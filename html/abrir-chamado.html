@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/abrir-chamado.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <title>Chamado</title>
+</head>
+<body>
+    <h1>Chamados</h1>
+    <div class="chamado">
+        <form action="">
+            <label for="ID">ID:</label>
+            <input type="text" id="ID" name="ID" readonly>
+
+            <label for="name">Nome:</label>
+            <input type="text" id="name" name="name" placeholder="Nome completo" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" placeholder="Email" required>
+
+            <label for="phone">Telefone:</label>
+            <input type="tel" id="phone" name="phone" placeholder="Telefone" required>
+
+            <label for="priority">Prioridade: </label>
+            <select name="priority" id="priority" required>
+                <option value="">Selecione...</option>
+                <option value="1">Baixa</option>
+                <option value="2">Média</option>
+                <option value="3">Alta</option>
+            </select>
+
+            <label for="category">Categoria:</label>
+            <select name="category" id="category" required>
+                <option value="">Selecione...</option>
+                <option value="1">Software</option>
+                <option value="2">Hardware</option>
+                <option value="3">Rede</option>
+                <option value="4">Acesso</option>
+                <option value="5">Outros</option>
+            </select>
+
+            <label for="description">Descrição:</label>
+            <textarea name="description" id="description" placeholder="Descreva sobre o seu problema: " required></textarea>
+
+            <label for="fileInput" class="custom-file-upload">Anexar arquivo:</label>
+            <input type="file" id="fileInput" name="file">
+            <span id="fileName">Nenhum arquivo selecionado.</span>
+
+            <button type="submit" id="submit-button">Abrir Chamado</button>
+        </form>
+    </div>
+</body>
+</html>

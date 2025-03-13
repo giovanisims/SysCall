@@ -1,0 +1,14 @@
+.nav-bar {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-bar a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+.nav-bar a:hover {
+    color: #288efc;
+}
