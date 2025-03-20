@@ -1,3 +1,5 @@
+@import url(./header.css);
+
 .chamado{
     display: flex;
     justify-content: center;
