@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../css/sign-up.css">
+    <link rel="stylesheet" href="/pages/css/sign_up.css">
     <title>Cadastre-se</title>
 </head>
 <body>
@@ -24,16 +24,13 @@
                 <input type="text" id="phone" name="phone" placeholder="Telefone *" required>
                 </div>
                 <div class="input-group">
-                    <select name="country" id="country" required>
-                    <option value="">País</option>
-                    </select>
-                <select name="state" id="state" required>
-                    <option value="">Estado</option>
-                </select>
-
+                <input type="text" id="cep" name="cep" placeholder="CEP *" onblur="searchAddress()" maxlength="9"    required>
+                <input type="text" id="observation" name="observation" placeholder="Complemento ">
                 </div>
+                <input type="text" id="address" name="address" placeholder="Endereço" readonly>
+                
                 <input type="password" id="password" name="password" placeholder="Senha *" required>
-                <input type="text" id="password-confirm" name="password-confirm" placeholder="Confirme a senha *" required>
+                <input type="text" id="passwordConfirm" name="passwordConfirm" placeholder="Confirme a senha *" required>
                 
                 <button type="submit" id="submit-button">Entrar</button>
             </form>
@@ -42,4 +39,5 @@
         </div>
     </div>
 </body>
+<script src="/pages/js/sign.js"></script>
 </html>
