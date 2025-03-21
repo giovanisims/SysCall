@@ -1,3 +1,4 @@
+DROP DATABASE SysCall;
 CREATE DATABASE IF NOT EXISTS SysCall ;
 USE SysCall;
 
@@ -28,7 +29,7 @@ CREATE TABLE Issue (
     FOREIGN KEY (CurrentState) REFERENCES IssueState(idIssueState)
 );
 
-CREATE TABLE StateHistory (
+CREATE TABLE IssueHistory (
     idStateHistory INT PRIMARY KEY,
     fk_Issue_idIssue INT NOT NULL,
     fk_IssueState INT NOT NULL,
@@ -46,3 +47,4 @@ CREATE TABLE Evaluates (
     FOREIGN KEY (fk_Issue_idIssue) REFERENCES Issue(idIssue) ON DELETE CASCADE,
     FOREIGN KEY (fk_Company_idCompany) REFERENCES Company(idCompany) ON DELETE CASCADE
 );
+
