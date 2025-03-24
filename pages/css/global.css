@@ -22,3 +22,29 @@ a {
     color: #eee;
     text-decoration: none;
 }
+
+#errorCep, #errorFields, #errorPassword, #errorEqualPasswords{
+    display: none;
+}
+
+.error{
+    border: 1px solid #921f1f !important;
+    border-radius: 5px !important;
+}
+
+.empty-field{
+    border: 1px solid #cfb70c !important;
+    border-radius: 5px !important;
+}
+
+.none{
+    display: none;
+}
+
+.error-msg p{
+    color:#921f1f;
+}
+
+#errorFields {
+    color:#cfb70c;
+}
