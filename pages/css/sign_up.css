@@ -25,6 +25,22 @@
     width: 100%;
 }
 
+.see-password{
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.see-password-check{
+    margin-left: -130px;
+}
+
+.see-password-text{
+    font-size: 15px;
+    margin-left: -125px;
+    margin-bottom: 20px;
+}
+
 
 @media (max-width: 768px) {
     .login {
@@ -41,6 +57,16 @@
     .login-data form {
         max-width: 100%;
     }
+
+    .see-password-check{
+        margin-left: -180px;
+    }
+    
+    .see-password-text{
+        font-size: 15px;
+        margin-left: -170px;
+        margin-bottom: 20px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -55,5 +81,15 @@
     .login-data form button {
         font-size: 14px;
         padding: 8px;
+    }
+
+    .see-password-check{
+        margin-left: -130px;
+    }
+    
+    .see-password-text{
+        font-size: 15px;
+        margin-left: -125px;
+        margin-bottom: 20px;
     }
 }
