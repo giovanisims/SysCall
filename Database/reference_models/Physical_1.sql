@@ -13,8 +13,13 @@ CREATE TABLE Company (
     CompanyName VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE IssueState (
-    idIssueState INT PRIMARY KEY,
+CREATE TABLE IssueProgress (
+    idIssueProgress INT PRIMARY KEY,
+    StateName VARCHAR(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE IssueType (
+	idIssueType INT PRIMARY KEY,
     StateName VARCHAR(255) UNIQUE NOT NULL
 );
 
@@ -22,21 +27,23 @@ CREATE TABLE Issue (
     idIssue INT PRIMARY KEY,
     Title VARCHAR(255) NOT NULL, 
     Description TEXT,
-    fk_User_idUser INT NOT NULL, 
-    CurrentState INT NOT NULL, 
     CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+	fk_User_idUser INT NOT NULL,
+	fk_IssueProgress_idIssueProgress INT NOT NULL,
+    fk_IssueType_idIssueType INT NOT NULL,
     FOREIGN KEY (fk_User_idUser) REFERENCES User(idUser),
-    FOREIGN KEY (CurrentState) REFERENCES IssueState(idIssueState)
+    FOREIGN KEY (fk_IssueProgress_idIssueProgress) REFERENCES IssueProgress(idIssueProgress),
+	FOREIGN KEY (fk_IssueType_idIssueType) REFERENCES IssueType(idIssueType)
 );
 
 CREATE TABLE IssueHistory (
     idStateHistory INT PRIMARY KEY,
     fk_Issue_idIssue INT NOT NULL,
-    fk_IssueState INT NOT NULL,
+    fk_IssueProgress INT NOT NULL,
     ChangedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
     fk_ChangedByUser INT NOT NULL,
     FOREIGN KEY (fk_Issue_idIssue) REFERENCES Issue(idIssue),
-    FOREIGN KEY (fk_IssueState) REFERENCES IssueState(idIssueState),
+    FOREIGN KEY (fk_IssueProgress) REFERENCES IssueProgress(idIssueProgress),
     FOREIGN KEY (fk_ChangedByUser) REFERENCES User(idUser)
 );
 
