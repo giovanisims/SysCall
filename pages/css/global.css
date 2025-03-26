@@ -23,17 +23,18 @@ a {
     text-decoration: none;
 }
 
-#errorCep, #errorFields, #errorPassword, #errorEqualPasswords{
+#errorCep, #errorFields, #errorPassword, #errorEqualPasswords, #errorCpf, #errorPhone{
     display: none;
+}
+
+
+.empty-field{
+    border: 1px solid #cfb70c !important;
+    border-radius: 5px !important;
 }
 
 .error{
     border: 1px solid #921f1f !important;
-    border-radius: 5px !important;
-}
-
-.empty-field{
-    border: 1px solid #cfb70c !important;
     border-radius: 5px !important;
 }
 
