@@ -14,17 +14,20 @@
         </div>
         <div class="login-data">
             <form action="">
-                <!-- <label for="email">Email:</label> -->
-                <input type="email" id="email" name="email" placeholder="Email *" required>
-                
-                <!-- <label for="password">Senha:</label> -->
-                <input type="password" id="password" name="password" placeholder="Senha *" required>
-                
-                <button type="submit" id="submit-button">Entrar</button>
+                <input type="email" id="email" name="email" placeholder="Email *" class="required">
+                <input type="password" id="password" name="password" placeholder="Senha *" class="required">
+                <div class="error-msg">
+                    <p id="errorFields">Preencha os campos obrigatórios</p>
+                </div>
+                <button type="button" id="submitButtonVisible">Entrar</button>
+                <div class="none">
+                    <button type="submit" id="submitButton"></button>
+                </div>
             </form>
             <p>Não possui uma conta? <a href="sign_up.html">Cadastre-se</a></p>
             
         </div>
     </div>
+    <script src="../js/login.js"></script>
 </body>
 </html>

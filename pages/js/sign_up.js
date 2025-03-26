@@ -15,7 +15,6 @@ function loadSelectors(){
     var password = document.getElementById('password');
     var passwordConfirm = document.getElementById('passwordConfirm');
     var submitButtonVisible = document.getElementById('submitButtonVisible')
-    var submitButton = document.getElementById('submitButton');
     var errorCep = document.getElementById('errorCep');
     var errorFields = document.getElementById('errorFields');
     var errorPassword = document.getElementById('errorPassword')
