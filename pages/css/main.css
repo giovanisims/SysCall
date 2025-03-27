@@ -1,17 +1,31 @@
 @import url('global.css');
 @import url('header.css');
 
-.nav-bar {
+.start-pag{
+    width: 100%;
+    height: 90vh;
     display: flex;
-    gap: 20px;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(../images/background-fotor-2025032619327.png);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
-.nav-bar a {
-    color: white;
-    text-decoration: none;
-    font-size: 18px;
+.start-pag h1{
+    justify-self: center;
+    margin-top: 250px;
+    margin-left: 20px;
+    font-size: 50px;
+    font-weight: 700;
+    border-right: 3px solid white;
+    height: 60px;
+    white-space: nowrap;
+    overflow: hidden;
+    animation: blink 0.7s step-end infinite;
 }
 
-.nav-bar a:hover {
-    color: #288efc;
+@keyframes blink {
+    50% {
+        border-color: transparent;
+    }
 }

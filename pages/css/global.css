@@ -8,9 +8,8 @@
 }
 
 body {
-    background-color: #22223b;
+    background-color: #1e1e35;
     color: #f2e9e4;
-    padding: 20px;
     align-items: center;
 }
 
@@ -48,4 +47,22 @@ a {
 
 #errorFields {
     color:#cfb70c;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #eee;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #313136;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
