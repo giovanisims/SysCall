@@ -3,12 +3,13 @@
 
 .start-pag{
     width: 100%;
-    height: 90vh;
+    height: 80vh;
     display: flex;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(../images/background-fotor-2025032619327.png);
+    /* background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(../images/background-fotor-2025032619327.png);
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
+    background-repeat: no-repeat; */
+    background-color: transparent;
 }
 
 .start-pag h1{
@@ -22,6 +23,29 @@
     white-space: nowrap;
     overflow: hidden;
     animation: blink 0.7s step-end infinite;
+    z-index: 1;
+}
+
+#section-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    width: 100vw;
+    height: 100vh;
+    border: none;
+    outline: none;
+    background-color: #22223b;
+    filter: blur(100px);
+    overflow: hidden;
+}
+
+.star {
+    background-color: #3b2e51;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 100%;
+    position: absolute;
 }
 
 @keyframes blink {
