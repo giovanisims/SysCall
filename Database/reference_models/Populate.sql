@@ -1,4 +1,3 @@
--- Use the SysCall database  
 USE SysCall;
 
 -- Insert sample data into the User table  
@@ -13,20 +12,25 @@ INSERT INTO Company (idCompany, CompanyName) VALUES
 (2, 'Innovatech'),
 (3, 'SoftServe');
 
--- Insert sample data into the IssueState table  
-INSERT INTO IssueState (idIssueState, StateName) VALUES  
+-- Insert sample data into the IssueProgress table  
+INSERT INTO IssueProgress (idIssueProgress, StateName) VALUES  
 (1, 'Resolved'),
 (2, 'Unresolved'),
 (3, 'Resolving');
 
+-- Assume we need to insert data into IssueType as well  
+INSERT INTO IssueType (idIssueType, StateName) VALUES  
+(1, 'Bug'), 
+(2, 'Feature Request'); 
+
 -- Insert sample data into the Issue table  
-INSERT INTO Issue (idIssue, Title, Description, fk_User_idUser, CurrentState, CreatedDate) VALUES  
-(1, 'Website Down', 'The company website is not accessible.', 1, 2, '2023-10-01 10:00:00'),
-(2, 'Email Issues', 'Unable to send emails through the company server.', 2, 3, '2023-10-02 11:30:00'),
-(3, 'Bug in Software', 'The application crashes on launching.', 3, 1, '2023-10-03 12:45:00');
+INSERT INTO Issue (idIssue, Title, Description, fk_User_idUser, fk_IssueProgress_idIssueProgress, fk_IssueType_idIssueType, CreatedDate) VALUES  
+(1, 'Website Down', 'The company website is not accessible.', 1, 2, 1, '2023-10-01 10:00:00'),
+(2, 'Email Issues', 'Unable to send emails through the company server.', 2, 3, 1, '2023-10-02 11:30:00'),
+(3, 'Bug in Software', 'The application crashes on launching.', 3, 1, 1, '2023-10-03 12:45:00');
 
 -- Insert sample data into the IssueHistory table  
-INSERT INTO IssueHistory (idStateHistory, fk_Issue_idIssue, fk_IssueState, ChangedDate, fk_ChangedByUser) VALUES  
+INSERT INTO IssueHistory (idStateHistory, fk_Issue_idIssue, fk_IssueProgress, ChangedDate, fk_ChangedByUser) VALUES  
 (1, 1, 2, '2023-10-01 11:00:00', 1),
 (2, 1, 3, '2023-10-01 15:00:00', 2),
 (3, 1, 1, '2023-10-02 09:00:00', 3),

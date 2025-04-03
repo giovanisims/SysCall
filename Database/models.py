@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DATETIME  
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime  
 from sqlalchemy.orm import relationship  
 from database import Base
 
@@ -9,8 +9,6 @@ class User(Base):
     Username = Column(String(255), unique=True, nullable=False)
     Password = Column(String(255), nullable=False)
 
-    issues = relationship("Issue", back_populates="user")
-    history = relationship("IssueHistory", back_populates="changed_by_user")
 
 class Company(Base):
     __tablename__ = "Company"
@@ -18,11 +16,20 @@ class Company(Base):
     idCompany = Column(Integer, primary_key=True, index=True)
     CompanyName = Column(String(255), nullable=False)
 
-class IssueState(Base):
-    __tablename__ = "IssueState"
 
-    idIssueState = Column(Integer, primary_key=True, index=True)
+class IssueProgress(Base):
+    __tablename__ = "IssueProgress"
+
+    idIssueProgress = Column(Integer, primary_key=True, index=True)
     StateName = Column(String(255), unique=True, nullable=False)
+
+
+class IssueType(Base):
+    __tablename__ = "IssueType"
+
+    idIssueType = Column(Integer, primary_key=True, index=True)
+    StateName = Column(String(255), unique=True, nullable=False)
+
 
 class Issue(Base):
     __tablename__ = "Issue"
@@ -30,26 +37,29 @@ class Issue(Base):
     idIssue = Column(Integer, primary_key=True, index=True)
     Title = Column(String(255), nullable=False)
     Description = Column(String)
+    CreatedDate = Column(DateTime, nullable=False)
     fk_User_idUser = Column(Integer, ForeignKey('User.idUser'), nullable=False)
-    CurrentState = Column(Integer, ForeignKey('IssueState.idIssueState'), nullable=False)
-    CreatedDate = Column(DATETIME, nullable=False)
+    fk_IssueProgress_idIssueProgress = Column(Integer, ForeignKey('IssueProgress.idIssueProgress'), nullable=False)
+    fk_IssueType_idIssueType = Column(Integer, ForeignKey('IssueType.idIssueType'), nullable=False)
 
-    user = relationship("User", back_populates="issues")
-    state = relationship("IssueState")
-    history = relationship("IssueHistory", back_populates="issue")
+    user = relationship("User")
+    progress = relationship("IssueProgress")
+    type = relationship("IssueType")
+
 
 class IssueHistory(Base):
     __tablename__ = "IssueHistory"
 
     idStateHistory = Column(Integer, primary_key=True, index=True)
     fk_Issue_idIssue = Column(Integer, ForeignKey('Issue.idIssue'), nullable=False)
-    fk_IssueState = Column(Integer, ForeignKey('IssueState.idIssueState'), nullable=False)
-    ChangedDate = Column(DATETIME, nullable=False)
+    fk_IssueProgress = Column(Integer, ForeignKey('IssueProgress.idIssueProgress'), nullable=False)
+    ChangedDate = Column(DateTime, nullable=False)
     fk_ChangedByUser = Column(Integer, ForeignKey('User.idUser'), nullable=False)
 
-    issue = relationship("Issue", back_populates="history")
-    issue_state = relationship("IssueState")
-    changed_by_user = relationship("User", back_populates="history")
+    issue = relationship("Issue")
+    issue_progress = relationship("IssueProgress")
+    changed_by_user = relationship("User")
+
 
 class Evaluates(Base):
     __tablename__ = "Evaluates"

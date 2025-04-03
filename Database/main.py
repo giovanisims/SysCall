@@ -1,3 +1,6 @@
+import os  
+import sys
+
 from fastapi import FastAPI, Depends  
 from sqlalchemy.orm import Session  
 import models, database
@@ -18,3 +21,8 @@ def get_db():
 def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     users = db.query(models.User).offset(skip).limit(limit).all()
     return users
+
+# This code only runs if the script is executed directly, not if it is imported as a module.
+if __name__ == "__main__":
+    import uvicorn  
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
