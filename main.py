@@ -29,6 +29,9 @@ DB_CONFIG = {
     "database": "syscall"
 }
 
+def get_db():
+    return pymysql.connect(**DB_CONFIG)
+
 
 @app.get("/", response_class=HTMLResponse)
 async def read_main(request: Request):
@@ -41,6 +44,30 @@ async def read_login(request: Request):
 @app.get("/sign_up", response_class=HTMLResponse)
 async def read_register(request: Request):
     return templates.TemplateResponse("sign_up.html", {"request": request})
+
+@app.post("/login")
+async def login(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...),
+    db=Depends(get_db)
+):
+    try:
+        with db.cursor() as cursor:
+            cursor.execute("SELECT * FROM user WHERE Email = %s AND Password = %s", (email, password))
+            user = cursor.fetchone()
+
+            if user:
+                request.session["user_logged_in"] = True
+                request.session["email"] = user[1]
+                print ("funciona")
+                return RedirectResponse("/", status_code=302)
+            else:
+                request.session["login_error"] = "Invalid email or password."
+                print ("nao funciona")
+                return RedirectResponse("/login", status_code=302)
+    finally:
+        db.close()
 
 # This code only runs if the script is executed directly, not if it is imported as a module.
 if __name__ == "__main__":

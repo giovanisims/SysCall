@@ -5,7 +5,8 @@ USE SysCall;
 CREATE TABLE User (
     idUser INT PRIMARY KEY,
     Username VARCHAR(255) UNIQUE NOT NULL,
-    Password VARCHAR(255) NOT NULL  
+    Password VARCHAR(255) NOT NULL,
+    Email VARCHAR(255) NOT NULL  
 );
 
 CREATE TABLE Company (
