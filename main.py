@@ -34,6 +34,14 @@ DB_CONFIG = {
 async def read_main(request: Request):
     return templates.TemplateResponse("main.html", {"request": request})
 
+@app.get("/login", response_class=HTMLResponse)
+async def read_login(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.get("/sign_up", response_class=HTMLResponse)
+async def read_register(request: Request):
+    return templates.TemplateResponse("sign_up.html", {"request": request})
+
 # This code only runs if the script is executed directly, not if it is imported as a module.
 if __name__ == "__main__":
     import uvicorn  
