@@ -5,7 +5,14 @@ USE SysCall;
 CREATE TABLE User (
     idUser INT PRIMARY KEY,
     Username VARCHAR(255) UNIQUE NOT NULL,
-    Password VARCHAR(255) NOT NULL  
+    Email VARCHAR(255) UNIQUE NOT NULL,
+    NameSurname VARCHAR(255) NOT NULL,
+    CPF INTEGER(11) NOT NULL,
+    Number INTEGER(9) NOT NULL,
+    CEP INTEGER(7) NOT NULL,
+    Password VARCHAR(255) NOT NULL,
+    Address VARCHAR(255),
+    Complement VARCHAR(255)
 );
 
 CREATE TABLE Company (
@@ -38,10 +45,14 @@ CREATE TABLE Issue (
 
 CREATE TABLE IssueHistory (
     idStateHistory INT PRIMARY KEY,
+    fk_Issue_Title VARCHAR(255) NOT NULL,
+    fk_Issue_Description TEXT NOT NULL,
     fk_Issue_idIssue INT NOT NULL,
     fk_IssueProgress INT NOT NULL,
-    ChangedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
     fk_ChangedByUser INT NOT NULL,
+    ChangedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (fk_Issue_Title) REFERENCES Issue(Title),
+    FOREIGN KEY (fk_Issue_Description) REFERENCES Issue(Description),
     FOREIGN KEY (fk_Issue_idIssue) REFERENCES Issue(idIssue),
     FOREIGN KEY (fk_IssueProgress) REFERENCES IssueProgress(idIssueProgress),
     FOREIGN KEY (fk_ChangedByUser) REFERENCES User(idUser)
