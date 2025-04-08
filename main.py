@@ -63,9 +63,9 @@ async def login(
                 print ("funciona")
                 return RedirectResponse("/", status_code=302)
             else:
-                request.session["login_error"] = "Invalid email or password."
+                error_message = "Email ou senha invalidos"
                 print ("nao funciona")
-                return RedirectResponse("/login", status_code=302)
+                return templates.TemplateResponse("login.html", {"request": request, "error": error_message})
     finally:
         db.close()
 

@@ -20,6 +20,12 @@
                 <div class="error-msg">
                     <p id="errorFields">Preencha os campos obrigatórios</p>
                 </div>
+
+                <!-- Sim a mensagem de erro do login ta vindo do python, chora nao pq foi o jeito mais facil -->
+                {% if error %}
+                    <p class="error-msg">{{ error }}</p>
+                {% endif %}
+
                 <button type="button" id="submitButtonVisible">Entrar</button>
                 <div class="none">
                     <button type="submit" id="submitButton"></button>
