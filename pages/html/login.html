@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="../images/logo.png">
-    <link rel="stylesheet" href="../css/login.css">
+    <link rel="stylesheet" href="static/css/login.css">
     <title>Login</title>
 </head>
 <body>
@@ -14,21 +14,27 @@
             <p>Bem-vindo ao SysCall!</p>
         </div>
         <div class="login-data">
-            <form action="">
+            <form action="/login" method="post">
                 <input type="email" id="email" name="email" placeholder="Email *" class="required">
                 <input type="password" id="password" name="password" placeholder="Senha *" class="required">
                 <div class="error-msg">
                     <p id="errorFields">Preencha os campos obrigatórios</p>
                 </div>
+
+                <!-- Sim a mensagem de erro do login ta vindo do python, chora nao pq foi o jeito mais facil -->
+                {% if error %}
+                    <p class="error-msg">{{ error }}</p>
+                {% endif %}
+
                 <button type="button" id="submitButtonVisible">Entrar</button>
                 <div class="none">
                     <button type="submit" id="submitButton"></button>
                 </div>
             </form>
-            <p>Não possui uma conta? <a href="sign_up.html">Cadastre-se</a></p>
+            <p>Não possui uma conta? <a href="sign_up">Cadastre-se</a></p>
             
         </div>
     </div>
-    <script src="../js/login.js"></script>
+    <script src="static/js/login.js"></script>
 </body>
 </html>
