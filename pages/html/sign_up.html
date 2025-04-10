@@ -14,43 +14,39 @@
             <p>Bem-vindo ao SysCall!</p>
         </div>
         <div class="login-data">
-            <form action="">
+            <form method="post" action="/sign_up">
                 <div class="input-group">
-                <input type="text" id="name" name="name" placeholder="Nome *" class="required">
-                <input type="text" id="surname" name="surname" placeholder="Sobrenome *" class="required">
+                    <input type="text" id="Username" name="Username" placeholder="Username *" class="required">
+                    <input type="text" id="NameSurname" name="NameSurname" placeholder="Surname *" class="required">
                 </div>
-                <input type="email" id="email" name="email" placeholder="Email *" class="required">
+                <input type="email" id="Email" name="Email" placeholder="Email *" class="required">
                 <div class="input-group">
-                <input type="text" id="cpf" name="cpf" placeholder="CPF *" maxlength="11" class="required">
-                <input type="text" id="phone" name="phone" placeholder="Telefone *"  maxlength="12" class="required">
+                    <input type="text" id="CPF" name="CPF" placeholder="CPF *" maxlength="11" class="required">
+                    <input type="text" id="Number" name="Number" placeholder="Phone *"  maxlength="11" class="required">
                 </div>
                 <div class="input-group">
-                <input type="text" id="cep" name="cep" placeholder="CEP *" maxlength="9"    class="required">
-                <input type="text" id="observation" name="observation" placeholder="Complemento ">
+                    <input type="text" id="CEP" name="CEP" placeholder="CEP *" maxlength="8"    class="required">
+                    <input type="text" id="Complement" name="Complement" placeholder="Complement">
                 </div>
-                <input type="text" id="address" name="address" placeholder="Endereço" readonly>
-                
-                <input type="password" id="password" name="password" placeholder="Senha *" class="required">
-                <input type="password" id="passwordConfirm" name="passwordConfirm" placeholder="Confirme a senha *" class="required">
+                <input type="text" id="Address" name="Address" placeholder="Address">
+
+                <input type="password" id="Password" name="Password" placeholder="Password *" class="required">
+                <input type="password" id="passwordConfirm" name="passwordConfirm" placeholder="Confirm Password *" class="required">
                 <div class="see-password">
                     <input type="checkbox" id="seePassword" name="seePassword" class="see-password-check">
-                    <label for="seePassword" class="see-password-text">Mostrar a senha</label>
+                    <label for="seePassword" class="see-password-text">Show Password</label>
                 </div>
                 <div class="error-msg">
-                    <p id="errorCep">CEP inválido</p>
-                    <p id="errorCpf">CPF inválido</p>
-                    <p id="errorPhone">Telefone inválido</p>
-                    <p id="errorFields">Preencha os campos obrigatórios</p>
-                    <p id="errorPassword">A senha deve conter uma letra maiúscula, uma letra minúscula, um número e um caractere especial</p>
-                    <p id="errorEqualPasswords" class="errorPassword">As senhas devem ser iguais</p>
+                    <p id="errorCep" style="display: none;">Invalid CEP</p>
+                    <p id="errorCpf" style="display: none;">Invalid CPF</p>
+                    <p id="errorPhone" style="display: none;">Invalid Phone</p>
+                    <p id="errorFields" style="display: none;">Fill in the required fields</p>
+                    <p id="errorPassword" style="display: none;">Password must contain an uppercase letter, a lowercase letter, a number, and a special character</p>
+                    <p id="errorEqualPasswords" class="errorPassword" style="display: none;">Passwords must match</p>
                 </div>
-                <button type="button" id="submitButtonVisible">Cadastrar</button>
-                <div class="none">
-                    <button type="submit" id="submitButton"></button>
-                </div>
+                <button type="submit" id="submitButtonVisible">Sign Up</button>
             </form>
-            <p>Já possui uma conta? <a href="login">Entrar</a></p>
-            
+            <p>Already have an account? <a href="login">Log In</a></p>
         </div>
     </div>
 </body>

@@ -1,57 +1,87 @@
 document.addEventListener('DOMContentLoaded', function () {
-    loadSelectors();
-    loadEvents();
-});
-
-
-function loadSelectors() {
-    var name = document.getElementById('name');
-    var surname = document.getElementById('surname');
-    var email = document.getElementById('email');
-    var cpf = document.getElementById('cpf');
-    var phone = document.getElementById('phone');
-    var cep = document.getElementById('cep');
-    var address = document.getElementById('address');
-    var password = document.getElementById('password');
+    // Load selectors and events here
+    var name = document.getElementById('NameSurname');
+    var username = document.getElementById('Username');
+    var email = document.getElementById('Email');
+    var cpf = document.getElementById('CPF');
+    var phone = document.getElementById('Number');
+    var cep = document.getElementById('CEP');
+    var address = document.getElementById('Address');
+    var complement = document.getElementById('Complement');
+    var password = document.getElementById('Password');
     var passwordConfirm = document.getElementById('passwordConfirm');
-    var submitButtonVisible = document.getElementById('submitButtonVisible')
+    var submitButtonVisible = document.getElementById('submitButtonVisible');
     var errorCep = document.getElementById('errorCep');
     var errorFields = document.getElementById('errorFields');
     var errorPassword = document.getElementById('errorPassword');
     var errorEqualPasswords = document.getElementById('errorEqualPasswords');
     var errorCpf = document.getElementById('errorCpf');
     var errorPhone = document.getElementById('errorPhone');
-}
 
-function loadEvents() {
     cep.addEventListener('blur', searchAddress);
     cpf.addEventListener('blur', formatAndValidateCPF);
-    phone.addEventListener('blur', formatPhone)
-    submitButtonVisible.addEventListener('click', validateForm)
+    phone.addEventListener('blur', formatPhone);
+    submitButtonVisible.addEventListener('click', validateAndSubmitForm); // Changed to a new function
     document.getElementById('seePassword').addEventListener('change', seePassword);
-}
+});
 
-function validateForm() {
-    resetErrorMessages()
-    var emptyFieldsValid = validateEmptyFields()
-    var passwordValid = validatePassword()
+function validateAndSubmitForm(event) {
+    event.preventDefault(); // Prevent the default form submission
 
-    var valid = emptyFieldsValid && passwordValid
+    resetErrorMessages();
+    var emptyFieldsValid = validateEmptyFields();
+    var passwordValid = validatePassword();
+
+    var valid = emptyFieldsValid && passwordValid;
 
     if (valid) {
-        document.getElementById('submitButton').click()
+        submitForm(); // Call the submitForm function
     }
 }
 
-function searchAddress() {
-    let cepElement = document.getElementById("cep");
-    let cep = cepElement.value;
+function submitForm() {
+    // Collect form data
+    const formData = {
+        Username: username.value,
+        Email: email.value,
+        NameSurname: name.value,
+        CPF: cpf.value,
+        Number: phone.value,
+        CEP: cep.value,
+        Address: address.value,
+        Complement: complement.value,
+        Password: password.value
+    };
 
-    let rawCep = cep.replace(/\D/g, "");
+    // Send POST request using fetch
+    fetch('/sign_up', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+        } else {
+            console.log('Sign-up failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function searchAddress() {
+    let cepElement = document.getElementById("CEP");
+    let cepValue = cepElement.value;
+
+    let rawCep = cepValue.replace(/\D/g, "");
 
     if (rawCep.length === 8) {
         let formattedCep = rawCep.replace(/^(\d{2})(\d{3})(\d{3})$/, "$1.$2-$3");
-        document.getElementById("cep").value = formattedCep;
+        document.getElementById("CEP").value = formattedCep;
 
         let url = `https://viacep.com.br/ws/${rawCep}/json/`;
 
@@ -59,7 +89,7 @@ function searchAddress() {
             .then(response => response.json())
             .then(data => {
                 if (!("erro" in data)) {
-                    document.getElementById("address").value = data.logradouro;
+                    document.getElementById("Address").value = data.logradouro;
                 } else {
                     alert("CEP não encontrado.");
                 }
@@ -78,17 +108,17 @@ function searchAddress() {
 }
 
 function formatAndValidateCPF() {
-    let cpfElement = document.getElementById("cpf");
-    let cpf = cpfElement.value;
-    let formattedCpf = cpf.replace(/\D/g, "");
+    let cpfElement = document.getElementById("CPF");
+    let cpfValue = cpfElement.value;
+    let formattedCpf = cpfValue.replace(/\D/g, "");
 
     if (formattedCpf.length <= 11) {
-        formattedCpf = cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})$/, "$1.$2.$3-$4");
+        formattedCpf = cpfValue.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})$/, "$1.$2.$3-$4");
     }
 
     cpfElement.value = formattedCpf;
 
-    let cleanCpf = cpf.replace(/\D/g, "");
+    let cleanCpf = cpfValue.replace(/\D/g, "");
     let isValid = true;
 
     if (cleanCpf.length !== 11) {
@@ -122,27 +152,23 @@ function formatAndValidateCPF() {
 }
 
 function formatPhone() {
-    let phoneElement = document.getElementById("phone");
-    let phone = phoneElement.value;
+    let phoneElement = document.getElementById("Number");
+    let phoneValue = phoneElement.value;
 
-    let cleanPhone = phone.replace(/\D/g, "");
-    errorPhone.style.display = 'none'
+    let cleanPhone = phoneValue.replace(/\D/g, "");
+    errorPhone.style.display = 'none';
     phoneElement.classList.remove('error');
-    phoneElement.classList.remove('empty-field')
+    phoneElement.classList.remove('empty-field');
+    
     if (cleanPhone.length === 11) {
         phoneElement.value = cleanPhone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
-        phoneElement.classList.remove('error');
-        phoneElement.classList.remove('empty-field');
     } else if (cleanPhone.length === 10) {
         phoneElement.value = cleanPhone.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
-        phoneElement.classList.remove('error');
-        phoneElement.classList.remove('empty-field');
     } else if (cleanPhone.length > 0) {
-        errorPhone.style.display = 'block'
+        errorPhone.style.display = 'block';
         phoneElement.classList.add('error');
     }
 }
-
 
 function resetErrorMessages() {
     errorFields.style.display = 'none';
@@ -207,4 +233,3 @@ function seePassword(event) {
         passwordConfirm.type = "password";
     }
 }
-
