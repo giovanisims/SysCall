@@ -21,8 +21,8 @@ templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "p
 # Configuração do banco de dados
 DB_CONFIG = {
     "host": "localhost",
-    "user": "Lucas",
-    "password": "2525",
+    "user": "admin",
+    "password": "root",
     "database": "SysCall"
 }
 
