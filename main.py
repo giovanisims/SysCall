@@ -3,7 +3,7 @@ import os
 
 from mangum import Mangum
 from fastapi import FastAPI, Request, Form, Depends, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -21,14 +21,17 @@ templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "p
 # Configuração do banco de dados
 DB_CONFIG = {
     "host": "localhost",
-    "user": "root",
-    "password": "admin",
+    "user": "admin",
+    "password": "root",
     "database": "SysCall"
 }
 
 def get_db():
     return pymysql.connect(**DB_CONFIG)
 
+@app.get("/users_crud", response_class=HTMLResponse)
+async def read_users_crud(request: Request):
+    return templates.TemplateResponse("users_crud.html", {"request": request})
 
 @app.get("/", response_class=HTMLResponse)
 async def read_main(request: Request):
@@ -120,6 +123,72 @@ async def sign_up(
         print(f"Error during sign up: {e}")
         error_message = "An error occurred during registration."
         return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+    finally:
+        db.close()
+
+@app.get("/delete_user")
+async def delete_user(
+    user_id: int,
+    db=Depends(get_db)
+):
+    try:
+        with db.cursor() as cursor:
+            # Deleta os registros relacionados na tabela IssueHistory
+            cursor.execute("DELETE FROM IssueHistory WHERE fk_ChangedByUser = %s", (user_id,))
+            db.commit()
+
+            # Deleta os registros relacionados na tabela Issue
+            cursor.execute("DELETE FROM Issue WHERE fk_User_idUser = %s", (user_id,))
+            db.commit()
+
+            # Deleta os registros relacionados na tabela Address
+            cursor.execute("DELETE FROM Address WHERE fk_User_idUser = %s", (user_id,))
+            db.commit()
+
+            # Deleta os registros relacionados na tabela Complement
+            cursor.execute("DELETE FROM Complement WHERE fk_User_idUser = %s", (user_id,))
+            db.commit()
+
+            # Deleta o usuário da tabela User
+            cursor.execute("DELETE FROM User WHERE idUser = %s", (user_id,))
+            db.commit()
+
+            return RedirectResponse("/users_crud", status_code=302)
+    except Exception as e:
+        print(f"Error deleting user: {e}")
+        return JSONResponse(content={"error": "Failed to delete user"}, status_code=500)
+    finally:
+        db.close()
+        
+@app.post("/edit_user")
+#algum dia isso aqui vai funcionar
+
+@app.get("/users", response_class=JSONResponse)
+async def get_users(db=Depends(get_db)):
+    try:
+        with db.cursor() as cursor:
+            # Consulta todos os usuários da tabela User
+            cursor.execute("SELECT idUser, Username, Email, NameSurname, CPF, Number, CEP, Complement FROM User")
+            users = cursor.fetchall()
+
+            # Mapeia os resultados para um formato JSON
+            result = [
+                {
+                    "idUser": user[0],
+                    "Username": user[1],
+                    "Email": user[2],
+                    "NameSurname": user[3],
+                    "CPF": user[4],
+                    "Number": user[5],
+                    "CEP": user[6],
+                    "Complement": user[7],
+                }
+                for user in users
+            ]
+            return result
+    except Exception as e:
+        print(f"Error fetching users: {e}")
+        return JSONResponse(content={"error": "Failed to fetch users"}, status_code=500)
     finally:
         db.close()
 

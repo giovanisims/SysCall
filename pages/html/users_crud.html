@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Usuários</title>
+    <script>
+        async function fetchUsers() {
+            const response = await fetch('http://127.0.0.1:8000/users'); 
+            const users = await response.json(); //transforma o banco de dados num JSON
+            const tableBody = document.getElementById('users-table-body'); // escolhe a tabela (so tem uma mas enfim ne)
+            tableBody.innerHTML = ''; //limpa a tabela antes de preencher (so precavendo)
+
+            // monta cada linha
+            users.forEach(user => {
+                const row = `<tr>
+                    <td>${user.idUser}</td>
+                    <td>${user.Username}</td>
+                    <td>${user.Email}</td>
+                    <td>${user.NameSurname}</td>
+                    <td>${user.CPF}</td>
+                    <td>${user.Number}</td>
+                    <td>${user.CEP}</td>
+                    <td>${user.Complement || ''}</td>
+                    <td><a href="delete_user?user_id=${user.idUser}">deletar usuario</a></td>
+                    <td><a href="edit_user?user_id=${user.idUser}">editar usuario</a></td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        // Chama a função pra funcionar
+        document.addEventListener('DOMContentLoaded', fetchUsers);
+    </script>
+</head>
+<body>
+    <h1>Lista de Usuários</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Nome Completo</th>
+                <th>CPF</th>
+                <th>Número</th>
+                <th>CEP</th>
+                <th>Complemento</th>
+                <th colspan="2">Ações</th>
+            </tr>
+        </thead>
+        <tbody id="users-table-body">
+            <!-- é dentro dessas tag q entra os usuarios -->
+        </tbody>
+    </table>
+
+    <a href="sign_up">Adicionar usuario</a>
+</body>
+</html>
