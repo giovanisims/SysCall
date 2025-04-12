@@ -8,9 +8,9 @@
 }
 
 body {
-    background-color: #1e1e35;
     color: #f2e9e4;
     align-items: center;
+    background-color: #f2e9e4;
 }
 
 h1 {
@@ -20,6 +20,10 @@ h1 {
 a {
     color: #eee;
     text-decoration: none;
+}
+
+.margin-top {
+    margin-top: 10px;
 }
 
 #errorCep, #errorFields, #errorPassword, #errorEqualPasswords, #errorCpf, #errorPhone{

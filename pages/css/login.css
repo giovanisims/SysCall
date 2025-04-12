@@ -1,11 +1,13 @@
 @import url('global.css');
+@import url('header.css');
 
-body{
+.login-container{
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 80vh;
     padding: 20px;
+    background-color: #f2e9e4;
 }
 
 .login {
@@ -17,25 +19,25 @@ body{
     border-radius: 10px;
     padding: 50px;
     width: 80vw;
-    max-width: 800px;
     flex-direction: row;
     height: min-content;
 }
 
-.text-center{
-    flex: 1; 
+.text-center {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center; 
-    align-items: center; 
+    justify-content: center;
+    align-items: center;
     text-align: center;
     padding: 20px;
     height: 100%;
-    font-size: 24px;
+    font-size: 35px;
+    margin-bottom: 10px;
 }
 
-.login-data{
-    flex: 1; 
+.login-data {
+    flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -44,35 +46,65 @@ body{
     height: 100%;
 }
 
-
 .login-data form {
     display: flex;
     flex-direction: column;
-    margin-left: 5px;
-    padding: 10px;
     width: 100%;
 }
 
-.login-data form label {
-    margin-top: 10px;
-    font-weight: bold;
+/* Container do input */
+.input-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 20px;
 }
 
-.login-data form input {
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    border-bottom: 1px solid #444;
-    background-color: transparent;
-    margin-bottom: 2px;
-    border-bottom: #4a4e69 1px solid;
-    padding: 10px;
-}
-
-.login-data form input:focus {
+/* Input */
+.input-container input {
+    width: 100%;
+    padding: 12px 10px;
+    border: 1px solid #4a4e69;
+    border-radius: 5px;
     outline: none;
+    font-size: 16px;
+    background: transparent;
+    color: #4a4e69;
 }
 
+/* Label que começa como placeholder */
+.input-container label {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: #4a4e69;
+    transition: 0.3s ease-in-out;
+    pointer-events: none;
+}
+
+.link-login{
+    color: #4a4e69;
+    text-decoration: none;
+    font-size: 14px;
+    margin-top: 10px;
+    font-style: italic;
+    text-decoration: underline;
+}
+
+/* Quando o input está focado ou preenchido */
+.input-container input:focus + label,
+.input-container input:not(:placeholder-shown) + label {
+    top: 0;
+    left: 10px;
+    font-size: 12px;
+    color: #4a4e69;
+    background: #f2e9e4;
+    padding: 0 5px;
+    transition: 0.3s ease-in-out;
+}
+
+/* Botão */
 .login-data form button {
     background-color: #4a4e69;
     color: #f2e9e4;
@@ -87,21 +119,17 @@ body{
     background-color: #313446;
 }
 
-a{
-    color: #4a4e69;
-    font-weight: bold;
-    text-decoration: underline;
-}
-
+/* Responsividade */
 @media (max-width: 768px) {
     .login {
-        flex-direction: column; 
+        flex-direction: column;
         width: 90vw;
         padding: 30px;
         gap: 10px;
     }
 
-    .text-center, .login-data {
+    .text-center,
+    .login-data {
         width: 100%;
     }
 
