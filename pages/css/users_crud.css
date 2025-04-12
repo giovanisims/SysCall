@@ -80,3 +80,40 @@ th {
     background-color: #307737;
     cursor: pointer;
 }
+
+@media (max-width: 800px) {
+    /* .title {
+        flex-direction: column;
+        gap: 20px;
+        padding-top: 20px;
+    } */
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .table-container {
+        width: 100%;
+        padding: 0 10px;
+    }
+
+    table {
+        width: 100%;
+        font-size: 0.5rem;
+    }
+
+    th {
+        font-size: 0.5rem;
+        padding: 5px;
+    }
+
+    #users-table-body td {
+        font-size: 0.5rem;
+        padding: 5px;
+    }
+    .add {
+        width: 100px;
+        height: 35px;
+        font-size: 0.8rem;
+    }
+}

@@ -4,6 +4,7 @@ header{
     padding: 20px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     background-color: #1e1e35;
 }
 
@@ -20,4 +21,46 @@ nav{
     justify-content: space-around;
     align-items: center;
     list-style: none;
+}
+
+.icons{
+    width: 10%;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    gap: 20px;
+    margin-right: 10px;
+}
+
+#menuButton {
+    display: none;
+}
+
+@media (max-width: 800px) {
+    #navBar {
+        display: none;
+        position: absolute;
+        top: 11vh;
+        right: 0;
+        background-color: #1e1e35;
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+    }
+    #navBar li {
+        width: 100%;
+        text-align: center;
+        padding: 10px 0;
+    }
+    #navBar a {
+        width: 100%;
+    }
+    #menuButton {
+        display: block;
+        cursor: pointer;
+    }
+    .menu{
+        display: flex;
+        flex-direction: column;
+    }
 }
