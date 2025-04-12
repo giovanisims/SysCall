@@ -7,12 +7,10 @@ CREATE TABLE User (
     Username VARCHAR(255) UNIQUE NOT NULL,
     Email VARCHAR(255) UNIQUE NOT NULL,
     NameSurname VARCHAR(255) NOT NULL,
-    CPF BIGINT NOT NULL,
-    Number INTEGER(9) NOT NULL,
-    CEP INTEGER(7) NOT NULL,
-    fk_Address_idAddress INT,
-    Complement INT,
-    Password VARCHAR(255) NOT NULL  
+    CPF VARCHAR(11) NOT NULL,
+    Number VARCHAR(11) NOT NULL,
+    CEP VARCHAR(11)NOT NULL,
+    Password VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE Complement(
@@ -25,10 +23,8 @@ CREATE TABLE Complement(
 CREATE TABLE Address (
     idAddress INT PRIMARY KEY AUTO_INCREMENT,
     Address VARCHAR(255) NOT NULL,
-    fk_Complement_IdComplement INT,
     fk_User_idUser INT NOT NULL,
-    FOREIGN KEY (fk_User_idUser) REFERENCES User(idUser),
-    FOREIGN KEY (fk_Complement_IdComplement) REFERENCES Complement(idComplement)
+    FOREIGN KEY (fk_User_idUser) REFERENCES User(idUser)
 );
 
 CREATE TABLE Company (

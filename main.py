@@ -21,8 +21,8 @@ templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "p
 # Configuração do banco de dados
 DB_CONFIG = {
     "host": "localhost",
-    "user": "admin",
-    "password": "root",
+    "user": "root",
+    "password": "admin",
     "database": "SysCall"
 }
 
@@ -71,20 +71,30 @@ async def login(
 @app.post("/sign_up")
 async def sign_up(
     request: Request,
-    Username: str = Form(...),
-    Email: str = Form(...),
-    NameSurname: str = Form(...),
-    CPF: int = Form(...),
-    Number: int = Form(...),
-    CEP: int = Form(...),
-    Address: str = Form(...),
-    Complement: str = Form(None),  # None lets the field be null
-    Password: str = Form(...),
+    name: str = Form(...),
+    surname: str = Form(...),
+    email: str = Form(...),
+    cpf: str = Form(...),
+    phone: str = Form(...),
+    cep: str = Form(...),
+    address: str = Form(...),
+    observation: str = Form(None),
+    password: str = Form(...),
     db=Depends(get_db)
 ):
+    NameSurname = f"{name} {surname}"
+    Username = email
+    Email = email
+    CPF = cpf.replace('.', '').replace('-', '')
+    CEP = cep.replace('-', '').replace('.', '')
+    Number = phone.replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
+
+    Address = address
+    Complement = observation
+    Password = password
+
     try:
         with db.cursor() as cursor:
-            # Checks if the username or email are already in use, if so returns an error menssage
             cursor.execute("SELECT * FROM User WHERE Username = %s OR Email = %s", (Username, Email))
             existing_user = cursor.fetchone()
 
@@ -92,34 +102,33 @@ async def sign_up(
                 error_message = "Username or email already in use."
                 return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
 
-            #Inserts into each table according to indepence
+            complement_id = None
 
-            #Inserts the complement into the DB if it exits
-            if Complement:
-                cursor.execute("INSERT INTO Complement (Complement) VALUES (%s)", (Complement,))
-                complement_id = cursor.lastrowid
-                db.commit()
-            else:
-                complement_id = None
-
-            # First, insert the user into the User table
             cursor.execute(
-                "INSERT INTO User (Username, Email, NameSurname, CPF, Number, CEP, Complement, Password) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                (Username, Email, NameSurname, CPF, Number, CEP, complement_id, Password)
+                "INSERT INTO User (Username, Email, NameSurname, CPF, Number, CEP, Password) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (Username, Email, NameSurname, CPF, Number, CEP, Password)
             )
-            user_id = cursor.lastrowid  # Get the newly generated user ID
+            user_id = cursor.lastrowid
             db.commit()
 
-            # Now, insert the address into the Address table, referencing the User
-            cursor.execute("INSERT INTO Address (Address, fk_Complement_idComplement, fk_User_idUser) VALUES (%s, %s, %s)", (Address, complement_id, user_id))
+            cursor.execute("INSERT INTO Address (Address, fk_User_idUser) VALUES (%s, %s)", (Address, user_id))
             address_id = cursor.lastrowid
             db.commit()
 
-            # Redirect to login page
+            if Complement:
+                 cursor.execute("INSERT INTO Complement (Complement, fk_User_idUser) VALUES (%s, %s)", (Complement, user_id))
+                 complement_id = cursor.lastrowid
+                 db.commit()
+
             return RedirectResponse("/login", status_code=302)
 
-    # Handles unknown errors in the sign up process
+    except pymysql.err.IntegrityError as ie:
+        db.rollback()
+        print(f"Integrity error during sign up: {ie}")
+        error_message = "Registration failed due to data conflict (e.g., duplicate entry or invalid foreign key)."
+        return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
     except Exception as e:
+        db.rollback()
         print(f"Error during sign up: {e}")
         error_message = "An error occurred during registration."
         return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
@@ -166,26 +175,14 @@ async def delete_user(
 @app.get("/users", response_class=JSONResponse)
 async def get_users(db=Depends(get_db)):
     try:
-        with db.cursor() as cursor:
-            # Consulta todos os usuários da tabela User
-            cursor.execute("SELECT idUser, Username, Email, NameSurname, CPF, Number, CEP, Complement FROM User")
+        with db.cursor(pymysql.cursors.DictCursor) as cursor: # Use DictCursor for easier mapping
+            # Adjust query based on actual User table columns needed and schema
+            # Assuming User.Complement is an INT FK as per schema, might need JOIN
+            # Simplified query for now:
+            cursor.execute("SELECT idUser, Username, Email, NameSurname, CPF, Number, CEP FROM User")
             users = cursor.fetchall()
-
-            # Mapeia os resultados para um formato JSON
-            result = [
-                {
-                    "idUser": user[0],
-                    "Username": user[1],
-                    "Email": user[2],
-                    "NameSurname": user[3],
-                    "CPF": user[4],
-                    "Number": user[5],
-                    "CEP": user[6],
-                    "Complement": user[7],
-                }
-                for user in users
-            ]
-            return result
+            # No need for manual mapping if using DictCursor
+            return users
     except Exception as e:
         print(f"Error fetching users: {e}")
         return JSONResponse(content={"error": "Failed to fetch users"}, status_code=500)
