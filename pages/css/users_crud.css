@@ -1,0 +1,82 @@
+@import url('main.css');
+
+.title{
+    width: 100%;
+    padding-top: 40px;
+    display: flex;
+    justify-content: center;
+    gap: 100px;
+}
+
+h1{
+    font-size: 2rem;
+    text-align: center;
+    font-family: 'Exo 2', sans-serif;
+    color: black;
+}
+
+.table-container{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+
+}
+
+table{
+    width: 85%;
+    height: auto;
+    color: black;
+}
+
+th {
+    height: 40px;
+    padding: 10px;
+    font-size: 0.9rem;
+    background-color: #c6c0bd;
+    font-weight: bold;
+}
+
+#users-table-body td {
+    height: 40px;
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+#users-table-body .action-button{
+    border: none;
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    transition: 0.5s ease-in-out;
+}
+
+#users-table-body .delete{
+    border-left: 1px solid #ddd;
+}
+
+#users-table-body .edit{
+    border-right: 1px solid #ddd;
+}
+
+#users-table-body .action-button i:hover{
+    transform: scale(1.3);
+}
+
+.add{
+    height: 40px;
+    width: 130px;
+    background-color: #4bb655;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    gap: 5px;
+    color: #f2e9e4;
+    font-weight: bold;
+    transition: 0.3s ease;
+}
+
+.add:hover{
+    background-color: #307737;
+    cursor: pointer;
+}
