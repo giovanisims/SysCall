@@ -13,7 +13,7 @@ function loadSelectors() {
     var address = document.getElementById('address');
     var password = document.getElementById('password');
     var passwordConfirm = document.getElementById('passwordConfirm');
-    var submitButtonVisible = document.getElementById('submitButtonVisible')
+    var submitButtonVisible = document.getElementById('submitButtonVisible');
     var errorCep = document.getElementById('errorCep');
     var errorFields = document.getElementById('errorFields');
     var errorPassword = document.getElementById('errorPassword');
@@ -21,6 +21,7 @@ function loadSelectors() {
     var errorCpf = document.getElementById('errorCpf');
     var errorPhone = document.getElementById('errorPhone');
 }
+
 
 function loadEvents() {
     cep.addEventListener('blur', searchAddress);
@@ -175,34 +176,41 @@ function validateEmptyFields() {
 
 function validatePassword() {
     const passwordRegex = /(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{4,}/;
-    if (!passwordRegex.test(password.value)) {
+    // Get elements directly here as well for consistency
+    const passwordInput = document.getElementById('password');
+    const passwordConfirmInput = document.getElementById('passwordConfirm');
+
+    if (!passwordRegex.test(passwordInput.value)) {
         console.log("senha não atende requisitos");
-        password.classList.add("error");
+        passwordInput.classList.add("error");
         errorPassword.style.display = 'block';
         return false;
     } else {
-        password.classList.remove("error");
+        passwordInput.classList.remove("error");
     }
-    if (password.value !== passwordConfirm.value) {
-        password.classList.add("error");
-        passwordConfirm.classList.add("error");
+    if (passwordInput.value !== passwordConfirmInput.value) {
+        passwordInput.classList.add("error");
+        passwordConfirmInput.classList.add("error");
         errorEqualPasswords.style.display = 'block';
         return false;
     } else {
-        password.classList.remove("error");
-        passwordConfirm.classList.remove("error");
+        passwordInput.classList.remove("error");
+        passwordConfirmInput.classList.remove("error");
     }
     return true;
 }
 
 function seePassword(event) {
     const checkbox = document.getElementById('seePassword');
+    // Get the password input elements directly inside the function
+    const passwordInput = document.getElementById('password');
+    const passwordConfirmInput = document.getElementById('passwordConfirm');
 
     if (checkbox.checked) {
-        password.type = "text";
-        passwordConfirm.type = "text";
+        passwordInput.type = "text";
+        passwordConfirmInput.type = "text";
     } else {
-        password.type = "password";
-        passwordConfirm.type = "password";
+        passwordInput.type = "password";
+        passwordConfirmInput.type = "password";
     }
 }
