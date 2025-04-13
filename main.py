@@ -78,7 +78,7 @@ async def sign_up(
     phone: str = Form(...),
     cep: str = Form(...),
     address: str = Form(...),
-    observation: str = Form(None),
+    observation: str = Form(None), # None lets the field be null
     password: str = Form(...),
     db=Depends(get_db)
 ):
@@ -95,15 +95,18 @@ async def sign_up(
 
     try:
         with db.cursor() as cursor:
+            # Checks if the username or email are already in use, if so returns an error menssage
             cursor.execute("SELECT * FROM User WHERE Username = %s OR Email = %s", (Username, Email))
             existing_user = cursor.fetchone()
+
 
             if existing_user:
                 error_message = "Username or email already in use."
                 return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
 
-            complement_id = None
+            #Inserts into each table according to indepence
 
+            # First, insert the user into the User table
             cursor.execute(
                 "INSERT INTO User (Username, Email, NameSurname, CPF, Number, CEP, Password) VALUES (%s, %s, %s, %s, %s, %s, %s)",
                 (Username, Email, NameSurname, CPF, Number, CEP, Password)
@@ -111,10 +114,14 @@ async def sign_up(
             user_id = cursor.lastrowid
             db.commit()
 
+            # Now, insert the address into the Address table, referencing the User
             cursor.execute("INSERT INTO Address (Address, fk_User_idUser) VALUES (%s, %s)", (Address, user_id))
             address_id = cursor.lastrowid
             db.commit()
 
+            #Inserts the complement into the DB if it exits
+
+            complement_id = None
             if Complement:
                  cursor.execute("INSERT INTO Complement (Complement, fk_User_idUser) VALUES (%s, %s)", (Complement, user_id))
                  complement_id = cursor.lastrowid
@@ -122,6 +129,7 @@ async def sign_up(
 
             return RedirectResponse("/login", status_code=302)
 
+    # Rollback safeguards for duplicate or incorrect entries
     except pymysql.err.IntegrityError as ie:
         db.rollback()
         print(f"Integrity error during sign up: {ie}")
@@ -175,21 +183,31 @@ async def delete_user(
 @app.get("/users", response_class=JSONResponse)
 async def get_users(db=Depends(get_db)):
     try:
-        with db.cursor(pymysql.cursors.DictCursor) as cursor: # Use DictCursor for easier mapping
-            # Adjust query based on actual User table columns needed and schema
-            # Assuming User.Complement is an INT FK as per schema, might need JOIN
-            # Simplified query for now:
+        with db.cursor() as cursor:
+            # Consulta todos os usuários da tabela User
             cursor.execute("SELECT idUser, Username, Email, NameSurname, CPF, Number, CEP FROM User")
             users = cursor.fetchall()
-            # No need for manual mapping if using DictCursor
-            return users
+
+            # Mapeia os resultados para um formato JSON
+            result = [
+                {
+                    "idUser": user[0],
+                    "Username": user[1],
+                    "Email": user[2],
+                    "NameSurname": user[3],
+                    "CPF": user[4],
+                    "Number": user[5],
+                    "CEP": user[6],
+                    "Complement": user[7],
+                }
+                for user in users
+            ]
+            return result
     except Exception as e:
         print(f"Error fetching users: {e}")
         return JSONResponse(content={"error": "Failed to fetch users"}, status_code=500)
     finally:
         db.close()
-
-
 
 if __name__ == "__main__":
     import uvicorn  
