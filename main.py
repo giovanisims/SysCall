@@ -1,5 +1,6 @@
 import pymysql
 import os
+import hashlib
 
 from mangum import Mangum
 from fastapi import FastAPI, Request, Form, Depends, UploadFile, File
@@ -57,8 +58,11 @@ async def login(
     db=Depends(get_db)
 ):
     try:
+
+        # Hash the password using MD5
+        hashed_password = hashlib.md5(password.encode()).hexdigest()
         with db.cursor() as cursor:
-            cursor.execute("SELECT * FROM User WHERE Email = %s AND Password = %s", (email, password))
+            cursor.execute("SELECT * FROM User WHERE Email = %s AND Password = %s", (email, hashed_password))
             user = cursor.fetchone()
 
             if user:
@@ -95,7 +99,9 @@ async def sign_up(
 
     Address = address
     Complement = observation
-    Password = password
+
+    # Hash the password using MD5
+    Password = hashlib.md5(password.encode()).hexdigest()
 
     try:
         with db.cursor() as cursor:
