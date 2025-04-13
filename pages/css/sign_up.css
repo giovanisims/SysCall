@@ -67,21 +67,19 @@
 
 
 .see-password{
+    width: 50%;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
 }
 
-.see-password-check{
-    margin-left: -130px;
+.input-see-password{
+    padding-right: 10px;
 }
 
-.see-password-text{
-    font-size: 15px;
-    margin-left: -125px;
-    margin-bottom: 20px;
-}
 
+input[type="checkbox"]:checked {
+    accent-color: #4a4e69;
+}
 
 @media (max-width: 768px) {
     .login {
@@ -98,15 +96,9 @@
     .login-data form {
         max-width: 100%;
     }
-
-    .see-password-check{
-        margin-left: -180px;
-    }
     
-    .see-password-text{
-        font-size: 15px;
-        margin-left: -170px;
-        margin-bottom: 20px;
+    .see-password{
+        width: 75%;
     }
 }
 
@@ -123,14 +115,8 @@
         font-size: 14px;
         padding: 8px;
     }
-
-    .see-password-check{
-        margin-left: -130px;
-    }
     
-    .see-password-text{
-        font-size: 15px;
-        margin-left: -125px;
-        margin-bottom: 20px;
+    .see-password{
+        width: 75%;
     }
 }
