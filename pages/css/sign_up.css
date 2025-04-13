@@ -96,15 +96,9 @@ input[type="checkbox"]:checked {
     .login-data form {
         max-width: 100%;
     }
-
-    .see-password-check{
-        margin-left: -180px;
-    }
     
-    .see-password-text{
-        font-size: 15px;
-        margin-left: -170px;
-        margin-bottom: 20px;
+    .see-password{
+        width: 75%;
     }
 }
 
@@ -121,14 +115,8 @@ input[type="checkbox"]:checked {
         font-size: 14px;
         padding: 8px;
     }
-
-    .see-password-check{
-        margin-left: -130px;
-    }
     
-    .see-password-text{
-        font-size: 15px;
-        margin-left: -125px;
-        margin-bottom: 20px;
+    .see-password{
+        width: 75%;
     }
 }
