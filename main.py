@@ -45,6 +45,10 @@ async def read_login(request: Request):
 async def read_register(request: Request):
     return templates.TemplateResponse("sign_up.html", {"request": request})
 
+@app.get("/tickets", response_class=HTMLResponse)
+async def read_register(request: Request):
+    return templates.TemplateResponse("tickets.html", {"request": request})
+
 @app.post("/login")
 async def login(
     request: Request,

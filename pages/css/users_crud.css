@@ -1,4 +1,4 @@
-@import url('main.css');
+@import url('header.css');
 
 .title{
     width: 100%;
@@ -65,7 +65,7 @@ th {
 .add{
     height: 40px;
     width: 130px;
-    background-color: #4bb655;
+    background-color: #523b7b;
     border-radius: 15px;
     display: flex;
     align-items: center;
@@ -77,7 +77,7 @@ th {
 }
 
 .add:hover{
-    background-color: #307737;
+    background-color: #10071e;
     cursor: pointer;
 }
 

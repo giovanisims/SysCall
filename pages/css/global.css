@@ -33,13 +33,15 @@ a {
 
 
 .empty-field{
-    border: 1px solid #cfb70c !important;
+    border: 2px solid #cfb70c !important;
     border-radius: 5px !important;
+    transition: 0.2s ease;
 }
 
 .error{
-    border: 1px solid #921f1f !important;
+    border: 2px solid #921f1f !important;
     border-radius: 5px !important;
+    transition: 0.2s ease;
 }
 
 .none{
