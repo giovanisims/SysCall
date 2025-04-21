@@ -22,8 +22,8 @@ templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "p
 # Configuração do banco de dados
 DB_CONFIG = {
     "host": "localhost",
-    "user": "root",
-    "password": "admin",
+    "user": "Lucas",
+    "password": "2525",
     "database": "SysCall"
 }
 
@@ -32,11 +32,14 @@ def get_db():
 
 @app.get("/users_crud", response_class=HTMLResponse)
 async def read_users_crud(request: Request):
-    return templates.TemplateResponse("users_crud.html", {"request": request})
+    user_name = request.session.get("user_name", None)
+    return templates.TemplateResponse("users_crud.html", {"request": request, "user_name": user_name})
 
 @app.get("/", response_class=HTMLResponse)
 async def read_main(request: Request):
-    return templates.TemplateResponse("main.html", {"request": request})
+    # Obtém o nome do usuário da sessão
+    user_name = request.session.get("user_name", None)
+    return templates.TemplateResponse("main.html", {"request": request, "user_name": user_name})
 
 @app.get("/login", response_class=HTMLResponse)
 async def read_login(request: Request):
@@ -48,7 +51,8 @@ async def read_register(request: Request):
 
 @app.get("/tickets", response_class=HTMLResponse)
 async def read_register(request: Request):
-    return templates.TemplateResponse("tickets.html", {"request": request})
+    user_name = request.session.get("user_name", None)
+    return templates.TemplateResponse("tickets.html", {"request": request, "user_name": user_name})
 
 @app.post("/login")
 async def login(
@@ -58,22 +62,26 @@ async def login(
     db=Depends(get_db)
 ):
     try:
-
-        # Hash the password using MD5
+        # Hash da senha usando MD5
         hashed_password = hashlib.md5(password.encode()).hexdigest()
         with db.cursor() as cursor:
-            cursor.execute("SELECT * FROM User WHERE Email = %s AND Password = %s", (email, hashed_password))
+            cursor.execute("SELECT NameSurname FROM User WHERE Email = %s AND Password = %s", (email, hashed_password))
             user = cursor.fetchone()
 
             if user:
-                request.session["user_logged_in"] = True
-                request.session["email"] = user[1]
+                # Armazena o nome do usuário na sessão
+                request.session["user_name"] = user[0]
                 return RedirectResponse("/", status_code=302)
             else:
-                error_message = "Email ou senha invalidos"
+                error_message = "Email ou senha inválidos"
                 return templates.TemplateResponse("login.html", {"request": request, "error": error_message})
     finally:
         db.close()
+        
+@app.get("/logout")
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse("/", status_code=302)
 
 
 @app.post("/sign_up")
