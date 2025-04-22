@@ -1,40 +1,79 @@
-import pymysql
+import uvicorn  
 import os
 import hashlib
-# Add Pydantic for request body validation
-from pydantic import BaseModel, EmailStr, constr, Field 
-from typing import Optional
+from typing import Optional, Annotated # For type hinting and Pydantic V2 constraints
 
-from pymysql import cursors
-from mangum import Mangum
-# Add HTTPException
-from fastapi import FastAPI, Request, Form, Depends, UploadFile, File, HTTPException, Body
+# Third-party imports
+import pymysql
+from pymysql import cursors # Explicitly import cursors if used directly
+from fastapi import (
+    FastAPI,
+    Request,
+    Form,
+    Depends,
+    HTTPException
+)
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel, EmailStr, Field # Keep Field for V2 constraints
 from starlette.middleware.sessions import SessionMiddleware
+from mangum import Mangum # Keep if deploying to AWS Lambda
 
-
+DB_CONFIG = {
+    # bash: export foo="bar"
+    # cmd: setx foo "bar"
+    # pwsh: [Environment]::SetEnvironmentVariable("foo", "bar", "User")
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'user': os.getenv('DB_USER', 'your_db_user'),
+    'password': os.getenv('DB_PASSWORD', 'your_db_password'),
+    'db': 'SysCall',
+    'charset': 'utf8mb4',
+    'cursorclass': cursors.DictCursor 
+}
 
 app = FastAPI()
 
 # Configuração de sessão (chave secreta para cookies de sessão)
+# Ensure SessionMiddleware is imported from starlette.middleware.sessions
 app.add_middleware(SessionMiddleware, secret_key="Syscall")
+
 # Configuração de arquivos estáticos
-app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "pages")), name="static")
+# Ensure StaticFiles is imported from fastapi.staticfiles
+# Ensure os is imported
+static_dir = os.path.join(os.path.dirname(__file__), "pages")
+if not os.path.exists(static_dir):
+     # Handle case where directory might not exist yet or path is wrong
+     print(f"Warning: Static directory not found at {static_dir}")
+     # Decide how to handle this - maybe create it, or just proceed cautiously.
+     # For now, we'll let the mount potentially fail if it doesn't exist.
+     pass
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
 
 # Configuração de templates Jinja2
-templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "pages/html"))
+# Ensure Jinja2Templates is imported from fastapi.templating
+# Ensure os is imported
+templates_dir = os.path.join(os.path.dirname(__file__), "pages", "html")
+if not os.path.exists(templates_dir):
+    print(f"Warning: Templates directory not found at {templates_dir}")
+    # Handle appropriately
+    pass
+templates = Jinja2Templates(directory=templates_dir)
 
+# --- Rest of your application code (routes, functions, etc.) ---
+# ... (get_db function, Pydantic models like UserUpdate, routes like /login, /users, etc.) ...
+
+# Example Pydantic model using cleaned imports
 class UserUpdate(BaseModel):
-    username: str = Field(..., min_length=1, max_length=255)
-    namesurname: str = Field(..., min_length=1, max_length=255)
-    email: EmailStr # Pydantic handles email validation
-    cpf: constr(pattern=r'^\d{11}$') # Example: Enforce 11 digits for CPF after cleaning
-    number: constr(pattern=r'^\d{10,11}$') # Example: Enforce 10 or 11 digits for Number
-    cep: constr(pattern=r'^\d{8}$') # Example: Enforce 8 digits for CEP
-    address: str = Field(..., min_length=1, max_length=255)
-    complement: Optional[str] = Field(None, max_length=255) # Optional field
+    Username: str
+    NameSurname: str
+    Email: EmailStr
+    CPF: Annotated[str, Field(pattern=r'^\d{11}$')]
+    Number: Annotated[str, Field(pattern=r'^\d{10,11}$')]
+    CEP: Annotated[str, Field(pattern=r'^\d{8}$')]
+    Address: Optional[str] = None
+    Complement: Optional[str] = None
 
 # Configuração do banco de dados
 DB_CONFIG = {
@@ -355,5 +394,4 @@ async def update_user(
 
 
 if __name__ == "__main__":
-    import uvicorn  
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
