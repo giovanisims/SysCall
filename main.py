@@ -18,19 +18,24 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, EmailStr, Field # Keep Field for V2 constraints
 from starlette.middleware.sessions import SessionMiddleware
-from mangum import Mangum # Keep if deploying to AWS Lambda
 
 DB_CONFIG = {
     # bash: export foo="bar"
     # cmd: setx foo "bar"
     # pwsh: [Environment]::SetEnvironmentVariable("foo", "bar", "User")
     'host': os.getenv('DB_HOST', 'localhost'),
-    'user': os.getenv('DB_USER', 'your_db_user'),
-    'password': os.getenv('DB_PASSWORD', 'your_db_password'),
+    'port' : int(os.getenv('DB_PORT', '3306')),
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', 'admin'),
     'db': 'SysCall',
     'charset': 'utf8mb4',
-    'cursorclass': cursors.DictCursor 
+    'cursorclass': cursors.DictCursor,
 }
+
+def get_db():
+    # Ensure DictCursor is used for this connection if you want dicts by default
+    # Or specify it when creating the cursor
+    return pymysql.connect(**DB_CONFIG) 
 
 app = FastAPI()
 
@@ -61,9 +66,6 @@ if not os.path.exists(templates_dir):
     pass
 templates = Jinja2Templates(directory=templates_dir)
 
-# --- Rest of your application code (routes, functions, etc.) ---
-# ... (get_db function, Pydantic models like UserUpdate, routes like /login, /users, etc.) ...
-
 # Example Pydantic model using cleaned imports
 class UserUpdate(BaseModel):
     Username: str
@@ -75,18 +77,6 @@ class UserUpdate(BaseModel):
     Address: Optional[str] = None
     Complement: Optional[str] = None
 
-# Configuração do banco de dados
-DB_CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "admin",
-    "database": "SysCall"
-}
-
-def get_db():
-    # Ensure DictCursor is used for this connection if you want dicts by default
-    # Or specify it when creating the cursor
-    return pymysql.connect(**DB_CONFIG, cursorclass=cursors.DictCursor) 
 
 @app.get("/users_crud", response_class=HTMLResponse)
 async def read_users_crud(request: Request):
@@ -314,32 +304,28 @@ async def update_user(
     user_data: UserUpdate, # Use the Pydantic model for validation
     db=Depends(get_db)
 ):
-    # Clean input data (remove formatting) - do this before validation if needed,
-    # or adjust Pydantic patterns accordingly. Here we assume Pydantic validates the final format.
-    CPF_cleaned = user_data.cpf # Assuming Pydantic model expects cleaned data
-    CEP_cleaned = user_data.cep
-    Number_cleaned = user_data.number
 
     try:
         with db.cursor() as cursor:
             # 1. Check for potential email/username conflicts (excluding the current user)
             cursor.execute(
                 "SELECT idUser FROM User WHERE (Email = %s OR Username = %s) AND idUser != %s",
-                (user_data.email, user_data.username, user_id)
+                (user_data.Email, user_data.Username, user_id) # Use model fields directly
             )
             if cursor.fetchone():
                 raise HTTPException(status_code=409, detail="Email or Username already in use by another user.")
 
             # 2. Update User table
             user_sql = """
-                UPDATE User SET 
-                    Username = %s, Email = %s, NameSurname = %s, 
+                UPDATE User SET
+                    Username = %s, Email = %s, NameSurname = %s,
                     CPF = %s, Number = %s, CEP = %s
                 WHERE idUser = %s
             """
             cursor.execute(user_sql, (
-                user_data.username, user_data.email, user_data.namesurname,
-                CPF_cleaned, Number_cleaned, CEP_cleaned, user_id
+                user_data.Username, user_data.Email, user_data.NameSurname,
+                user_data.CPF, user_data.Number, user_data.CEP, # Use model fields directly
+                user_id
             ))
 
             # 3. Update Address table (UPSERT logic: Update if exists, Insert if not)
