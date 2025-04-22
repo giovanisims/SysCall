@@ -1,13 +1,20 @@
 import pymysql
 import os
 import hashlib
+# Add Pydantic for request body validation
+from pydantic import BaseModel, EmailStr, constr, Field 
+from typing import Optional
 
+from pymysql import cursors
 from mangum import Mangum
-from fastapi import FastAPI, Request, Form, Depends, UploadFile, File
+# Add HTTPException
+from fastapi import FastAPI, Request, Form, Depends, UploadFile, File, HTTPException, Body
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+
+
 
 app = FastAPI()
 
@@ -19,16 +26,28 @@ app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__
 # Configuração de templates Jinja2
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "pages/html"))
 
+class UserUpdate(BaseModel):
+    username: str = Field(..., min_length=1, max_length=255)
+    namesurname: str = Field(..., min_length=1, max_length=255)
+    email: EmailStr # Pydantic handles email validation
+    cpf: constr(pattern=r'^\d{11}$') # Example: Enforce 11 digits for CPF after cleaning
+    number: constr(pattern=r'^\d{10,11}$') # Example: Enforce 10 or 11 digits for Number
+    cep: constr(pattern=r'^\d{8}$') # Example: Enforce 8 digits for CEP
+    address: str = Field(..., min_length=1, max_length=255)
+    complement: Optional[str] = Field(None, max_length=255) # Optional field
+
 # Configuração do banco de dados
 DB_CONFIG = {
     "host": "localhost",
-    "user": "Lucas",
-    "password": "2525",
+    "user": "root",
+    "password": "admin",
     "database": "SysCall"
 }
 
 def get_db():
-    return pymysql.connect(**DB_CONFIG)
+    # Ensure DictCursor is used for this connection if you want dicts by default
+    # Or specify it when creating the cursor
+    return pymysql.connect(**DB_CONFIG, cursorclass=cursors.DictCursor) 
 
 @app.get("/users_crud", response_class=HTMLResponse)
 async def read_users_crud(request: Request):
@@ -70,7 +89,7 @@ async def login(
 
             if user:
                 # Armazena o nome do usuário na sessão
-                request.session["user_name"] = user[0]
+                request.session["user_name"] = user["NameSurname"]
                 return RedirectResponse("/", status_code=302)
             else:
                 error_message = "Email ou senha inválidos"
@@ -168,64 +187,172 @@ async def delete_user(
 ):
     try:
         with db.cursor() as cursor:
-            # Deleta os registros relacionados na tabela IssueHistory
-            cursor.execute("DELETE FROM IssueHistory WHERE fk_ChangedByUser = %s", (user_id,))
-            db.commit()
-
-            # Deleta os registros relacionados na tabela Issue
-            cursor.execute("DELETE FROM Issue WHERE fk_User_idUser = %s", (user_id,))
-            db.commit()
-
-            # Deleta os registros relacionados na tabela Address
+            # 1. Delete related records from Address
             cursor.execute("DELETE FROM Address WHERE fk_User_idUser = %s", (user_id,))
             db.commit()
 
-            # Deleta os registros relacionados na tabela Complement
+            # 2. Delete related records from Complement
             cursor.execute("DELETE FROM Complement WHERE fk_User_idUser = %s", (user_id,))
             db.commit()
 
-            # Deleta o usuário da tabela User
+            # 3. Finally, delete the user
             cursor.execute("DELETE FROM User WHERE idUser = %s", (user_id,))
             db.commit()
 
-            return RedirectResponse("/users_crud", status_code=302)
+            # Redirect back with a success flag
+            return RedirectResponse("/users_crud?deleted=true", status_code=302)
     except Exception as e:
-        print(f"Error deleting user: {e}")
-        return JSONResponse(content={"error": "Failed to delete user"}, status_code=500)
+        db.rollback() # Rollback all changes if any step fails
+        print(f"Error deleting user {user_id}: {e}")
+        # Raise HTTPException which FastAPI/Starlette can handle
+        # You might want a specific error page or message on the frontend
+        raise HTTPException(status_code=500, detail=f"Failed to delete user: {e}")
     finally:
-        db.close()
-        
-@app.post("/edit_user")
-#algum dia isso aqui vai funcionar
+        if db:
+            db.close()
+
 
 @app.get("/users", response_class=JSONResponse)
 async def get_users(db=Depends(get_db)):
     try:
         with db.cursor() as cursor:
-            # Consulta todos os usuários da tabela User
-            cursor.execute("SELECT idUser, Username, Email, NameSurname, CPF, Number, CEP FROM User")
-            users = cursor.fetchall()
+            # Join User, Complement, and Address tables
+            sql = """
+                SELECT 
+                    u.idUser, u.Username, u.Email, u.NameSurname, u.CPF, u.Number, u.CEP,
+                    c.Complement, 
+                    a.Address  -- Select the Address column from the Address table
+                FROM User u
+                LEFT JOIN Complement c ON u.idUser = c.fk_User_idUser 
+                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser -- Join the Address table
+            """
+            cursor.execute(sql)
+            users = cursor.fetchall() # fetchall() returns a list of dictionaries
 
-            # Mapeia os resultados para um formato JSON
-            result = [
-                {
-                    "idUser": user[0],
-                    "Username": user[1],
-                    "Email": user[2],
-                    "NameSurname": user[3],
-                    "CPF": user[4],
-                    "Number": user[5],
-                    "CEP": user[6],
-                    "Complement": user[7],
-                }
-                for user in users
-            ]
-            return result
+            # FastAPI handles dictionary serialization
+            return users 
     except Exception as e:
         print(f"Error fetching users: {e}")
         return JSONResponse(content={"error": "Failed to fetch users"}, status_code=500)
     finally:
-        db.close()
+        if db:
+            db.close()
+
+@app.get("/user/{user_id}", response_class=JSONResponse)
+async def get_user(user_id: int, db=Depends(get_db)):
+    try:
+        with db.cursor() as cursor:
+            # Fetch user data along with address and complement
+            sql = """
+                SELECT 
+                    u.idUser, u.Username, u.Email, u.NameSurname, u.CPF, u.Number, u.CEP,
+                    a.Address, 
+                    c.Complement
+                FROM User u
+                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
+                LEFT JOIN Complement c ON u.idUser = c.fk_User_idUser
+                WHERE u.idUser = %s
+            """
+            cursor.execute(sql, (user_id,))
+            user = cursor.fetchone()
+            if not user:
+                # Use HTTPException for standard errors
+                raise HTTPException(status_code=404, detail="User not found") 
+            return user
+    except HTTPException as http_exc:
+         raise http_exc # Re-raise HTTPException
+    except Exception as e:
+        print(f"Error fetching user {user_id}: {e}")
+        # Return error as JSON for the frontend to handle
+        return JSONResponse(content={"error": f"Failed to fetch user data: {e}"}, status_code=500)
+    finally:
+        if db:
+            db.close()
+
+@app.put("/update_user/{user_id}", response_class=JSONResponse)
+async def update_user(
+    user_id: int,
+    user_data: UserUpdate, # Use the Pydantic model for validation
+    db=Depends(get_db)
+):
+    # Clean input data (remove formatting) - do this before validation if needed,
+    # or adjust Pydantic patterns accordingly. Here we assume Pydantic validates the final format.
+    CPF_cleaned = user_data.cpf # Assuming Pydantic model expects cleaned data
+    CEP_cleaned = user_data.cep
+    Number_cleaned = user_data.number
+
+    try:
+        with db.cursor() as cursor:
+            # 1. Check for potential email/username conflicts (excluding the current user)
+            cursor.execute(
+                "SELECT idUser FROM User WHERE (Email = %s OR Username = %s) AND idUser != %s",
+                (user_data.email, user_data.username, user_id)
+            )
+            if cursor.fetchone():
+                raise HTTPException(status_code=409, detail="Email or Username already in use by another user.")
+
+            # 2. Update User table
+            user_sql = """
+                UPDATE User SET 
+                    Username = %s, Email = %s, NameSurname = %s, 
+                    CPF = %s, Number = %s, CEP = %s
+                WHERE idUser = %s
+            """
+            cursor.execute(user_sql, (
+                user_data.username, user_data.email, user_data.namesurname,
+                CPF_cleaned, Number_cleaned, CEP_cleaned, user_id
+            ))
+
+            # 3. Update Address table (UPSERT logic: Update if exists, Insert if not)
+            # Check if address exists
+            cursor.execute("SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))
+            address_row = cursor.fetchone()
+            if address_row:
+                 # Update existing address
+                 addr_sql = "UPDATE Address SET Address = %s WHERE fk_User_idUser = %s"
+                 cursor.execute(addr_sql, (user_data.address, user_id))
+            elif user_data.address: # Only insert if address is provided
+                 # Insert new address
+                 addr_sql = "INSERT INTO Address (Address, fk_User_idUser) VALUES (%s, %s)"
+                 cursor.execute(addr_sql, (user_data.address, user_id))
+
+
+            # 4. Update Complement table (UPSERT logic)
+            cursor.execute("SELECT idComplement FROM Complement WHERE fk_User_idUser = %s", (user_id,))
+            complement_row = cursor.fetchone()
+
+            if complement_row:
+                if user_data.complement:
+                    # Update existing complement
+                    comp_sql = "UPDATE Complement SET Complement = %s WHERE fk_User_idUser = %s"
+                    cursor.execute(comp_sql, (user_data.complement, user_id))
+                else:
+                    # Delete existing complement if new value is empty/null
+                    comp_sql = "DELETE FROM Complement WHERE fk_User_idUser = %s"
+                    cursor.execute(comp_sql, (user_id,))
+            elif user_data.complement: # Only insert if complement is provided
+                # Insert new complement
+                comp_sql = "INSERT INTO Complement (Complement, fk_User_idUser) VALUES (%s, %s)"
+                cursor.execute(comp_sql, (user_data.complement, user_id))
+
+            db.commit() # Commit all changes together
+            return {"message": "User updated successfully"}
+
+    except HTTPException as http_exc:
+         db.rollback() # Rollback on validation errors too
+         raise http_exc
+    except pymysql.err.IntegrityError as ie:
+         db.rollback()
+         print(f"Integrity error updating user {user_id}: {ie}")
+         raise HTTPException(status_code=400, detail=f"Database integrity error: {ie}")
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update user: {e}")
+    finally:
+        if db:
+            db.close()
+
 
 if __name__ == "__main__":
     import uvicorn  

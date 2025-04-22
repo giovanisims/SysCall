@@ -47,10 +47,10 @@ CREATE TABLE Issue (
     Title VARCHAR(255) NOT NULL, 
     Description TEXT,
     CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-    fk_User_idUser INT NOT NULL,
+    fk_User_idUser INT,
     fk_IssueProgress_idIssueProgress INT NOT NULL,
     fk_IssueType_idIssueType INT NOT NULL,
-    FOREIGN KEY (fk_User_idUser) REFERENCES User(idUser),
+    FOREIGN KEY (fk_User_idUser) REFERENCES User(idUser) ON DELETE SET NULL,
     FOREIGN KEY (fk_IssueProgress_idIssueProgress) REFERENCES IssueProgress(idIssueProgress),
     FOREIGN KEY (fk_IssueType_idIssueType) REFERENCES IssueType(idIssueType)
 );
@@ -61,11 +61,9 @@ CREATE TABLE IssueHistory (
     Title VARCHAR(255) NOT NULL,
     Description TEXT NOT NULL,
     fk_IssueProgress INT NOT NULL,
-    fk_ChangedByUser INT NOT NULL,
     ChangedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (fk_Issue_idIssue) REFERENCES Issue(idIssue),
-    FOREIGN KEY (fk_IssueProgress) REFERENCES IssueProgress(idIssueProgress),
-    FOREIGN KEY (fk_ChangedByUser) REFERENCES User(idUser)
+    FOREIGN KEY (fk_Issue_idIssue) REFERENCES Issue(idIssue) ON DELETE CASCADE,
+    FOREIGN KEY (fk_IssueProgress) REFERENCES IssueProgress(idIssueProgress)
 );
 
 CREATE TABLE Evaluates (
