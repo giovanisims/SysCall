@@ -1,57 +1,78 @@
+var Selector
+
 document.addEventListener('DOMContentLoaded', function () {
-    loadSelectors();
+    Selector = loadSelectors();
     loadEvents();
 });
 
 function loadSelectors() {
-    var name = document.getElementById('name');
-    var surname = document.getElementById('surname');
-    var email = document.getElementById('email');
-    var cpf = document.getElementById('cpf');
-    var phone = document.getElementById('phone');
-    var cep = document.getElementById('cep');
-    var address = document.getElementById('address');
-    var password = document.getElementById('password');
-    var passwordConfirm = document.getElementById('passwordConfirm');
-    var submitButtonVisible = document.getElementById('submitButtonVisible');
-    var errorCep = document.getElementById('errorCep');
-    var errorFields = document.getElementById('errorFields');
-    var errorPassword = document.getElementById('errorPassword');
-    var errorEqualPasswords = document.getElementById('errorEqualPasswords');
-    var errorCpf = document.getElementById('errorCpf');
-    var errorPhone = document.getElementById('errorPhone');
+    return {
+        name: document.getElementById('name'),
+        surname: document.getElementById('surname'),
+        email: document.getElementById('email'),
+        cpf: document.getElementById('cpf'),
+        phone: document.getElementById('phone'),
+        cep: document.getElementById('cep'),
+        address: document.getElementById('address'),
+        password: document.getElementById('password'),
+        passwordConfirm: document.getElementById('passwordConfirm'),
+        submitButtonVisible: document.getElementById('submitButtonVisible'),
+        submitButton: document.getElementById('submitButton'),
+        errorCep: document.getElementById('errorCep'),
+        errorFields: document.getElementById('errorFields'),
+        errorPassword: document.getElementById('errorPassword'),
+        errorEqualPasswords: document.getElementById('errorEqualPasswords'),
+        errorCpf: document.getElementById('errorCpf'),
+        errorPhone: document.getElementById('errorPhone'),
+        seePasswordCheckbox: document.getElementById('seePassword'),
+        errorName: document.getElementById('errorName'),
+        errorSurname: document.getElementById('errorSurname'),
+        errorEmail: document.getElementById('errorEmail'),
+    };
 }
 
-
 function loadEvents() {
-    cep.addEventListener('blur', searchAddress);
-    cpf.addEventListener('blur', formatAndValidateCPF);
-    phone.addEventListener('blur', formatPhone)
-    submitButtonVisible.addEventListener('click', validateForm)
-    document.getElementById('seePassword').addEventListener('change', seePassword);
+    Selector.cep.addEventListener('blur', searchAddress);
+    Selector.cpf.addEventListener('blur', formatAndValidateCPF);
+    Selector.phone.addEventListener('blur', formatPhone);
+    Selector.name.addEventListener('blur', validateName);
+    Selector.surname.addEventListener('blur', validateSurname);
+    Selector.email.addEventListener('blur', validateEmail);
+    Selector.submitButtonVisible.addEventListener('click', validateForm);
+    Selector.seePasswordCheckbox.addEventListener('change', seePassword);
 }
 
 function validateForm() {
-    resetErrorMessages()
-    var emptyFieldsValid = validateEmptyFields()
-    var passwordValid = validatePassword()
-
-    var valid = emptyFieldsValid && passwordValid
-
+    const valid = validateAllFields();
+    
     if (valid) {
-        document.getElementById('submitButton').click()
+        Selector.submitButton.click();
     }
 }
 
-function searchAddress() {
-    let cepElement = document.getElementById("cep");
-    let cep = cepElement.value;
+function validateAllFields() {
+    resetErrorMessages();
+    
+    const emptyFieldsValid = validateEmptyFields();
+    const nameValid = validateName();
+    const surnameValid = validateSurname();
+    const emailValid = validateEmail();
+    const cpfValid = formatAndValidateCPF();
+    const cepValid = searchAddress();
+    const phoneValid = formatPhone();
+    const passwordValid = validatePassword();
+    
+    return emptyFieldsValid && nameValid && emailValid && cpfValid && 
+           cepValid && phoneValid && passwordValid &&surnameValid;
+}
 
+function searchAddress() {
+    let cep = Selector.cep.value;
     let rawCep = cep.replace(/\D/g, "");
 
     if (rawCep.length === 8) {
         let formattedCep = rawCep.replace(/^(\d{2})(\d{3})(\d{3})$/, "$1.$2-$3");
-        document.getElementById("cep").value = formattedCep;
+        Selector.cep.value = formattedCep;
 
         let url = `https://viacep.com.br/ws/${rawCep}/json/`;
 
@@ -59,7 +80,7 @@ function searchAddress() {
             .then(response => response.json())
             .then(data => {
                 if (!("erro" in data)) {
-                    document.getElementById("address").value = data.logradouro;
+                    Selector.address.value = data.logradouro;
                 } else {
                     alert("CEP não encontrado.");
                 }
@@ -68,25 +89,26 @@ function searchAddress() {
                 console.error('Erro ao buscar o CEP:', error);
                 alert("Erro ao buscar o CEP.");
             });
-        errorCep.style.display = 'none';
-        cepElement.classList.remove('error');
-        cepElement.classList.remove('empty-field');
+        Selector.errorCep.style.display = 'none';
+        Selector.cep.classList.remove('error');
+        Selector.cep.classList.remove('empty-field');
+        return true;
     } else {
-        cepElement.classList.add('error');
-        errorCep.style.display = 'block';
+        Selector.cep.classList.add('error');
+        Selector.errorCep.style.display = 'block';
+        return false;
     }
 }
 
 function formatAndValidateCPF() {
-    let cpfElement = document.getElementById("cpf");
-    let cpf = cpfElement.value;
+    let cpf = Selector.cpf.value;
     let formattedCpf = cpf.replace(/\D/g, "");
 
     if (formattedCpf.length <= 11) {
         formattedCpf = cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})$/, "$1.$2.$3-$4");
     }
 
-    cpfElement.value = formattedCpf;
+    Selector.cpf.value = formattedCpf;
 
     let cleanCpf = cpf.replace(/\D/g, "");
     let isValid = true;
@@ -112,42 +134,43 @@ function formatAndValidateCPF() {
     }
 
     if (!isValid) {
-        cpfElement.classList.add('error');
-        errorCpf.style.display = 'block';
+        Selector.cpf.classList.add('error');
+        Selector.errorCpf.style.display = 'block';
+        return false;
     } else {
-        cpfElement.classList.remove('error');
-        cpfElement.classList.remove('empty-field');
-        errorCpf.style.display = 'none';
+        Selector.cpf.classList.remove('error');
+        Selector.cpf.classList.remove('empty-field');
+        Selector.errorCpf.style.display = 'none';
+        return true;
     }
 }
 
 function formatPhone() {
-    let phoneElement = document.getElementById("phone");
-    let phone = phoneElement.value;
-
+    let phone = Selector.phone.value;
     let cleanPhone = phone.replace(/\D/g, "");
-    errorPhone.style.display = 'none'
-    phoneElement.classList.remove('error');
-    phoneElement.classList.remove('empty-field')
+
+    Selector.errorPhone.style.display = 'none';
+    Selector.phone.classList.remove('error');
+    Selector.phone.classList.remove('empty-field');
+
     if (cleanPhone.length === 11) {
-        phoneElement.value = cleanPhone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
-        phoneElement.classList.remove('error');
-        phoneElement.classList.remove('empty-field');
+        Selector.phone.value = cleanPhone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
     } else if (cleanPhone.length === 10) {
-        phoneElement.value = cleanPhone.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
-        phoneElement.classList.remove('error');
-        phoneElement.classList.remove('empty-field');
+        Selector.phone.value = cleanPhone.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
+    } else if (cleanPhone.length === 9) {
+        Selector.phone.value = cleanPhone.replace(/^(\d{5})(\d{4})$/, "$1-$2");
     } else if (cleanPhone.length > 0) {
-        errorPhone.style.display = 'block'
-        phoneElement.classList.add('error');
+        Selector.errorPhone.style.display = 'block';
+        Selector.phone.classList.add('error');
+        return false;
     }
+    return true;
 }
 
-
 function resetErrorMessages() {
-    errorFields.style.display = 'none';
-    errorPassword.style.display = 'none';
-    errorEqualPasswords.style.display = 'none';
+    Selector.errorFields.style.display = 'none';
+    Selector.errorPassword.style.display = 'none';
+    Selector.errorEqualPasswords.style.display = 'none';
 }
 
 function validateEmptyFields() {
@@ -167,7 +190,7 @@ function validateEmptyFields() {
         });
 
         if (hasEmptyFields) {
-            errorFields.style.display = 'block';
+            Selector.errorFields.style.display = 'block';
             return false;
         }
     }
@@ -175,42 +198,74 @@ function validateEmptyFields() {
 }
 
 function validatePassword() {
-    const passwordRegex = /(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{4,}/;
-    // Get elements directly here as well for consistency
-    const passwordInput = document.getElementById('password');
-    const passwordConfirmInput = document.getElementById('passwordConfirm');
+    const passwordRegex = /(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}/;
 
-    if (!passwordRegex.test(passwordInput.value)) {
+    if (!passwordRegex.test(Selector.password.value)) {
         console.log("senha não atende requisitos");
-        passwordInput.classList.add("error");
-        errorPassword.style.display = 'block';
+        Selector.password.classList.add("error");
+        Selector.errorPassword.style.display = 'block';
         return false;
     } else {
-        passwordInput.classList.remove("error");
+        Selector.password.classList.remove("error");
     }
-    if (passwordInput.value !== passwordConfirmInput.value) {
-        passwordInput.classList.add("error");
-        passwordConfirmInput.classList.add("error");
-        errorEqualPasswords.style.display = 'block';
+    if (Selector.password.value !== Selector.passwordConfirm.value) {
+        Selector.password.classList.add("error");
+        Selector.passwordConfirm.classList.add("error");
+        Selector.errorEqualPasswords.style.display = 'block';
         return false;
     } else {
-        passwordInput.classList.remove("error");
-        passwordConfirmInput.classList.remove("error");
+        Selector.password.classList.remove("error");
+        Selector.passwordConfirm.classList.remove("error");
     }
     return true;
 }
 
 function seePassword(event) {
-    const checkbox = document.getElementById('seePassword');
-    // Get the password input elements directly inside the function
-    const passwordInput = document.getElementById('password');
-    const passwordConfirmInput = document.getElementById('passwordConfirm');
-
-    if (checkbox.checked) {
-        passwordInput.type = "text";
-        passwordConfirmInput.type = "text";
+    if (Selector.seePasswordCheckbox.checked) {
+        Selector.password.type = "text";
+        Selector.passwordConfirm.type = "text";
     } else {
-        passwordInput.type = "password";
-        passwordConfirmInput.type = "password";
+        Selector.password.type = "password";
+        Selector.passwordConfirm.type = "password";
+    }
+}
+function validateName() {
+    var name = Selector.name.value.trim();
+    const regexName = /^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/;
+    if (!name || name.length < 2 || name.length > 100 || !regexName.test(name)) {
+        Selector.name.classList.add('error');
+        Selector.errorName.style.display = 'block';
+        return false;
+    } else {
+        Selector.name.classList.remove('error');
+        Selector.errorName.style.display = 'none';
+        return true;
+    }
+}
+
+function validateSurname() {
+    var surname = Selector.surname.value.trim();
+    const regexName = /^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/;
+    if (!surname || surname.length < 2 || surname.length > 100 || !regexName.test(surname)) {
+        Selector.surname.classList.add('error');
+        Selector.errorSurname.style.display = 'block';
+        return false;
+    } else {
+        Selector.surname.classList.remove('error');
+        Selector.errorSurname.style.display = 'none';
+        return true;
+    }
+}
+
+function validateEmail() {
+    const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!regexEmail.test(Selector.email.value)) {
+        Selector.email.classList.add('error');
+        Selector.errorEmail.style.display = 'block';
+        return false;
+    } else {
+        Selector.email.classList.remove('error');
+        Selector.errorEmail.style.display = 'none';
+        return true;
     }
 }

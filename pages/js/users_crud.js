@@ -27,9 +27,9 @@ async function fetchUsers() {
                 <td>${user.Username}</td>
                 <td>${user.NameSurname}</td>
                 <td>${user.Email}</td>
-                <td>${user.CPF || ''}</td>
-                <td>${user.Number || ''}</td>
-                <td>${user.CEP || ''}</td>
+                <td>${formatCPF(user.CPF)}</td>
+                <td>${formatPhoneNumber(user.Number)}</td>
+                <td>${formatCEP(user.CEP)}</td>
                 <td>${user.Address || ''}</td>
                 <td>${user.Complement || ''}</td>
                 <td class="action-button">
@@ -101,14 +101,20 @@ async function openEditModal(userId) {
 
         // Populate the form
         document.getElementById('editUserId').value = user.idUser;
-        document.getElementById('editUsername').value = user.Username || '';
-        document.getElementById('editNameSurname').value = user.NameSurname || '';
+        document.getElementById('editName').value = user.Username || '';
+        document.getElementById('editSurname').value = user.NameSurname || '';
         document.getElementById('editEmail').value = user.Email || '';
-        document.getElementById('editCPF').value = user.CPF || '';
-        document.getElementById('editNumber').value = user.Number || '';
-        document.getElementById('editCEP').value = user.CEP || '';
+        document.getElementById('editCPF').value = formatCPF(user.CPF || '');
+        document.getElementById('editNumber').value = formatPhoneNumber(user.Number || '');
+        document.getElementById('editCEP').value = formatCEP(user.CEP || '');
         document.getElementById('editAddress').value = user.Address || '';
         document.getElementById('editComplement').value = user.Complement || '';
+        
+        document.getElementById('submitButtonVisible').addEventListener('click', validateForm);
+        document.getElementById('editCEP').addEventListener('blur', searchAddress);
+        document.getElementById('editCPF').addEventListener('blur', formatAndValidateCPF);
+        document.getElementById('editNumber').addEventListener('blur', formatPhone);
+        
 
         showEditModal();
     } catch (error) {
@@ -206,3 +212,174 @@ document.addEventListener('DOMContentLoaded', () => {
         history.replaceState(null, '', newUrl);
     }
 });
+
+
+function formatCPF(cpf) {
+    if (!cpf) return '';
+    
+    // Remove any non-digit character
+    cpf = cpf.replace(/\D/g, '');
+    
+    if (cpf.length !== 11) return cpf;
+    
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+function formatPhoneNumber(number) {
+    if (!number) return '';
+    number = number.replace(/\D/g, '');
+    
+    if (number.length === 11) {
+        return number.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (number.length === 10) {
+        return number.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    }
+    return number;
+}
+
+function formatCEP(cep) {
+    if (!cep) return '';
+    
+    cep = cep.replace(/\D/g, '');
+ 
+    if (cep.length !== 8) return cep;
+
+    return cep.replace(/(\d{5})(\d{3})/, '$1-$2');
+}
+
+// --- Form Validation Logic ---
+
+function validateForm() {
+    resetErrorMessages();
+    var valid = validateEmptyFields();
+
+    if (valid) {
+        document.getElementById("submitButton").click();
+    }
+}
+
+function resetErrorMessages() {
+    document.getElementById("errorFields").style.display = 'none';
+}
+
+function validateEmptyFields() {
+    var requiredFields = document.getElementsByClassName("required");
+    var requiredFieldsArray = Array.from(requiredFields);
+    var hasEmptyFields = false;
+
+    if (requiredFieldsArray.length > 0) {
+        requiredFieldsArray.forEach(field => {
+            if (!field.value || field.value.trim() === "") {
+                console.log("campo obrigatório");
+                field.classList.add("empty-field");
+                hasEmptyFields = true;
+            } else {
+                field.classList.remove("empty-field");
+            }
+        });
+
+        if (hasEmptyFields) {
+            document.getElementById("errorFields").style.display = 'block';
+            return false;
+        }
+    }
+    return true;
+}
+
+function searchAddress() {
+    let cep = document.getElementById("editCEP").value;
+    let rawCep = cep.replace(/\D/g, "");
+
+    if (rawCep.length === 8) {
+        let formattedCep = rawCep.replace(/^(\d{2})(\d{3})(\d{3})$/, "$1.$2-$3");
+        document.getElementById("editCEP").value = formattedCep;
+
+        let url = `https://viacep.com.br/ws/${rawCep}/json/`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (!("erro" in data)) {
+                    document.getElementById("editAddress").value = data.logradouro;
+                } else {
+                    document.getElementById("editCEP").classList.add("error");
+                document.getElementById("errorCep").style.display = 'block';
+                }
+            })
+            .catch(error => {
+                document.getElementById("editCEP").classList.add("error");
+                document.getElementById("errorCep").style.display = 'block';
+            });
+            document.getElementById("errorCep").style.display = 'none';
+            document.getElementById("editCEP").classList.remove("error");
+            document.getElementById("editCEP").classList.remove("empty-field");
+    } else {
+        document.getElementById("editCEP").classList.add("error");
+        document.getElementById("errorCep").style.display = 'block';
+    }
+}
+
+function formatAndValidateCPF() {
+    let cpf = document.getElementById("editCPF").value;
+    let formattedCpf = cpf.replace(/\D/g, "");
+
+    if (formattedCpf.length <= 11) {
+        formattedCpf = cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})$/, "$1.$2.$3-$4");
+    }
+
+    document.getElementById("editCPF").value = formattedCpf;
+
+    let cleanCpf = cpf.replace(/\D/g, "");
+    let isValid = true;
+
+    if (cleanCpf.length !== 11) {
+        isValid = false;
+    } else if (/^(\d)\1+$/.test(cleanCpf)) {
+        isValid = false;
+    } else {
+        let sum = 0, remainder;
+        for (let i = 1; i <= 9; i++) sum += parseInt(cleanCpf[i - 1]) * (11 - i);
+        remainder = (sum * 10) % 11;
+        if (remainder === 10 || remainder === 11) remainder = 0;
+        if (remainder !== parseInt(cleanCpf[9])) isValid = false;
+
+        if (isValid) {
+            sum = 0;
+            for (let i = 1; i <= 10; i++) sum += parseInt(cleanCpf[i - 1]) * (12 - i);
+            remainder = (sum * 10) % 11;
+            if (remainder === 10 || remainder === 11) remainder = 0;
+            if (remainder !== parseInt(cleanCpf[10])) isValid = false;
+        }
+    }
+
+    if (!isValid) {
+        document.getElementById("editCPF").classList.add("error");
+        document.getElementById("errorCpf").style.display = 'block';
+    } else {
+        document.getElementById("editCPF").classList.remove("error");
+        document.getElementById("editCPF").classList.remove("empty-field");
+        document.getElementById("errorCpf").style.display = 'none';
+    }
+}
+
+
+function formatPhone() {
+    let phone = document.getElementById("editNumber").value;
+    let cleanPhone = phone.replace(/\D/g, "");
+    
+    document.getElementById("errorPhone").style.display = 'none';
+    document.getElementById("editNumber").classList.remove("error");
+    document.getElementById("editNumber").classList.remove("empty-field");
+    
+    if (cleanPhone.length === 11) {
+        document.getElementById("editNumber").value = cleanPhone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+    } else if (cleanPhone.length === 10) {
+        document.getElementById("editNumber").value = cleanPhone.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
+    } else if (cleanPhone.length === 9) {
+        document.getElementById("editNumber").value = cleanPhone.replace(/^(\d{5})(\d{4})$/, "$1-$2");
+    } else if (cleanPhone.length > 0) {
+        document.getElementById("errorPhone").style.display = 'block';
+        document.getElementById("editNumber").classList.add("error");
+    }
+}
+

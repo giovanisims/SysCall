@@ -27,7 +27,7 @@ a {
     margin-top: 10px;
 }
 
-#errorCep, #errorFields, #errorPassword, #errorEqualPasswords, #errorCpf, #errorPhone{
+#errorCep, #errorFields, #errorPassword, #errorEqualPasswords, #errorCpf, #errorPhone, #errorEmail, #errorName, #errorSurname{
     display: none;
 }
 
