@@ -22,7 +22,7 @@ CREATE TABLE Complement(
 
 CREATE TABLE Address (
     idAddress INT PRIMARY KEY AUTO_INCREMENT,
-    Address VARCHAR(255) NOT NULL,
+    Address VARCHAR(255),
     fk_User_idUser INT NOT NULL,
     FOREIGN KEY (fk_User_idUser) REFERENCES User(idUser)
 );

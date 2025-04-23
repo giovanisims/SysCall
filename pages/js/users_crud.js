@@ -125,24 +125,55 @@ async function openEditModal(userId) {
 
 editForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    editErrorMsg.style.display = 'none';
+    editErrorMsg.style.display = 'none'; // Hide previous general errors
 
     const userId = document.getElementById('editUserId').value;
     const formData = new FormData(editForm);
     const data = Object.fromEntries(formData.entries());
 
+    // Prepare the payload with cleaned data and correct keys for the backend
+    const payload = {
+        Username: data.editName,
+        NameSurname: data.editSurname,
+        Email: data.editEmail,
+        CPF: data.cpf ? data.cpf.replace(/\D/g, '') : '',
+        Number: data.number ? data.number.replace(/\D/g, '') : '',
+        CEP: data.cep ? data.cep.replace(/\D/g, '') : '',
+        Address: data.editAddress,
+        Complement: data.editComplement
+    };
+
+    // Remove potentially undefined or null keys if they are optional and empty
+    // This depends on how your backend handles null vs missing keys.
+    // If null is acceptable, this step might not be needed.
+    Object.keys(payload).forEach(key => {
+        if (payload[key] === undefined || payload[key] === null) {
+            delete payload[key];
+        }
+        // Ensure required fields that might be cleaned to empty string are handled
+        // (e.g., if CPF was just formatting characters) - Pydantic should catch this.
+    });
+
+
     try {
         const response = await fetch(`/update_user/${userId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
+            body: JSON.stringify(payload), // Send the cleaned and correctly keyed payload
         });
-
         const result = await response.json();
 
-        if (!response.ok || result.error) {
+        if (!response.ok) {
+             // Handle specific 422 error for better feedback
+            if (response.status === 422) {
+                 // Extract detail if possible, otherwise provide a generic validation message
+                 const errorDetail = result.detail ? (Array.isArray(result.detail) ? result.detail.map(e => `${e.loc[1]}: ${e.msg}`).join(', ') : result.detail) : 'Validation error.';
+                 throw new Error(`Erro de validação: ${errorDetail}`);
+            }
+            // Handle other errors
             throw new Error(result.error || `HTTP error! status: ${response.status}`);
         }
+
 
         hideEditModal();
         fetchUsers(); // Refresh table
@@ -150,6 +181,7 @@ editForm.addEventListener('submit', async (event) => {
 
     } catch (error) {
         console.error("Failed to update user:", error);
+        // Display the error message in the designated spot within the modal
         editErrorMsg.textContent = `Erro ao atualizar: ${error.message}`;
         editErrorMsg.style.display = 'block';
     }

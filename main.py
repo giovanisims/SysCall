@@ -304,7 +304,6 @@ async def update_user(
     user_data: UserUpdate, # Use the Pydantic model for validation
     db=Depends(get_db)
 ):
-
     try:
         with db.cursor() as cursor:
             # 1. Check for potential email/username conflicts (excluding the current user)
@@ -332,33 +331,37 @@ async def update_user(
             # Check if address exists
             cursor.execute("SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))
             address_row = cursor.fetchone()
+            # --- FIX: Use user_data.Address (uppercase A) ---
             if address_row:
                  # Update existing address
                  addr_sql = "UPDATE Address SET Address = %s WHERE fk_User_idUser = %s"
-                 cursor.execute(addr_sql, (user_data.address, user_id))
-            elif user_data.address: # Only insert if address is provided
+                 cursor.execute(addr_sql, (user_data.Address, user_id))
+            elif user_data.Address: # Only insert if address is provided
                  # Insert new address
                  addr_sql = "INSERT INTO Address (Address, fk_User_idUser) VALUES (%s, %s)"
-                 cursor.execute(addr_sql, (user_data.address, user_id))
+                 cursor.execute(addr_sql, (user_data.Address, user_id))
+            # --- END FIX ---
 
 
             # 4. Update Complement table (UPSERT logic)
             cursor.execute("SELECT idComplement FROM Complement WHERE fk_User_idUser = %s", (user_id,))
             complement_row = cursor.fetchone()
 
+            # --- FIX: Use user_data.Complement (uppercase C) ---
             if complement_row:
-                if user_data.complement:
+                if user_data.Complement:
                     # Update existing complement
                     comp_sql = "UPDATE Complement SET Complement = %s WHERE fk_User_idUser = %s"
-                    cursor.execute(comp_sql, (user_data.complement, user_id))
+                    cursor.execute(comp_sql, (user_data.Complement, user_id))
                 else:
                     # Delete existing complement if new value is empty/null
                     comp_sql = "DELETE FROM Complement WHERE fk_User_idUser = %s"
                     cursor.execute(comp_sql, (user_id,))
-            elif user_data.complement: # Only insert if complement is provided
+            elif user_data.Complement: # Only insert if complement is provided
                 # Insert new complement
                 comp_sql = "INSERT INTO Complement (Complement, fk_User_idUser) VALUES (%s, %s)"
-                cursor.execute(comp_sql, (user_data.complement, user_id))
+                cursor.execute(comp_sql, (user_data.Complement, user_id))
+            # --- END FIX ---
 
             db.commit() # Commit all changes together
             return {"message": "User updated successfully"}
