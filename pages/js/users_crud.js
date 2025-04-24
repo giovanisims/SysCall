@@ -22,22 +22,21 @@ async function fetchUsers() {
 
         users.forEach(user => {
             const row = document.createElement('tr');
+            // Add data-label attributes matching the headers
             row.innerHTML = `
-                <td>${user.idUser}</td>
-                <td>${user.Username}</td>
-                <td>${user.NameSurname}</td>
-                <td>${user.Email}</td>
-                <td>${formatCPF(user.CPF)}</td>
-                <td>${formatPhoneNumber(user.Number)}</td>
-                <td>${formatCEP(user.CEP)}</td>
-                <td>${user.Address || ''}</td>
-                <td>${user.Complement || ''}</td>
-                <td class="action-button">
+                <td data-label="ID">${user.idUser}</td>
+                <td data-label="Nome">${user.Username}</td>
+                <td data-label="Sobrenome">${user.NameSurname}</td>
+                <td data-label="Email">${user.Email}</td>
+                <td data-label="CPF">${formatCPF(user.CPF)}</td>
+                <td data-label="Telefone">${formatPhoneNumber(user.Number)}</td>
+                <td data-label="CEP">${formatCEP(user.CEP)}</td>
+                <td data-label="Endereço">${user.Address || ''}</td>
+                <td data-label="Complemento">${user.Complement || ''}</td>
+                <td class="action-button" data-label="Ações">
                     <a href="#" class="edit-link" data-user-id="${user.idUser}">
                         <i class="fa-solid fa-pen-to-square" style="color: #125dde;"></i>
                     </a>
-                </td>
-                <td class="action-button">
                     <a href="#" class="delete-link" data-delete-url="/delete_user?user_id=${user.idUser}">
                         <i class="fa-solid fa-trash" style="color: #921f1f;"></i>
                     </a>
