@@ -128,7 +128,7 @@ async def sign_up(
     password: str = Form(...),
     db=Depends(get_db)
 ):
-    if not re.match("(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}", password):
+    if not re.match(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}", password):
         return templates.TemplateResponse("signup.html", {"request": request, "error": "Password doesn't match the requirements"})
 
     NameSurname = f"{name} {surname}"
