@@ -205,6 +205,7 @@ class UserUpdate(BaseModel):
     CEP: Annotated[str, Field(pattern=r'^\d{8}$')]
     Address: Optional[str] = None
     Complement: Optional[str] = None
+    Password: Optional[str] = None # Add optional password field
 
 @app.get("/delete_user")
 async def delete_user(
@@ -319,6 +320,13 @@ async def update_user(
     if len(clean_cep) != 8:
          raise HTTPException(status_code=400, detail="Invalid CEP format.")
 
+    # Validate new password if provided
+    hashed_password = None
+    if user_data.Password and user_data.Password.strip(): # Check if password is provided and not just whitespace
+        if not re.match(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}", user_data.Password):
+             raise HTTPException(status_code=400, detail="Password doesn't match the requirements (min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character).")
+        hashed_password = hashlib.md5(user_data.Password.encode()).hexdigest()
+
 
     try:
         with db.cursor() as cursor:
@@ -331,17 +339,25 @@ async def update_user(
                 raise HTTPException(status_code=409, detail="Email or Username already in use by another user.")
 
             # 2. Update User table
-            user_sql = """
+            user_sql_base = """
                 UPDATE User SET
                     Username = %s, Email = %s, NameSurname = %s,
                     CPF = %s, Number = %s, CEP = %s
-                WHERE idUser = %s
             """
-            cursor.execute(user_sql, (
+            params = [
                 user_data.Username, user_data.Email, user_data.NameSurname,
-                clean_cpf, clean_number, clean_cep, # Use cleaned data
-                user_id
-            ))
+                clean_cpf, clean_number, clean_cep
+            ]
+
+            # Conditionally add password update
+            if hashed_password:
+                user_sql_base += ", Password = %s"
+                params.append(hashed_password)
+
+            user_sql = user_sql_base + " WHERE idUser = %s"
+            params.append(user_id)
+
+            cursor.execute(user_sql, tuple(params)) # Execute with all parameters
 
             # 3. Find or Create Address and get its ID
             cursor.execute("SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))

@@ -95,6 +95,16 @@
     
                 <label for="editComplement">Complemento:</label>
                 <input type="text" id="editComplement" name="complement">
+
+                <label for="editPassword">Nova Senha (deixe em branco para não alterar):</label>
+                <input type="password" id="editPassword" name="editPassword">
+                <div class="see-password">
+                    <div class="input-see-password">
+                        <input type="checkbox" id="editSeePassword" class="see-password-check">
+                    </div>
+                    <label for="editSeePassword" class="see-password-text">Mostrar a senha</label>
+                </div>
+
                 <div class="error-msg">
                     <p id="errorCep">CEP inválido</p>
                     <p id="errorCpf">CPF inválido</p>
@@ -102,6 +112,7 @@
                     <p id="errorEmail">Email inválido</p>
                     <p id="errorName">Nome inválido</p>
                     <p id="errorSurname">Sobrenome inválido</p>
+                    <p id="errorPasswordEdit">A senha deve conter uma letra maiúscula, uma letra minúscula, um número, um caractere especial e 8 digitos</p>
                     <p id="errorFields">Preencha os campos obrigatórios</p>
                 </div>
     

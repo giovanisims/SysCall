@@ -9,6 +9,9 @@ const editErrorMsg = document.getElementById('editError');
 const successModal = document.getElementById('successModal');
 const closeSuccessBtn = document.getElementById('closeSuccessBtn');
 const successMessageText = document.getElementById('successMessageText');
+const editPasswordInput = document.getElementById('editPassword');
+const editSeePasswordCheckbox = document.getElementById('editSeePassword');
+const errorPasswordEdit = document.getElementById('errorPasswordEdit');
 
 let deleteUrl = null; // To store the URL for deletion
 
@@ -108,12 +111,25 @@ async function openEditModal(userId) {
         document.getElementById('editCEP').value = formatCEP(user.CEP || '');
         document.getElementById('editAddress').value = user.Address || '';
         document.getElementById('editComplement').value = user.Complement || '';
-        
+        document.getElementById('editPassword').value = ''; // Ensure password field is empty
+
+        // Remove previous listeners to avoid duplicates if modal is reopened
+        document.getElementById('submitButtonVisible').removeEventListener('click', validateForm);
+        document.getElementById('editCEP').removeEventListener('blur', searchAddress);
+        document.getElementById('editCPF').removeEventListener('blur', formatAndValidateCPF);
+        document.getElementById('editNumber').removeEventListener('blur', formatPhone);
+        editPasswordInput.removeEventListener('blur', validatePasswordEdit);
+        editSeePasswordCheckbox.removeEventListener('change', togglePasswordVisibilityEdit);
+
+
+        // Add event listeners
         document.getElementById('submitButtonVisible').addEventListener('click', validateForm);
         document.getElementById('editCEP').addEventListener('blur', searchAddress);
         document.getElementById('editCPF').addEventListener('blur', formatAndValidateCPF);
         document.getElementById('editNumber').addEventListener('blur', formatPhone);
-        
+        editPasswordInput.addEventListener('blur', validatePasswordEdit); // Add listener for password validation
+        editSeePasswordCheckbox.addEventListener('change', togglePasswordVisibilityEdit); // Add listener for show/hide password
+
 
         showEditModal();
     } catch (error) {
@@ -142,6 +158,12 @@ editForm.addEventListener('submit', async (event) => {
         Address: formData.get('address'),
         Complement: formData.get('complement') || null // Send null if empty
     };
+
+    // Only include password if it's not empty
+    const newPassword = formData.get('editPassword');
+    if (newPassword && newPassword.trim() !== '') {
+        data.Password = newPassword; // Add password to the data object
+    }
     // --- End of change ---
 
     try {
@@ -268,15 +290,29 @@ function formatCEP(cep) {
 
 function validateForm() {
     resetErrorMessages();
-    var valid = validateEmptyFields();
+    var fieldsValid = validateEmptyFields();
+    var passwordValid = true; // Assume valid if empty
 
-    if (valid) {
+    // Only validate password if the field is not empty
+    if (editPasswordInput.value.trim() !== '') {
+        passwordValid = validatePasswordEdit();
+    }
+
+    if (fieldsValid && passwordValid) {
         document.getElementById("submitButton").click();
     }
 }
 
 function resetErrorMessages() {
     document.getElementById("errorFields").style.display = 'none';
+    errorPasswordEdit.style.display = 'none'; // Reset password error
+    // Reset other specific errors if needed (CEP, CPF, etc.)
+    document.getElementById("errorCep").style.display = 'none';
+    document.getElementById("errorCpf").style.display = 'none';
+    document.getElementById("errorPhone").style.display = 'none';
+    // Remove error classes
+    const errorFields = editForm.querySelectorAll('.error, .empty-field');
+    errorFields.forEach(field => field.classList.remove('error', 'empty-field'));
 }
 
 function validateEmptyFields() {
@@ -397,6 +433,38 @@ function formatPhone() {
     } else if (cleanPhone.length > 0) {
         document.getElementById("errorPhone").style.display = 'block';
         document.getElementById("editNumber").classList.add("error");
+    }
+}
+
+// Add password validation function for the edit form
+function validatePasswordEdit() {
+    const password = editPasswordInput.value;
+    // If password field is empty, it's considered valid (no change)
+    if (!password || password.trim() === '') {
+        editPasswordInput.classList.remove("error");
+        errorPasswordEdit.style.display = 'none';
+        return true;
+    }
+
+    // Regex: At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}$/;
+    if (!passwordRegex.test(password)) {
+        editPasswordInput.classList.add("error");
+        errorPasswordEdit.style.display = 'block';
+        return false;
+    } else {
+        editPasswordInput.classList.remove("error");
+        errorPasswordEdit.style.display = 'none';
+        return true;
+    }
+}
+
+// Add function to toggle password visibility in the edit form
+function togglePasswordVisibilityEdit() {
+    if (editSeePasswordCheckbox.checked) {
+        editPasswordInput.type = 'text';
+    } else {
+        editPasswordInput.type = 'password';
     }
 }
 
