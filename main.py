@@ -1,11 +1,11 @@
 import uvicorn  
 import os
 import hashlib
-from typing import Optional, Annotated # For type hinting and Pydantic V2 constraints
+from typing import Optional, Annotated
+import re
 
-# Third-party imports
 import pymysql
-from pymysql import cursors # Explicitly import cursors if used directly
+from pymysql import cursors
 from fastapi import (
     FastAPI,
     Request,
@@ -16,7 +16,7 @@ from fastapi import (
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel, EmailStr, Field # Keep Field for V2 constraints
+from pydantic import BaseModel, EmailStr, Field
 from starlette.middleware.sessions import SessionMiddleware
 
 DB_CONFIG = {
@@ -33,19 +33,14 @@ DB_CONFIG = {
 }
 
 def get_db():
-    # Ensure DictCursor is used for this connection if you want dicts by default
-    # Or specify it when creating the cursor
     return pymysql.connect(**DB_CONFIG) 
 
 app = FastAPI()
 
 # Configuração de sessão (chave secreta para cookies de sessão)
-# Ensure SessionMiddleware is imported from starlette.middleware.sessions
 app.add_middleware(SessionMiddleware, secret_key="Syscall")
 
 # Configuração de arquivos estáticos
-# Ensure StaticFiles is imported from fastapi.staticfiles
-# Ensure os is imported
 static_dir = os.path.join(os.path.dirname(__file__), "pages")
 if not os.path.exists(static_dir):
      # Handle case where directory might not exist yet or path is wrong
@@ -57,25 +52,12 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
 # Configuração de templates Jinja2
-# Ensure Jinja2Templates is imported from fastapi.templating
-# Ensure os is imported
 templates_dir = os.path.join(os.path.dirname(__file__), "pages", "html")
 if not os.path.exists(templates_dir):
     print(f"Warning: Templates directory not found at {templates_dir}")
     # Handle appropriately
     pass
 templates = Jinja2Templates(directory=templates_dir)
-
-# Example Pydantic model using cleaned imports
-class UserUpdate(BaseModel):
-    Username: str
-    NameSurname: str
-    Email: EmailStr
-    CPF: Annotated[str, Field(pattern=r'^\d{11}$')]
-    Number: Annotated[str, Field(pattern=r'^\d{10,11}$')]
-    CEP: Annotated[str, Field(pattern=r'^\d{8}$')]
-    Address: Optional[str] = None
-    Complement: Optional[str] = None
 
 
 @app.get("/users_crud", response_class=HTMLResponse)
@@ -146,6 +128,9 @@ async def sign_up(
     password: str = Form(...),
     db=Depends(get_db)
 ):
+    if not re.match("(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}", password):
+        return templates.TemplateResponse("signup.html", {"request": request, "error": "Password doesn't match the requirements"})
+
     NameSurname = f"{name} {surname}"
     Username = email
     Email = email
@@ -209,6 +194,17 @@ async def sign_up(
     finally:
         db.close()
 
+# User reference model
+class UserUpdate(BaseModel):
+    Username: str
+    NameSurname: str
+    Email: EmailStr
+    CPF: Annotated[str, Field(pattern=r'^\d{11}$')]
+    Number: Annotated[str, Field(pattern=r'^\d{10,11}$')]
+    CEP: Annotated[str, Field(pattern=r'^\d{8}$')]
+    Address: Optional[str] = None
+    Complement: Optional[str] = None
+
 @app.get("/delete_user")
 async def delete_user(
     user_id: int,
@@ -250,15 +246,14 @@ async def get_users(db=Depends(get_db)):
                 SELECT 
                     u.idUser, u.Username, u.Email, u.NameSurname, u.CPF, u.Number, u.CEP,
                     c.Complement, 
-                    a.Address  -- Select the Address column from the Address table
+                    a.Address  
                 FROM User u
                 LEFT JOIN Complement c ON u.idUser = c.fk_User_idUser 
-                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser -- Join the Address table
+                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
             """
             cursor.execute(sql)
-            users = cursor.fetchall() # fetchall() returns a list of dictionaries
+            users = cursor.fetchall()
 
-            # FastAPI handles dictionary serialization
             return users 
     except Exception as e:
         print(f"Error fetching users: {e}")
@@ -285,7 +280,6 @@ async def get_user(user_id: int, db=Depends(get_db)):
             cursor.execute(sql, (user_id,))
             user = cursor.fetchone()
             if not user:
-                # Use HTTPException for standard errors
                 raise HTTPException(status_code=404, detail="User not found") 
             return user
     except HTTPException as http_exc:
@@ -298,10 +292,11 @@ async def get_user(user_id: int, db=Depends(get_db)):
         if db:
             db.close()
 
+
 @app.put("/update_user/{user_id}", response_class=JSONResponse)
 async def update_user(
     user_id: int,
-    user_data: UserUpdate, # Use the Pydantic model for validation
+    user_data: UserUpdate,
     db=Depends(get_db)
 ):
 
@@ -310,7 +305,7 @@ async def update_user(
             # 1. Check for potential email/username conflicts (excluding the current user)
             cursor.execute(
                 "SELECT idUser FROM User WHERE (Email = %s OR Username = %s) AND idUser != %s",
-                (user_data.Email, user_data.Username, user_id) # Use model fields directly
+                (user_data.Email, user_data.Username, user_id) 
             )
             if cursor.fetchone():
                 raise HTTPException(status_code=409, detail="Email or Username already in use by another user.")
@@ -324,11 +319,11 @@ async def update_user(
             """
             cursor.execute(user_sql, (
                 user_data.Username, user_data.Email, user_data.NameSurname,
-                user_data.CPF, user_data.Number, user_data.CEP, # Use model fields directly
+                user_data.CPF, user_data.Number, user_data.CEP,
                 user_id
             ))
 
-            # 3. Update Address table (UPSERT logic: Update if exists, Insert if not)
+            # 3. Update Address table
             # Check if address exists
             cursor.execute("SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))
             address_row = cursor.fetchone()
@@ -336,13 +331,13 @@ async def update_user(
                  # Update existing address
                  addr_sql = "UPDATE Address SET Address = %s WHERE fk_User_idUser = %s"
                  cursor.execute(addr_sql, (user_data.address, user_id))
-            elif user_data.address: # Only insert if address is provided
+            elif user_data.address:
                  # Insert new address
                  addr_sql = "INSERT INTO Address (Address, fk_User_idUser) VALUES (%s, %s)"
                  cursor.execute(addr_sql, (user_data.address, user_id))
 
 
-            # 4. Update Complement table (UPSERT logic)
+            # 4. Update Complement table
             cursor.execute("SELECT idComplement FROM Complement WHERE fk_User_idUser = %s", (user_id,))
             complement_row = cursor.fetchone()
 
@@ -360,7 +355,7 @@ async def update_user(
                 comp_sql = "INSERT INTO Complement (Complement, fk_User_idUser) VALUES (%s, %s)"
                 cursor.execute(comp_sql, (user_data.complement, user_id))
 
-            db.commit() # Commit all changes together
+            db.commit() # Commits all changes together, also means this should be ACID compliant
             return {"message": "User updated successfully"}
 
     except HTTPException as http_exc:
