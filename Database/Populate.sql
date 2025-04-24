@@ -1,4 +1,6 @@
--- Insert some users with hashed passwords  
+USE SysCall;
+
+-- Insert users
 INSERT INTO User (Username, Email, NameSurname, CPF, Number, CEP, Password)
 VALUES 
 ('johndoe', 'johndoe@example.com', 'John Doe', '12345678901', '1234567890', '12345678', MD5('password1')),
