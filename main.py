@@ -137,9 +137,8 @@ async def sign_up(
     CPF = cpf.replace('.', '').replace('-', '')
     CEP = cep.replace('-', '').replace('.', '')
     Number = phone.replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
-
-    Address = address
-    Complement = observation
+    Address_text = address # Renamed to avoid conflict with Address table name
+    Complement_text = observation # Renamed for clarity
 
     # Hash the password using MD5
     Password = hashlib.md5(password.encode()).hexdigest()
@@ -163,20 +162,21 @@ async def sign_up(
                 (Username, Email, NameSurname, CPF, Number, CEP, Password)
             )
             user_id = cursor.lastrowid
-            db.commit()
+            # No commit here yet, do it after all related inserts
 
             # Now, insert the address into the Address table, referencing the User
-            cursor.execute("INSERT INTO Address (Address, fk_User_idUser) VALUES (%s, %s)", (Address, user_id))
-            address_id = cursor.lastrowid
-            db.commit()
+            cursor.execute("INSERT INTO Address (Address, fk_User_idUser) VALUES (%s, %s)", (Address_text, user_id))
+            address_id = cursor.lastrowid # Get the ID of the inserted address
+            # No commit here yet
 
-            #Inserts the complement into the DB if it exits
-
+            # Insert the complement into the DB if it exists, referencing the Address
             complement_id = None
-            if Complement:
-                 cursor.execute("INSERT INTO Complement (Complement, fk_User_idUser) VALUES (%s, %s)", (Complement, user_id))
+            if Complement_text:
+                 cursor.execute("INSERT INTO Complement (Complement, fk_Address_idAddress) VALUES (%s, %s)", (Complement_text, address_id)) # Use address_id
                  complement_id = cursor.lastrowid
-                 db.commit()
+                 # No commit here yet
+
+            db.commit() # Commit all changes together
 
             return RedirectResponse("/login", status_code=302)
 
@@ -192,7 +192,8 @@ async def sign_up(
         error_message = "An error occurred during registration."
         return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
     finally:
-        db.close()
+        if db:
+            db.close()
 
 # User reference model
 class UserUpdate(BaseModel):
@@ -212,17 +213,24 @@ async def delete_user(
 ):
     try:
         with db.cursor() as cursor:
-            # 1. Delete related records from Address
+            # 1. Find the address ID associated with the user
+            cursor.execute("SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))
+            address_result = cursor.fetchone()
+
+            if address_result:
+                address_id = address_result['idAddress']
+                # 2. Delete related records from Complement using the address ID
+                cursor.execute("DELETE FROM Complement WHERE fk_Address_idAddress = %s", (address_id,))
+                # No commit yet
+
+            # 3. Delete related records from Address
             cursor.execute("DELETE FROM Address WHERE fk_User_idUser = %s", (user_id,))
-            db.commit()
+            # No commit yet
 
-            # 2. Delete related records from Complement
-            cursor.execute("DELETE FROM Complement WHERE fk_User_idUser = %s", (user_id,))
-            db.commit()
-
-            # 3. Finally, delete the user
+            # 4. Finally, delete the user
             cursor.execute("DELETE FROM User WHERE idUser = %s", (user_id,))
-            db.commit()
+
+            db.commit() # Commit all deletions together
 
             # Redirect back with a success flag
             return RedirectResponse("/users_crud?deleted=true", status_code=302)
@@ -241,15 +249,15 @@ async def delete_user(
 async def get_users(db=Depends(get_db)):
     try:
         with db.cursor() as cursor:
-            # Join User, Complement, and Address tables
+            # Join User -> Address -> Complement
             sql = """
-                SELECT 
+                SELECT
                     u.idUser, u.Username, u.Email, u.NameSurname, u.CPF, u.Number, u.CEP,
-                    c.Complement, 
-                    a.Address  
+                    a.Address,
+                    c.Complement
                 FROM User u
-                LEFT JOIN Complement c ON u.idUser = c.fk_User_idUser 
                 LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
+                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress -- Join Complement via Address
             """
             cursor.execute(sql)
             users = cursor.fetchall()
@@ -266,15 +274,15 @@ async def get_users(db=Depends(get_db)):
 async def get_user(user_id: int, db=Depends(get_db)):
     try:
         with db.cursor() as cursor:
-            # Fetch user data along with address and complement
+            # Fetch user data along with address and complement via address
             sql = """
-                SELECT 
+                SELECT
                     u.idUser, u.Username, u.Email, u.NameSurname, u.CPF, u.Number, u.CEP,
-                    a.Address, 
-                    c.Complement
+                    a.idAddress, a.Address, -- Select address ID as well
+                    c.idComplement, c.Complement -- Select complement ID as well
                 FROM User u
                 LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
-                LEFT JOIN Complement c ON u.idUser = c.fk_User_idUser
+                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress -- Join Complement via Address
                 WHERE u.idUser = %s
             """
             cursor.execute(sql, (user_id,))
@@ -296,9 +304,21 @@ async def get_user(user_id: int, db=Depends(get_db)):
 @app.put("/update_user/{user_id}", response_class=JSONResponse)
 async def update_user(
     user_id: int,
-    user_data: UserUpdate,
+    user_data: UserUpdate, # Assuming UserUpdate has fields like 'address' and 'complement'
     db=Depends(get_db)
 ):
+    # Cleanse input data
+    clean_cpf = re.sub(r'\D', '', user_data.CPF)
+    clean_number = re.sub(r'\D', '', user_data.Number)
+    clean_cep = re.sub(r'\D', '', user_data.CEP)
+
+    if len(clean_cpf) != 11:
+        raise HTTPException(status_code=400, detail="Invalid CPF format.")
+    if not (10 <= len(clean_number) <= 11):
+         raise HTTPException(status_code=400, detail="Invalid phone number format.")
+    if len(clean_cep) != 8:
+         raise HTTPException(status_code=400, detail="Invalid CEP format.")
+
 
     try:
         with db.cursor() as cursor:
@@ -319,43 +339,48 @@ async def update_user(
             """
             cursor.execute(user_sql, (
                 user_data.Username, user_data.Email, user_data.NameSurname,
-                user_data.CPF, user_data.Number, user_data.CEP,
+                clean_cpf, clean_number, clean_cep, # Use cleaned data
                 user_id
             ))
 
-            # 3. Update Address table
-            # Check if address exists
+            # 3. Find or Create Address and get its ID
             cursor.execute("SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))
             address_row = cursor.fetchone()
+            address_id = None
+
             if address_row:
-                 # Update existing address
-                 addr_sql = "UPDATE Address SET Address = %s WHERE fk_User_idUser = %s"
-                 cursor.execute(addr_sql, (user_data.address, user_id))
-            elif user_data.address:
+                 address_id = address_row['idAddress']
+                 # Update existing address if provided
+                 if user_data.Address is not None: # Check if address data is provided
+                     addr_sql = "UPDATE Address SET Address = %s WHERE idAddress = %s"
+                     cursor.execute(addr_sql, (user_data.Address, address_id))
+            elif user_data.Address is not None: # Only insert if address data is provided
                  # Insert new address
                  addr_sql = "INSERT INTO Address (Address, fk_User_idUser) VALUES (%s, %s)"
-                 cursor.execute(addr_sql, (user_data.address, user_id))
+                 cursor.execute(addr_sql, (user_data.Address, user_id))
+                 address_id = cursor.lastrowid # Get the new address ID
 
+            # 4. Update Complement table using the address_id (if address exists)
+            if address_id: # Only manage complement if an address exists/was created
+                cursor.execute("SELECT idComplement FROM Complement WHERE fk_Address_idAddress = %s", (address_id,))
+                complement_row = cursor.fetchone()
 
-            # 4. Update Complement table
-            cursor.execute("SELECT idComplement FROM Complement WHERE fk_User_idUser = %s", (user_id,))
-            complement_row = cursor.fetchone()
+                if complement_row:
+                    complement_id = complement_row['idComplement']
+                    if user_data.Complement:
+                        # Update existing complement
+                        comp_sql = "UPDATE Complement SET Complement = %s WHERE idComplement = %s"
+                        cursor.execute(comp_sql, (user_data.Complement, complement_id))
+                    else:
+                        # Delete existing complement if new value is empty/null
+                        comp_sql = "DELETE FROM Complement WHERE idComplement = %s"
+                        cursor.execute(comp_sql, (complement_id,))
+                elif user_data.Complement: # Only insert if complement is provided
+                    # Insert new complement
+                    comp_sql = "INSERT INTO Complement (Complement, fk_Address_idAddress) VALUES (%s, %s)"
+                    cursor.execute(comp_sql, (user_data.Complement, address_id))
 
-            if complement_row:
-                if user_data.complement:
-                    # Update existing complement
-                    comp_sql = "UPDATE Complement SET Complement = %s WHERE fk_User_idUser = %s"
-                    cursor.execute(comp_sql, (user_data.complement, user_id))
-                else:
-                    # Delete existing complement if new value is empty/null
-                    comp_sql = "DELETE FROM Complement WHERE fk_User_idUser = %s"
-                    cursor.execute(comp_sql, (user_id,))
-            elif user_data.complement: # Only insert if complement is provided
-                # Insert new complement
-                comp_sql = "INSERT INTO Complement (Complement, fk_User_idUser) VALUES (%s, %s)"
-                cursor.execute(comp_sql, (user_data.complement, user_id))
-
-            db.commit() # Commits all changes together, also means this should be ACID compliant
+            db.commit() # Commit all changes together
             return {"message": "User updated successfully"}
 
     except HTTPException as http_exc:
