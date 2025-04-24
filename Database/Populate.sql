@@ -44,8 +44,8 @@ VALUES
 ('Request for new feature', 'Would like to see a dark mode feature implemented.', 2, 2, 2);
 
 -- Insert issue history  
-INSERT INTO IssueHistory (fk_Issue_idIssue, Title, Description, fk_IssueProgress)
-VALUES 
+INSERT INTO IssueHistory (fk_Issue_idIssue, Title, Description, fk_IssueProgress_idIssueProgress) -- Corrected column name
+VALUES
 (1, 'Initial Report', 'Report submitted by user.', 1),
 (2, 'Feature Request Submitted', 'Feature request registered.', 2);
 
