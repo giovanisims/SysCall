@@ -129,19 +129,36 @@ editForm.addEventListener('submit', async (event) => {
 
     const userId = document.getElementById('editUserId').value;
     const formData = new FormData(editForm);
-    const data = Object.fromEntries(formData.entries());
+    // const data = Object.fromEntries(formData.entries()); // Original problematic line
+
+    // --- Construct the data object with keys matching the Pydantic model ---
+    const data = {
+        Username: formData.get('editName'),
+        NameSurname: formData.get('editSurname'),
+        Email: formData.get('editEmail'),
+        // Send raw digits for validation on the backend
+        CPF: formData.get('cpf').replace(/\D/g, ''),
+        Number: formData.get('number').replace(/\D/g, ''),
+        CEP: formData.get('cep').replace(/\D/g, ''),
+        Address: formData.get('address'),
+        Complement: formData.get('complement') || null // Send null if empty
+    };
+    // --- End of change ---
 
     try {
         const response = await fetch(`/update_user/${userId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
+            body: JSON.stringify(data), // Send the correctly structured data
         });
 
+        // console.log(response) // Keep for debugging if needed
         const result = await response.json();
+        // console.log(result) // Keep for debugging if needed
 
-        if (!response.ok || result.error) {
-            throw new Error(result.error || `HTTP error! status: ${response.status}`);
+        if (!response.ok) { // Check response.ok instead of result.error first
+            // Use the error message from the backend if available
+            throw new Error(result.detail || result.error || `HTTP error! status: ${response.status}`);
         }
 
         hideEditModal();
@@ -150,6 +167,7 @@ editForm.addEventListener('submit', async (event) => {
 
     } catch (error) {
         console.error("Failed to update user:", error);
+        // Display the specific error message from the backend or the fetch error
         editErrorMsg.textContent = `Erro ao atualizar: ${error.message}`;
         editErrorMsg.style.display = 'block';
     }

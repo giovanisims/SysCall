@@ -13,18 +13,19 @@ CREATE TABLE User (
     Password VARCHAR(32) NOT NULL
 );
 
-CREATE TABLE Complement(
-    idComplement INT PRIMARY KEY AUTO_INCREMENT,
-    Complement VARCHAR(255),
-    fk_User_idUser INT,
-    FOREIGN KEY (fk_User_idUser) REFERENCES User(idUser)
-);
 
 CREATE TABLE Address (
     idAddress INT PRIMARY KEY AUTO_INCREMENT,
     Address VARCHAR(255) NOT NULL,
     fk_User_idUser INT NOT NULL,
     FOREIGN KEY (fk_User_idUser) REFERENCES User(idUser)
+);
+
+CREATE TABLE Complement(
+    idComplement INT PRIMARY KEY AUTO_INCREMENT,
+    Complement VARCHAR(255),
+    fk_Address_idAddress INT,
+    FOREIGN KEY (fk_Address_idAddress) REFERENCES Address(idAddress) ON DELETE CASCADE
 );
 
 CREATE TABLE Company (
