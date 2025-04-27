@@ -10,13 +10,13 @@
 
 .welcome .text{
     font-family: 'Exo 2', sans-serif;
-    color: #3b2e51;
+    color: #000;
     font-weight: bold;
     line-height: 20px;
 }
 
 .welcome .text p{
-    font-weight: 500;
+    font-weight: lighter;
 }
 
 .action-button{
@@ -30,19 +30,19 @@
     height: 40px;
     width: 150px;
     border: none;
-    background-color: #523b7b;
+    background-color: #17176D;
     border-radius: 15px;
     display: flex;
     align-items: center;
     padding: 15px;
     gap: 5px;
     color: #f2e9e4;
-    font-weight: bold;
-    transition: 0.3s ease;
+    transition:all 1s ease;
 }
 
 .new-ticket:hover{
-    background-color: #10071e;
+    background-color: #2222b5;
+    transform: scale(1.1);
     cursor: pointer;
 }
   
@@ -52,17 +52,75 @@
   }
   
   #filters select {
+    background-color: transparent;
+    border: 1px solid #000;
+    border-radius: 10px;
     padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
   }
   
-  #listaChamados {
-    max-width: 800px;
-    margin: 0 auto;
+  .tickets {
+    width: 100%;
+    padding: 35px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .card {
+    width: calc(33.33% - 20px); /* Adjust for 3 cards per row with gap */
+    height: 255px;
+    border: 0.5px solid #17176D;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: #000;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding: 20px;
+    margin-bottom: 60px;
+    cursor: pointer;
+  }
+  
+  .title{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-weight: 500;
+    font-size: 20px;
+  }
+  
+
+  .priority {
+    align-self: flex-end;
+    padding: 5px 10px;
+    border-radius: 20px;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .high{
+    background-color: #e74c3c; /* vermelho */
+  }
+
+  .medium {
+    background-color: #f1c40f; /* amarelo */
+    color: black;
+  }
+
+  .low {
+    background-color: #2ecc71; /* verde */
+  }
+  .description{
+    font-weight: lighter;
+    font-size: 16px;
+  }
+
+  @media (max-width: 800px) {
+    .card {
+      width: 100%; /* Full width for smaller screens */
+    }
   }
   
   /* Modal */
@@ -73,7 +131,7 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0,0,0,0.5);
-    color: #4a4e69;
+    color: #000;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -113,7 +171,7 @@
     margin-top: 5px;
     padding: 12px 10px;
     border: 1px solid #4a4e69;
-    border-radius: 5px;
+    border-radius: 10px;
     outline: none;
     font-size: 16px;
     background: transparent;
@@ -138,7 +196,7 @@
     height: 35px;
     width: 100px;
     border: none;
-    background-color: #523b7b;
+    background-color: #17176D;
     border-radius: 15px;
     display: flex;
     align-items: center;
@@ -151,7 +209,7 @@
   }
 
   .form-actions button:hover{
-    background-color: #10071e;
+    background-color: #2222b5;
     cursor: pointer;
   }
   

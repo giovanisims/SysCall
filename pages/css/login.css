@@ -12,7 +12,7 @@
 
 .login {
     background-color: #f2e9e4;
-    color: #4a4e69;
+    color: #17176D;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -106,7 +106,7 @@
 
 /* Botão */
 .login-data form button {
-    background-color: #4a4e69;
+    background-color: #17176D;
     color: #f2e9e4;
     border: none;
     padding: 10px;
@@ -116,7 +116,7 @@
 }
 
 .login-data form button:hover {
-    background-color: #313446;
+    background-color: #2222b5;
 }
 
 /* Responsividade */
