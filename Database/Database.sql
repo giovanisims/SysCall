@@ -30,7 +30,23 @@ CREATE TABLE Complement(
 
 CREATE TABLE Company (
     idCompany INT PRIMARY KEY AUTO_INCREMENT,
-    CompanyName VARCHAR(255) NOT NULL  
+    CompanyName VARCHAR(255) NOT NULL,
+    CNPJ VARCHAR(14) NOT NULL
+);
+
+CREATE TABLE Role (
+	idRole INT PRIMARY KEY AUTO_INCREMENT,
+    Role VARCHAR(255)
+);
+
+CREATE TABLE Employee (
+	idEmployee INT PRIMARY KEY AUTO_INCREMENT,
+    EmployeeName VARCHAR(255) NOT NULL,
+    EmployeePassword VARCHAR(32),
+    fk_Company_idCompany INT NOT NULL,
+    fk_Role_Role INT,
+    FOREIGN KEY (fk_Company_idCompany) REFERENCES Company(idCompany),
+    FOREIGN KEY (fk_Role_Role) REFERENCES Role(idRole)
 );
 
 CREATE TABLE IssueProgress (
