@@ -30,7 +30,7 @@
     height: 40px;
     width: 150px;
     border: none;
-    background-color: #17176D;
+    background-color: #2C1E5A;
     border-radius: 15px;
     display: flex;
     align-items: center;
@@ -41,7 +41,7 @@
 }
 
 .new-ticket:hover{
-    background-color: #2222b5;
+    background-color: #5322b5;
     transform: scale(1.1);
     cursor: pointer;
 }
@@ -196,7 +196,7 @@
     height: 35px;
     width: 100px;
     border: none;
-    background-color: #17176D;
+    background-color: #2C1E5A;
     border-radius: 15px;
     display: flex;
     align-items: center;
@@ -209,7 +209,7 @@
   }
 
   .form-actions button:hover{
-    background-color: #2222b5;
+    background-color: #5322b5;
     cursor: pointer;
   }
   

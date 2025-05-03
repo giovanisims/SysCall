@@ -65,7 +65,7 @@ th {
 .add{
     height: 40px;
     width: 130px;
-    background-color: #17176D;
+    background-color: #2C1E5A;
     border-radius: 15px;
     display: flex;
     align-items: center;
@@ -77,7 +77,7 @@ th {
 }
 
 .add:hover{
-    background-color: #2222b5;
+    background-color: #5322b5;
     cursor: pointer;
 }
 
