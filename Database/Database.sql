@@ -2,6 +2,11 @@ DROP DATABASE IF EXISTS SysCall;
 CREATE DATABASE IF NOT EXISTS SysCall;
 USE SysCall;
 
+CREATE TABLE Role (
+	idRole INT PRIMARY KEY AUTO_INCREMENT,
+    Role VARCHAR(255)
+);
+
 CREATE TABLE User (
     idUser INT PRIMARY KEY AUTO_INCREMENT,
     Username VARCHAR(255) UNIQUE NOT NULL,
@@ -9,14 +14,16 @@ CREATE TABLE User (
     NameSurname VARCHAR(255) NOT NULL,
     CPF VARCHAR(11) NOT NULL,
     Number VARCHAR(11) NOT NULL,
-    CEP VARCHAR(8)NOT NULL,
-    Password VARCHAR(32) NOT NULL
+    Password VARCHAR(32) NOT NULL,
+    fk_Role_idAddress INT,
+    FOREIGN KEY (fk_Role_idAddress) REFERENCES Role(idRole) ON DELETE CASCADE 
 );
 
 
 CREATE TABLE Address (
     idAddress INT PRIMARY KEY AUTO_INCREMENT,
     Address VARCHAR(255) NOT NULL,
+    CEP VARCHAR(8)NOT NULL,
     fk_User_idUser INT NOT NULL,
     FOREIGN KEY (fk_User_idUser) REFERENCES User(idUser)
 );
@@ -28,26 +35,7 @@ CREATE TABLE Complement(
     FOREIGN KEY (fk_Address_idAddress) REFERENCES Address(idAddress) ON DELETE CASCADE
 );
 
-CREATE TABLE Company (
-    idCompany INT PRIMARY KEY AUTO_INCREMENT,
-    CompanyName VARCHAR(255) NOT NULL,
-    CNPJ VARCHAR(14) NOT NULL
-);
 
-CREATE TABLE Role (
-	idRole INT PRIMARY KEY AUTO_INCREMENT,
-    Role VARCHAR(255)
-);
-
-CREATE TABLE Employee (
-	idEmployee INT PRIMARY KEY AUTO_INCREMENT,
-    EmployeeName VARCHAR(255) NOT NULL,
-    EmployeePassword VARCHAR(32),
-    fk_Company_idCompany INT NOT NULL,
-    fk_Role_Role INT,
-    FOREIGN KEY (fk_Company_idCompany) REFERENCES Company(idCompany),
-    FOREIGN KEY (fk_Role_Role) REFERENCES Role(idRole)
-);
 
 CREATE TABLE IssueProgress (
     idIssueProgress INT PRIMARY KEY AUTO_INCREMENT,
@@ -81,12 +69,4 @@ CREATE TABLE IssueHistory (
     ChangedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (fk_Issue_idIssue) REFERENCES Issue(idIssue) ON DELETE CASCADE,
     FOREIGN KEY (fk_IssueProgress_idIssueProgress) REFERENCES IssueProgress(idIssueProgress)
-);
-
-CREATE TABLE Evaluates (
-    fk_Issue_idIssue INT NOT NULL,
-    fk_Company_idCompany INT NOT NULL,
-    PRIMARY KEY (fk_Issue_idIssue, fk_Company_idCompany),
-    FOREIGN KEY (fk_Issue_idIssue) REFERENCES Issue(idIssue) ON DELETE CASCADE,
-    FOREIGN KEY (fk_Company_idCompany) REFERENCES Company(idCompany) ON DELETE CASCADE  
 );
