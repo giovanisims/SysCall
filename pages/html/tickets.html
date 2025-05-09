@@ -63,11 +63,14 @@
           <!-- python verification hell yeah -->
           {% if user_name %}
               <p class="hello-user"><a href="logout">Olá, {{ user_name }}</a></p>
+              <a href="/logout"><i class="fa-solid fa-circle-user"></i></a>
+              <i id="menuButton" class="fa-solid fa-bars"></i>
           {% else %}
               <p class="hello-user" style="display: none;"></p>
+              <a href="/login"><i class="fa-solid fa-circle-user"></i></a>
+              <i id="menuButton" class="fa-solid fa-bars"></i>
           {% endif %}
-          <a href="/login"><i class="fa-solid fa-circle-user"></i></a>
-          <i id="menuButton" class="fa-solid fa-bars"></i>
+          
       </div>
     </header>
     <div class="welcome">

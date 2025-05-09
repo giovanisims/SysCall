@@ -25,8 +25,8 @@ DB_CONFIG = {
     # pwsh: [Environment]::SetEnvironmentVariable("foo", "bar", "User")
     'host': os.getenv('DB_HOST', 'localhost'),
     'port' : int(os.getenv('DB_PORT', '3306')),
-    'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'admin'),
+    'user': os.getenv('DB_USER', 'Lucas'),
+    'password': os.getenv('DB_PASSWORD', '2525'),
     'db': 'SysCall',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor,
