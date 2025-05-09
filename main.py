@@ -25,8 +25,8 @@ DB_CONFIG = {
     # pwsh: [Environment]::SetEnvironmentVariable("foo", "bar", "User")
     'host': os.getenv('DB_HOST', 'localhost'),
     'port' : int(os.getenv('DB_PORT', '3306')),
-    'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'admin'),
+    'user': os.getenv('DB_USER', 'Lucas'),
+    'password': os.getenv('DB_PASSWORD', '2525'),
     'db': 'SysCall',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor,
@@ -63,13 +63,14 @@ templates = Jinja2Templates(directory=templates_dir)
 @app.get("/users_crud", response_class=HTMLResponse)
 async def read_users_crud(request: Request):
     user_name = request.session.get("user_name", None)
-    return templates.TemplateResponse("users_crud.html", {"request": request, "user_name": user_name})
+    user_role = request.session.get("user_role", None)
+    return templates.TemplateResponse("users_crud.html", {"request": request, "user_name": user_name, "user_role": user_role})
 
 @app.get("/", response_class=HTMLResponse)
 async def read_main(request: Request):
-    # Obtém o nome do usuário da sessão
     user_name = request.session.get("user_name", None)
-    return templates.TemplateResponse("main.html", {"request": request, "user_name": user_name})
+    user_role = request.session.get("user_role", None)
+    return templates.TemplateResponse("main.html", {"request": request, "user_name": user_name, "user_role": user_role})
 
 @app.get("/login", response_class=HTMLResponse)
 async def read_login(request: Request):
@@ -82,7 +83,8 @@ async def read_register(request: Request):
 @app.get("/tickets", response_class=HTMLResponse)
 async def read_register(request: Request):
     user_name = request.session.get("user_name", None)
-    return templates.TemplateResponse("tickets.html", {"request": request, "user_name": user_name})
+    user_role = request.session.get("user_role", None)
+    return templates.TemplateResponse("tickets.html", {"request": request, "user_name": user_name, "user_role": user_role})
 
 @app.post("/login")
 async def login(
@@ -92,15 +94,24 @@ async def login(
     db=Depends(get_db)
 ):
     try:
-        # Hash da senha usando MD5
         hashed_password = hashlib.md5(password.encode()).hexdigest()
         with db.cursor() as cursor:
-            cursor.execute("SELECT NameSurname FROM User WHERE Email = %s AND Password = %s", (email, hashed_password))
+            sql_query = """
+                SELECT 
+                    u.NameSurname, 
+                    r.role AS UserRole 
+                FROM User u
+                JOIN role r ON u.fk_Role_idAddress = r.idRole 
+                WHERE u.Email = %s AND u.Password = %s
+            """
+            cursor.execute(sql_query, (email, hashed_password))
             user = cursor.fetchone()
 
             if user:
                 # Armazena o nome do usuário na sessão
                 request.session["user_name"] = user["NameSurname"]
+                # Agora user["UserRole"] conterá a string do nome da role
+                request.session["user_role"] = user["UserRole"] 
                 return RedirectResponse("/", status_code=302)
             else:
                 error_message = "Email ou senha inválidos"
@@ -158,14 +169,14 @@ async def sign_up(
 
             # First, insert the user into the User table
             cursor.execute(
-                "INSERT INTO User (Username, Email, NameSurname, CPF, Number, CEP, Password) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (Username, Email, NameSurname, CPF, Number, CEP, Password)
+                "INSERT INTO User (Username, Email, NameSurname, CPF, Number, Password) VALUES (%s, %s, %s, %s, %s, %s)",
+                (Username, Email, NameSurname, CPF, Number, Password)
             )
             user_id = cursor.lastrowid
             # No commit here yet, do it after all related inserts
 
             # Now, insert the address into the Address table, referencing the User
-            cursor.execute("INSERT INTO Address (Address, fk_User_idUser) VALUES (%s, %s)", (Address_text, user_id))
+            cursor.execute("INSERT INTO Address (Address, fk_User_idUser, CEP) VALUES (%s, %s, %s)", (Address_text, user_id, CEP))
             address_id = cursor.lastrowid # Get the ID of the inserted address
             # No commit here yet
 
@@ -253,7 +264,7 @@ async def get_users(db=Depends(get_db)):
             # Join User -> Address -> Complement
             sql = """
                 SELECT
-                    u.idUser, u.Username, u.Email, u.NameSurname, u.CPF, u.Number, u.CEP,
+                    u.idUser, u.Username, u.NameSurname, u.Email, u.CPF, u.Number,
                     a.Address,
                     c.Complement
                 FROM User u
@@ -262,7 +273,7 @@ async def get_users(db=Depends(get_db)):
             """
             cursor.execute(sql)
             users = cursor.fetchall()
-
+            print(users)
             return users 
     except Exception as e:
         print(f"Error fetching users: {e}")
@@ -278,7 +289,7 @@ async def get_user(user_id: int, db=Depends(get_db)):
             # Fetch user data along with address and complement via address
             sql = """
                 SELECT
-                    u.idUser, u.Username, u.Email, u.NameSurname, u.CPF, u.Number, u.CEP,
+                    u.idUser, u.Username, u.Email, u.NameSurname, u.CPF, u.Number,
                     a.idAddress, a.Address, -- Select address ID as well
                     c.idComplement, c.Complement -- Select complement ID as well
                 FROM User u
@@ -305,7 +316,7 @@ async def get_user(user_id: int, db=Depends(get_db)):
 @app.put("/update_user/{user_id}", response_class=JSONResponse)
 async def update_user(
     user_id: int,
-    user_data: UserUpdate, # Assuming UserUpdate has fields like 'address' and 'complement'
+    user_data: UserUpdate,  # Assuming UserUpdate has fields like 'address' and 'complement'
     db=Depends(get_db)
 ):
     # Cleanse input data
@@ -316,24 +327,26 @@ async def update_user(
     if len(clean_cpf) != 11:
         raise HTTPException(status_code=400, detail="Invalid CPF format.")
     if not (10 <= len(clean_number) <= 11):
-         raise HTTPException(status_code=400, detail="Invalid phone number format.")
+        raise HTTPException(status_code=400, detail="Invalid phone number format.")
     if len(clean_cep) != 8:
-         raise HTTPException(status_code=400, detail="Invalid CEP format.")
+        raise HTTPException(status_code=400, detail="Invalid CEP format.")
 
     # Validate new password if provided
     hashed_password = None
-    if user_data.Password and user_data.Password.strip(): # Check if password is provided and not just whitespace
+    if user_data.Password and user_data.Password.strip():  # Check if password is provided and not just whitespace
         if not re.match(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}", user_data.Password):
-             raise HTTPException(status_code=400, detail="Password doesn't match the requirements (min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character).")
+            raise HTTPException(
+                status_code=400,
+                detail="Password doesn't match the requirements (min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character)."
+            )
         hashed_password = hashlib.md5(user_data.Password.encode()).hexdigest()
-
 
     try:
         with db.cursor() as cursor:
             # 1. Check for potential email/username conflicts (excluding the current user)
             cursor.execute(
                 "SELECT idUser FROM User WHERE (Email = %s OR Username = %s) AND idUser != %s",
-                (user_data.Email, user_data.Username, user_id) 
+                (user_data.Email, user_data.Username, user_id)
             )
             if cursor.fetchone():
                 raise HTTPException(status_code=409, detail="Email or Username already in use by another user.")
@@ -342,11 +355,11 @@ async def update_user(
             user_sql_base = """
                 UPDATE User SET
                     Username = %s, Email = %s, NameSurname = %s,
-                    CPF = %s, Number = %s, CEP = %s
+                    CPF = %s, Number = %s
             """
             params = [
                 user_data.Username, user_data.Email, user_data.NameSurname,
-                clean_cpf, clean_number, clean_cep
+                clean_cpf, clean_number
             ]
 
             # Conditionally add password update
@@ -357,7 +370,7 @@ async def update_user(
             user_sql = user_sql_base + " WHERE idUser = %s"
             params.append(user_id)
 
-            cursor.execute(user_sql, tuple(params)) # Execute with all parameters
+            cursor.execute(user_sql, tuple(params))  # Execute with all parameters
 
             # 3. Find or Create Address and get its ID
             cursor.execute("SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))
@@ -365,19 +378,19 @@ async def update_user(
             address_id = None
 
             if address_row:
-                 address_id = address_row['idAddress']
-                 # Update existing address if provided
-                 if user_data.Address is not None: # Check if address data is provided
-                     addr_sql = "UPDATE Address SET Address = %s WHERE idAddress = %s"
-                     cursor.execute(addr_sql, (user_data.Address, address_id))
-            elif user_data.Address is not None: # Only insert if address data is provided
-                 # Insert new address
-                 addr_sql = "INSERT INTO Address (Address, fk_User_idUser) VALUES (%s, %s)"
-                 cursor.execute(addr_sql, (user_data.Address, user_id))
-                 address_id = cursor.lastrowid # Get the new address ID
+                address_id = address_row['idAddress']
+                # Update existing address if provided
+                if user_data.Address is not None or user_data.CEP is not None:  # Check if address or CEP data is provided
+                    addr_sql = "UPDATE Address SET Address = %s, CEP = %s WHERE idAddress = %s"
+                    cursor.execute(addr_sql, (user_data.Address, clean_cep, address_id))
+            elif user_data.Address is not None or user_data.CEP is not None:  # Only insert if address or CEP data is provided
+                # Insert new address
+                addr_sql = "INSERT INTO Address (Address, fk_User_idUser, CEP) VALUES (%s, %s, %s)"
+                cursor.execute(addr_sql, (user_data.Address, user_id, clean_cep))
+                address_id = cursor.lastrowid  # Get the new address ID
 
             # 4. Update Complement table using the address_id (if address exists)
-            if address_id: # Only manage complement if an address exists/was created
+            if address_id:  # Only manage complement if an address exists/was created
                 cursor.execute("SELECT idComplement FROM Complement WHERE fk_Address_idAddress = %s", (address_id,))
                 complement_row = cursor.fetchone()
 
@@ -391,21 +404,21 @@ async def update_user(
                         # Delete existing complement if new value is empty/null
                         comp_sql = "DELETE FROM Complement WHERE idComplement = %s"
                         cursor.execute(comp_sql, (complement_id,))
-                elif user_data.Complement: # Only insert if complement is provided
+                elif user_data.Complement:  # Only insert if complement is provided
                     # Insert new complement
                     comp_sql = "INSERT INTO Complement (Complement, fk_Address_idAddress) VALUES (%s, %s)"
                     cursor.execute(comp_sql, (user_data.Complement, address_id))
 
-            db.commit() # Commit all changes together
+            db.commit()  # Commit all changes together
             return {"message": "User updated successfully"}
 
     except HTTPException as http_exc:
-         db.rollback() # Rollback on validation errors too
-         raise http_exc
+        db.rollback()  # Rollback on validation errors too
+        raise http_exc
     except pymysql.err.IntegrityError as ie:
-         db.rollback()
-         print(f"Integrity error updating user {user_id}: {ie}")
-         raise HTTPException(status_code=400, detail=f"Database integrity error: {ie}")
+        db.rollback()
+        print(f"Integrity error updating user {user_id}: {ie}")
+        raise HTTPException(status_code=400, detail=f"Database integrity error: {ie}")
     except Exception as e:
         db.rollback()
         print(f"Error updating user {user_id}: {e}")

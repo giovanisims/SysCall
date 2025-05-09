@@ -22,14 +22,14 @@ async function fetchUsers() {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const users = await response.json();
         tableBody.innerHTML = '';
-
+        console.log(users)
         users.forEach(user => {
             const row = document.createElement('tr');
             // Add data-label attributes matching the headers
             row.innerHTML = `
                 <td data-label="ID">${user.idUser}</td>
-                <td data-label="Nome">${user.Username}</td>
-                <td data-label="Sobrenome">${user.NameSurname}</td>
+                <td data-label="Username">${user.Username }</td>
+                <td data-label="Nome Completo">${user.NameSurname}</td>
                 <td data-label="Email">${user.Email}</td>
                 <td data-label="CPF">${formatCPF(user.CPF)}</td>
                 <td data-label="Telefone">${formatPhoneNumber(user.Number)}</td>
