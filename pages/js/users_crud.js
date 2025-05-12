@@ -16,13 +16,14 @@ const errorPasswordEdit = document.getElementById('errorPasswordEdit');
 let deleteUrl = null; // To store the URL for deletion
 
 // --- Fetch and Populate Table ---
+// ...existing code...
 async function fetchUsers() {
     try {
         const response = await fetch('/users');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const users = await response.json();
         tableBody.innerHTML = '';
-        console.log(users)
+        console.log(users) // Verifique aqui no console do navegador a estrutura exata de 'users'
         users.forEach(user => {
             const row = document.createElement('tr');
             // Add data-label attributes matching the headers
@@ -33,9 +34,9 @@ async function fetchUsers() {
                 <td data-label="Email">${user.Email}</td>
                 <td data-label="CPF">${formatCPF(user.CPF)}</td>
                 <td data-label="Telefone">${formatPhoneNumber(user.Number)}</td>
-                <td data-label="CEP">${formatCEP(user.CEP)}</td>
-                <td data-label="Endereço">${user.Address || ''}</td>
-                <td data-label="Complemento">${user.Complement || ''}</td>
+                <td data-label="CEP">${user.CEP ? formatCEP(user.CEP) : ''}</td>
+                <td data-label="Endereço">${user.Address && user.Address.Address ? user.Address.Address : ''}</td>
+                <td data-label="Complemento">${user.Address && user.Address.Complement ? user.Address.Complement : ''}</td>
                 <td class="action-button" data-label="Ações">
                     <a href="#" class="edit-link" data-user-id="${user.idUser}">
                         <i class="fa-solid fa-pen-to-square" style="color: #125dde;"></i>
@@ -48,10 +49,7 @@ async function fetchUsers() {
             tableBody.appendChild(row);
         });
     } catch (error) {
-        console.error("Failed to fetch users:", error);
-        tableBody.innerHTML = '<tr><td colspan="11">Erro ao carregar usuários.</td></tr>';
-    }
-}
+// ...existing code...
 
 // --- Delete Modal Logic ---
 function showDeleteModal(url) {
@@ -468,3 +466,5 @@ function togglePasswordVisibilityEdit() {
     }
 }
 
+    }
+}
