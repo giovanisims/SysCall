@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function loadSelectors() {
     return {
-        name: document.getElementById('name'),
-        surname: document.getElementById('surname'),
+        name: document.getElementById('namesurname'),
+        username: document.getElementById('username'),
         email: document.getElementById('email'),
         cpf: document.getElementById('cpf'),
         phone: document.getElementById('phone'),
@@ -26,8 +26,8 @@ function loadSelectors() {
         errorPhone: document.getElementById('errorPhone'),
         seePasswordCheckbox: document.getElementById('seePassword'),
         errorName: document.getElementById('errorName'),
-        errorSurname: document.getElementById('errorSurname'),
         errorEmail: document.getElementById('errorEmail'),
+        errorUsername: document.getElementById('errorUsername'),
     };
 }
 
@@ -36,10 +36,10 @@ function loadEvents() {
     Selector.cpf.addEventListener('blur', formatAndValidateCPF);
     Selector.phone.addEventListener('blur', formatPhone);
     Selector.name.addEventListener('blur', validateName);
-    Selector.surname.addEventListener('blur', validateSurname);
     Selector.email.addEventListener('blur', validateEmail);
     Selector.submitButtonVisible.addEventListener('click', validateForm);
     Selector.seePasswordCheckbox.addEventListener('change', seePassword);
+    Selector.errorUsername.addEventListener('blur', validateUsername);
 }
 
 function validateForm() {
@@ -55,15 +55,15 @@ function validateAllFields() {
     
     const emptyFieldsValid = validateEmptyFields();
     const nameValid = validateName();
-    const surnameValid = validateSurname();
     const emailValid = validateEmail();
     const cpfValid = formatAndValidateCPF();
     const cepValid = searchAddress();
     const phoneValid = formatPhone();
     const passwordValid = validatePassword();
+    const usernameValid = validateUsername();
     
     return emptyFieldsValid && nameValid && emailValid && cpfValid && 
-           cepValid && phoneValid && passwordValid &&surnameValid;
+           cepValid && phoneValid && passwordValid &&usernameValid;
 }
 
 function searchAddress() {
@@ -243,20 +243,6 @@ function validateName() {
     }
 }
 
-function validateSurname() {
-    var surname = Selector.surname.value.trim();
-    const regexName = /^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/;
-    if (!surname || surname.length < 2 || surname.length > 100 || !regexName.test(surname)) {
-        Selector.surname.classList.add('error');
-        Selector.errorSurname.style.display = 'block';
-        return false;
-    } else {
-        Selector.surname.classList.remove('error');
-        Selector.errorSurname.style.display = 'none';
-        return true;
-    }
-}
-
 function validateEmail() {
     const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!regexEmail.test(Selector.email.value)) {
@@ -268,4 +254,8 @@ function validateEmail() {
         Selector.errorEmail.style.display = 'none';
         return true;
     }
+}
+
+function validateUsername() {
+    return true;
 }

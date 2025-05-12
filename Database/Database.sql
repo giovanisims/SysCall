@@ -15,8 +15,8 @@ CREATE TABLE User (
     CPF VARCHAR(11) NOT NULL,
     Number VARCHAR(11) NOT NULL,
     Password VARCHAR(32) NOT NULL,
-    fk_Role_idAddress INT,
-    FOREIGN KEY (fk_Role_idAddress) REFERENCES Role(idRole) ON DELETE CASCADE 
+    fk_Role_idRole INT,
+    FOREIGN KEY (fk_Role_idRole) REFERENCES Role(idRole) ON DELETE CASCADE 
 );
 
 

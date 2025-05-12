@@ -26,7 +26,7 @@ DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'port' : int(os.getenv('DB_PORT', '3306')),
     'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'admin'),
+    'password': os.getenv('DB_PASSWORD', 'Lili2209*'),
     'db': 'SysCall',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor,
@@ -101,7 +101,7 @@ async def login(
                     u.NameSurname, 
                     r.role AS UserRole 
                 FROM User u
-                JOIN role r ON u.fk_Role_idAddress = r.idRole 
+                JOIN role r ON u.fk_Role_idRole = r.idRole 
                 WHERE u.Email = %s AND u.Password = %s
             """
             cursor.execute(sql_query, (email, hashed_password))
@@ -128,13 +128,14 @@ async def logout(request: Request):
 @app.post("/sign_up")
 async def sign_up(
     request: Request,
-    name: str = Form(...),
-    surname: str = Form(...),
+    namesurname: str = Form(...),
+    username: str = Form(...),
     email: str = Form(...),
     cpf: str = Form(...),
     phone: str = Form(...),
     cep: str = Form(...),
     address: str = Form(...),
+    role: int = Form(...),
     observation: str = Form(None), # None lets the field be null
     password: str = Form(...),
     db=Depends(get_db)
@@ -142,14 +143,15 @@ async def sign_up(
     if not re.match(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}", password):
         return templates.TemplateResponse("signup.html", {"request": request, "error": "Password doesn't match the requirements"})
 
-    NameSurname = f"{name} {surname}"
-    Username = email
+    NameSurname = namesurname
+    Username = username
     Email = email
     CPF = cpf.replace('.', '').replace('-', '')
     CEP = cep.replace('-', '').replace('.', '')
     Number = phone.replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
     Address_text = address # Renamed to avoid conflict with Address table name
     Complement_text = observation # Renamed for clarity
+    fk_Role_idRole = role
 
     # Hash the password using MD5
     Password = hashlib.md5(password.encode()).hexdigest()
@@ -165,12 +167,20 @@ async def sign_up(
                 error_message = "Username or email already in use."
                 return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
 
-            #Inserts into each table according to indepence
+            # Validate the role ID against the Role table
+            cursor.execute("SELECT idRole FROM Role WHERE idRole = %s", (fk_Role_idRole,))
+            role_exists = cursor.fetchone()
+
+            if not role_exists:
+                error_message = "Invalid role ID provided."
+                return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+
+            # Inserts into each table according to independence
 
             # First, insert the user into the User table
             cursor.execute(
-                "INSERT INTO User (Username, Email, NameSurname, CPF, Number, Password) VALUES (%s, %s, %s, %s, %s, %s)",
-                (Username, Email, NameSurname, CPF, Number, Password)
+                "INSERT INTO User (Username, Email, NameSurname, CPF, Number, Password, fk_Role_idRole) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (Username, Email, NameSurname, CPF, Number, Password, fk_Role_idRole)
             )
             user_id = cursor.lastrowid
             # No commit here yet, do it after all related inserts
@@ -181,10 +191,8 @@ async def sign_up(
             # No commit here yet
 
             # Insert the complement into the DB if it exists, referencing the Address
-            complement_id = None
             if Complement_text:
                  cursor.execute("INSERT INTO Complement (Complement, fk_Address_idAddress) VALUES (%s, %s)", (Complement_text, address_id)) # Use address_id
-                 complement_id = cursor.lastrowid
                  # No commit here yet
 
             db.commit() # Commit all changes together
@@ -217,6 +225,7 @@ class UserUpdate(BaseModel):
     Address: Optional[str] = None
     Complement: Optional[str] = None
     Password: Optional[str] = None # Add optional password field
+    fk_Role_idRole: int
 
 @app.get("/delete_user")
 async def delete_user(

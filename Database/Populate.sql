@@ -4,10 +4,10 @@ USE SysCall;
 INSERT INTO Role (Role) VALUES ('User'), ('Technician'), ('System Administrator');
 
 -- Insert users  
-INSERT INTO User (Username, Email, NameSurname, CPF, Number, Password)
+INSERT INTO User (Username, Email, NameSurname, CPF, Number, Password, fk_Role_idRole)
 VALUES 
-('johndoe', 'johndoe@example.com', 'John Doe', '12345678901', '1234567890', MD5('Password1@')),
-('janedoe', 'janedoe@example.com', 'Jane Doe', '10987654321', '0987654321', MD5('Password2@'));
+('johndoe', 'johndoe@example.com', 'John Doe', '12345678901', '1234567890', MD5('Password1@'), "1"),
+('janedoe', 'janedoe@example.com', 'Jane Doe', '10987654321', '0987654321', MD5('Password2@'), "1");
 
 -- Insert addresses for these users  
 INSERT INTO Address (Address, fk_User_idUser, CEP)
