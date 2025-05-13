@@ -49,7 +49,10 @@ async function fetchUsers() {
             tableBody.appendChild(row);
         });
     } catch (error) {
-// ...existing code...
+        console.error("Failed to fetch users:", error);
+        tableBody.innerHTML = '<tr><td colspan="11">Erro ao carregar usuários.</td></tr>';
+    }
+}
 
 // --- Delete Modal Logic ---
 function showDeleteModal(url) {
@@ -466,5 +469,3 @@ function togglePasswordVisibilityEdit() {
     }
 }
 
-    }
-}
