@@ -346,7 +346,6 @@ async def delete_user(
 async def get_users(db=Depends(get_db)):
     try:
         with db.cursor() as cursor:
-            # Join User -> Address -> Complement
             sql = """
                 SELECT
                     u.idUser, u.Username, u.NameSurname, u.Email, u.CPF, u.Number,
@@ -357,14 +356,13 @@ async def get_users(db=Depends(get_db)):
                 LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
                 LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
             """
-
             cursor.execute(sql)
             users = cursor.fetchall()
-            print(users)
-            return users 
+            print(users)  # Adicione este print para verificar os dados retornados
+            return users
     except Exception as e:
-        print(f"Error fetching users: {e}")
-        return JSONResponse(content={"error": "Failed to fetch users"}, status_code=500)
+        print(f"Erro ao buscar usuários: {e}")
+        return JSONResponse(content={"error": "Falha ao buscar usuários"}, status_code=500)
     finally:
         if db:
             db.close()
