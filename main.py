@@ -137,6 +137,12 @@ async def read_register(request: Request):
     user_role = request.session.get("user_role", None)
     return templates.TemplateResponse("ticket_detail.html", {"request": request, "user_name": user_name, "user_role": user_role})
 
+@app.get("/ticket_detail_form", response_class=HTMLResponse)
+async def read_register(request: Request):
+    user_name = request.session.get("user_name", None)
+    user_role = request.session.get("user_role", None)
+    return templates.TemplateResponse("ticket_detail_form.html", {"request": request, "user_name": user_name, "user_role": user_role})
+
 @app.post("/login")
 async def login(
     request: Request,
