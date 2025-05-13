@@ -38,7 +38,7 @@ def get_db():
 app = FastAPI()
 
 # Configuração de sessão (chave secreta para cookies de sessão)
-app.add_middleware(SessionMiddleware, secret_key="Syscall")
+app.add_middleware(SessionMiddleware, secret_key="Syscall", max_age=69)
 
 # Configuração de arquivos estáticos
 static_dir = os.path.join(os.path.dirname(__file__), "pages")
