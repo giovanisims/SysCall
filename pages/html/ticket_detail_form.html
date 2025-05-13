@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://kit.fontawesome.com/a97e2a6b17.js" crossorigin="anonymous"></script>
     <link rel="icon" type="image/x-icon" href="/static/images/logo.ico">
-    <link rel="stylesheet" href="static/css/ticket_detail.css">
+    <link rel="stylesheet" href="static/css/ticket_detail_form.css">
     <title>SysCall</title>
 </head>
 <body>
@@ -73,79 +73,42 @@
           
       </div>
     </header>
-    <div class="ticket-container">
-        <div class="ticket">
-            <div class="main">
-                <div class="ticket-info">
-                    <div class="title">Título</div>
-                    <div class="description">
-                        Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? O Lucas é lindo? Corrupti doloremque itaque obcaecati!Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? Illo at libero nostrum vero? Corrupti doloremque itaque obcaecati!
-                        Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? O Lucas é lindo? Corrupti doloremque itaque obcaecati!Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? Illo at libero nostrum vero? Corrupti doloremque itaque obcaecati!
-                    </div>
-                </div>
-                <div class="ticket-history">
-                    <div class="title">Histórico</div>
-                    <div class="history">
-                        <div class="history-card">
-                            <div class="card-title">Título</div>
-                            <div class="card-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Expedita, veniam quaerat? Soluta pariatur vitae laborum quia, corporis doloribus dignissimos neque deleniti reprehenderit dolor inventore minima sapiente delectus officiis nobis in! Lorem ipsum dolor sit amet consectetur, adipisicing elit. Atque accusamus, eveniet quisquam eaque veritatis suscipit quod odit ipsum, adipisci temporibus corporis perspiciatis harum incidunt. Voluptate rem quo sed tempore harum.</div>
-                        </div>
-                        <div class="history-card">
-                            <div class="card-title">Título</div>
-                            <div class="card-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Expedita, veniam quaerat? Soluta pariatur vitae laborum quia, corporis doloribus dignissimos neque deleniti reprehenderit dolor inventore minima sapiente delectus officiis nobis in! Lorem ipsum dolor sit amet consectetur, adipisicing elit. Atque accusamus, eveniet quisquam eaque veritatis suscipit quod odit ipsum, adipisci temporibus corporis perspiciatis harum incidunt. Voluptate rem quo sed tempore harum.</div>
-                        </div>
-                    </div>
-                </div>
+    <div class="ticket-form-container">
+    <div class="form-container">
+        <div class="title">Chamados</div>
+        <form action="">
+            <div class="form-group">
+                <label for="title">Título</label>
+                <input id="title" type="text" placeholder="Título" readonly/>
             </div>
-            <div class="aside">
-                <div class="ticket-details">
-                    <div class="details-line">
-                        <div class="data">
-                            <span class="label">Cliente</span>
-                        </div>
-                        <div class="data">
-                            <span>Username</span>
-                        </div>
-                    </div>
-                    <div class="details-line">
-                        <div class="data">
-                            <span class="label">Técnico</span>
-                        </div>
-                        <div class="data">
-                            <span>Tecnico nome</span>
-                        </div>
-                    </div>
-                    <div class="details-line">
-                        <div class="data">
-                            <span class="label">Tipo</span>
-                        </div>
-                        <div class="data">
-                            <span>Bug</span>
-                        </div>
-                    </div>
-                    <div class="details-line">
-                        <div class="data">
-                            <span class="label">Data de criação</span>
-                        </div>
-                        <div class="data">
-                            <span>12/05/2025</span>
-                        </div>
-                    </div>
-                    <div class="details-line">
-                        <div class="data">
-                            <span class="label">Progresso</span>
-                        </div>
-                        <div class="data">
-                            <span>Em aberto</span>
-                        </div>
-                    </div>
-                    <div class="button-edit">
-                        <button type="button" onclick="window.location.href='/ticket_detail_form'">Editar</button>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label for="description">Descrição</label>
+                <textarea name="description" id="description" readonly>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? O Lucas é lindo? Corrupti doloremque itaque obcaecati!Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? Illo at libero nostrum vero? Corrupti doloremque itaque obcaecati!Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? O Lucas é lindo? Corrupti doloremque itaque obcaecati!Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? Illo at libero nostrum vero? Corrupti doloremque itaque obcaecati!</textarea>
             </div>
-        </div>
+            <div class="form-group">
+                <label for="technician">Técnico</label>
+                <input type="text" name="technician" id="technician" placeholder="Atribuir a mim" readonly>
+            </div>
+            <div class="form-group">
+                <label for="progress">Progresso</label>
+                <select name="progress" id="progress">
+                    <option value="open">Em aberto</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="type">Tipo</label>
+                <select name="type" id="type">
+                    <option value="bug">Bug</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="comments">Comentário</label>
+                <textarea name="comments" id="comments"></textarea>
+            </div>
+            <button>Enviar</button>
+        </form>
     </div>
+    </div>    
     
 </body>
 </html>
