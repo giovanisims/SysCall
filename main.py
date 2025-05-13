@@ -38,7 +38,7 @@ def get_db():
 app = FastAPI()
 
 # Configuração de sessão (chave secreta para cookies de sessão)
-app.add_middleware(SessionMiddleware, secret_key="Syscall")
+app.add_middleware(SessionMiddleware, secret_key="Syscall", max_age=69)
 
 # Configuração de arquivos estáticos
 static_dir = os.path.join(os.path.dirname(__file__), "pages")
@@ -60,11 +60,56 @@ if not os.path.exists(templates_dir):
 templates = Jinja2Templates(directory=templates_dir)
 
 
+
+# Exemplo conceitual para o endpoint /users em main.py
 @app.get("/users_crud", response_class=HTMLResponse)
-async def read_users_crud(request: Request):
-    user_name = request.session.get("user_name", None)
-    user_role = request.session.get("user_role", None)
-    return templates.TemplateResponse("users_crud.html", {"request": request, "user_name": user_name, "user_role": user_role})
+async def get_all_users(request: Request, db=Depends(get_db)): # Adicionado request: Request
+    try:
+        with db.cursor() as cursor:
+            # Query para buscar usuários com seus endereços e complementos
+            sql = """
+                SELECT
+                    u.idUser, u.Username, u.NameSurname, u.Email, u.CPF, u.Number,
+                    a.Address AS Address, a.CEP AS CEP,
+                    c.Complement
+                FROM User u
+                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
+                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
+            """
+
+            cursor.execute(sql)
+            users_from_db = cursor.fetchall() # Definindo users_from_db
+
+            users_list = []
+            if users_from_db: # Verificar se users_from_db não é None
+                for row in users_from_db:
+                    user_data = {
+                        "idUser": row["idUser"],
+                        "Username": row["Username"],
+                        "NameSurname": row.get("NameSurname"), # Adicionar outros campos que você precisa
+                        "Email": row.get("Email"),
+                        "CPF": row.get("CPF"),
+                        "Number": row.get("Number"),
+                        "Address": {
+                            "Address": row.get("Address"),
+                            "CEP": row.get("CEP"),
+                            "Complement": row.get("Complement")
+                        }
+                    }
+                    users_list.append(user_data)
+            user_name = request.session.get("user_name", None)
+            user_role = request.session.get("user_role", None)
+            return templates.TemplateResponse("users_crud.html", {"request": request, "user_name": user_name, "user_role": user_role, "users": users_list })
+
+
+    except Exception as e:
+        print(f"Error in get_all_users: {e}")
+        # Lide com o erro apropriadamente, talvez retornando uma página de erro
+        raise HTTPException(status_code=500, detail="Internal server error")
+    finally:
+        if db:
+            db.close()
+
 
 @app.get("/", response_class=HTMLResponse)
 async def read_main(request: Request):
@@ -281,11 +326,13 @@ async def get_users(db=Depends(get_db)):
                 SELECT
                     u.idUser, u.Username, u.NameSurname, u.Email, u.CPF, u.Number,
                     a.Address,
+                    a.CEP,
                     c.Complement
                 FROM User u
                 LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
-                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress -- Join Complement via Address
+                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
             """
+
             cursor.execute(sql)
             users = cursor.fetchall()
             print(users)
