@@ -21,9 +21,7 @@ CREATE TABLE User (
     Number VARCHAR(11) NOT NULL,
     Password VARCHAR(32) NOT NULL,
     fk_Role_idRole INT,
-    fk_Priority_idPriority INT,
-    FOREIGN KEY (fk_Role_idRole) REFERENCES Role(idRole) ON DELETE CASCADE,
-    FOREIGN KEY (fk_Priority_idPriority) REFERENCES Priority(idPriority) ON DELETE CASCADE 
+    FOREIGN KEY (fk_Role_idRole) REFERENCES Role(idRole) ON DELETE CASCADE
 );
 
 
@@ -62,9 +60,11 @@ CREATE TABLE Issue (
     fk_User_idUser INT,
     fk_IssueProgress_idIssueProgress INT NOT NULL,
     fk_IssueType_idIssueType INT NOT NULL,
+    fk_Priority_idPriority INT,
     FOREIGN KEY (fk_User_idUser) REFERENCES User(idUser) ON DELETE SET NULL,
     FOREIGN KEY (fk_IssueProgress_idIssueProgress) REFERENCES IssueProgress(idIssueProgress),
-    FOREIGN KEY (fk_IssueType_idIssueType) REFERENCES IssueType(idIssueType)
+    FOREIGN KEY (fk_IssueType_idIssueType) REFERENCES IssueType(idIssueType),
+    FOREIGN KEY (fk_Priority_idPriority) REFERENCES Priority(idPriority)
 );
 
 CREATE TABLE IssueHistory (
