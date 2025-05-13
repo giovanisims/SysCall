@@ -1,0 +1,111 @@
+@import url('./header.css');
+
+body{
+    color: black;
+}
+
+.ticket-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.ticket {
+    width: 95%;
+    border: 1px solid #000;
+    border-radius: 10px;
+    display: flex;
+    margin-top: 3%;
+}
+
+.main {
+    width: 80%;
+}
+
+.aside {
+    width: 20%;
+    border-left: 1px solid #000;
+}
+
+.ticket-info {
+    padding: 40px;
+}
+
+.title {
+    font-size: 36px;
+    font-weight: bold;
+}
+
+.ticket-history {
+    border-top: 1px solid #000;
+    padding: 40px;
+}
+
+.history {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.history-card {
+    background-color: #F5F2F2;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.card-title{
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.card-description {
+    font-size: 14px;
+}
+
+.ticket-details {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-top: 10%;
+}
+
+.details-line {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #000;
+}
+
+.data{
+    width: 50%;
+    padding: 10px;
+}
+
+.button-edit {
+    display: flex;
+    justify-content: center;
+    margin-top: 5%;
+}
+
+button{
+    height: 40px;
+    width: 250px;
+    border: none;
+    background-color: #2C1E5A;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    gap: 5px;
+    color: #f2e9e4;
+    transition:all 1s ease;
+}
+
+button:hover{
+    background-color: #5322b5;
+    transform: scale(1.1);
+    cursor: pointer;
+}

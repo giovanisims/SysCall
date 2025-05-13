@@ -9,35 +9,38 @@ const editErrorMsg = document.getElementById('editError');
 const successModal = document.getElementById('successModal');
 const closeSuccessBtn = document.getElementById('closeSuccessBtn');
 const successMessageText = document.getElementById('successMessageText');
+const editPasswordInput = document.getElementById('editPassword');
+const editSeePasswordCheckbox = document.getElementById('editSeePassword');
+const errorPasswordEdit = document.getElementById('errorPasswordEdit');
 
 let deleteUrl = null; // To store the URL for deletion
 
 // --- Fetch and Populate Table ---
+// ...existing code...
 async function fetchUsers() {
     try {
         const response = await fetch('/users');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const users = await response.json();
         tableBody.innerHTML = '';
-
+        console.log(users) // Verifique aqui no console do navegador a estrutura exata de 'users'
         users.forEach(user => {
             const row = document.createElement('tr');
+            // Add data-label attributes matching the headers
             row.innerHTML = `
-                <td>${user.idUser}</td>
-                <td>${user.Username}</td>
-                <td>${user.NameSurname}</td>
-                <td>${user.Email}</td>
-                <td>${formatCPF(user.CPF)}</td>
-                <td>${formatPhoneNumber(user.Number)}</td>
-                <td>${formatCEP(user.CEP)}</td>
-                <td>${user.Address || ''}</td>
-                <td>${user.Complement || ''}</td>
-                <td class="action-button">
+                <td data-label="ID">${user.idUser}</td>
+                <td data-label="Username">${user.Username }</td>
+                <td data-label="Nome Completo">${user.NameSurname}</td>
+                <td data-label="Email">${user.Email}</td>
+                <td data-label="CPF">${formatCPF(user.CPF)}</td>
+                <td data-label="Telefone">${formatPhoneNumber(user.Number)}</td>
+                <td data-label="CEP">${user.CEP ? formatCEP(user.CEP) : ''}</td>
+                <td data-label="Endereço">${user.Address && user.Address.Address ? user.Address.Address : ''}</td>
+                <td data-label="Complemento">${user.Address && user.Address.Complement ? user.Address.Complement : ''}</td>
+                <td class="action-button" data-label="Ações">
                     <a href="#" class="edit-link" data-user-id="${user.idUser}">
                         <i class="fa-solid fa-pen-to-square" style="color: #125dde;"></i>
                     </a>
-                </td>
-                <td class="action-button">
                     <a href="#" class="delete-link" data-delete-url="/delete_user?user_id=${user.idUser}">
                         <i class="fa-solid fa-trash" style="color: #921f1f;"></i>
                     </a>
@@ -46,10 +49,7 @@ async function fetchUsers() {
             tableBody.appendChild(row);
         });
     } catch (error) {
-        console.error("Failed to fetch users:", error);
-        tableBody.innerHTML = '<tr><td colspan="11">Erro ao carregar usuários.</td></tr>';
-    }
-}
+// ...existing code...
 
 // --- Delete Modal Logic ---
 function showDeleteModal(url) {
@@ -109,12 +109,25 @@ async function openEditModal(userId) {
         document.getElementById('editCEP').value = formatCEP(user.CEP || '');
         document.getElementById('editAddress').value = user.Address || '';
         document.getElementById('editComplement').value = user.Complement || '';
-        
+        document.getElementById('editPassword').value = ''; // Ensure password field is empty
+
+        // Remove previous listeners to avoid duplicates if modal is reopened
+        document.getElementById('submitButtonVisible').removeEventListener('click', validateForm);
+        document.getElementById('editCEP').removeEventListener('blur', searchAddress);
+        document.getElementById('editCPF').removeEventListener('blur', formatAndValidateCPF);
+        document.getElementById('editNumber').removeEventListener('blur', formatPhone);
+        editPasswordInput.removeEventListener('blur', validatePasswordEdit);
+        editSeePasswordCheckbox.removeEventListener('change', togglePasswordVisibilityEdit);
+
+
+        // Add event listeners
         document.getElementById('submitButtonVisible').addEventListener('click', validateForm);
         document.getElementById('editCEP').addEventListener('blur', searchAddress);
         document.getElementById('editCPF').addEventListener('blur', formatAndValidateCPF);
         document.getElementById('editNumber').addEventListener('blur', formatPhone);
-        
+        editPasswordInput.addEventListener('blur', validatePasswordEdit); // Add listener for password validation
+        editSeePasswordCheckbox.addEventListener('change', togglePasswordVisibilityEdit); // Add listener for show/hide password
+
 
         showEditModal();
     } catch (error) {
@@ -125,55 +138,47 @@ async function openEditModal(userId) {
 
 editForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    editErrorMsg.style.display = 'none'; // Hide previous general errors
+    editErrorMsg.style.display = 'none';
 
     const userId = document.getElementById('editUserId').value;
     const formData = new FormData(editForm);
-    const data = Object.fromEntries(formData.entries());
+    // const data = Object.fromEntries(formData.entries()); // Original problematic line
 
-    // Prepare the payload with cleaned data and correct keys for the backend
-    const payload = {
-        Username: data.editName,
-        NameSurname: data.editSurname,
-        Email: data.editEmail,
-        CPF: data.cpf ? data.cpf.replace(/\D/g, '') : '',
-        Number: data.number ? data.number.replace(/\D/g, '') : '',
-        CEP: data.cep ? data.cep.replace(/\D/g, '') : '',
-        Address: data.editAddress,
-        Complement: data.editComplement
+    // --- Construct the data object with keys matching the Pydantic model ---
+    const data = {
+        Username: formData.get('editName'),
+        NameSurname: formData.get('editSurname'),
+        Email: formData.get('editEmail'),
+        // Send raw digits for validation on the backend
+        CPF: formData.get('cpf').replace(/\D/g, ''),
+        Number: formData.get('number').replace(/\D/g, ''),
+        CEP: formData.get('cep').replace(/\D/g, ''),
+        Address: formData.get('address'),
+        Complement: formData.get('complement') || null // Send null if empty
     };
 
-    // Remove potentially undefined or null keys if they are optional and empty
-    // This depends on how your backend handles null vs missing keys.
-    // If null is acceptable, this step might not be needed.
-    Object.keys(payload).forEach(key => {
-        if (payload[key] === undefined || payload[key] === null) {
-            delete payload[key];
-        }
-        // Ensure required fields that might be cleaned to empty string are handled
-        // (e.g., if CPF was just formatting characters) - Pydantic should catch this.
-    });
-
+    // Only include password if it's not empty
+    const newPassword = formData.get('editPassword');
+    if (newPassword && newPassword.trim() !== '') {
+        data.Password = newPassword; // Add password to the data object
+    }
+    // --- End of change ---
 
     try {
         const response = await fetch(`/update_user/${userId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload), // Send the cleaned and correctly keyed payload
+            body: JSON.stringify(data), // Send the correctly structured data
         });
+
+        // console.log(response) // Keep for debugging if needed
         const result = await response.json();
+        // console.log(result) // Keep for debugging if needed
 
-        if (!response.ok) {
-             // Handle specific 422 error for better feedback
-            if (response.status === 422) {
-                 // Extract detail if possible, otherwise provide a generic validation message
-                 const errorDetail = result.detail ? (Array.isArray(result.detail) ? result.detail.map(e => `${e.loc[1]}: ${e.msg}`).join(', ') : result.detail) : 'Validation error.';
-                 throw new Error(`Erro de validação: ${errorDetail}`);
-            }
-            // Handle other errors
-            throw new Error(result.error || `HTTP error! status: ${response.status}`);
+        if (!response.ok) { // Check response.ok instead of result.error first
+            // Use the error message from the backend if available
+            throw new Error(result.detail || result.error || `HTTP error! status: ${response.status}`);
         }
-
 
         hideEditModal();
         fetchUsers(); // Refresh table
@@ -181,7 +186,7 @@ editForm.addEventListener('submit', async (event) => {
 
     } catch (error) {
         console.error("Failed to update user:", error);
-        // Display the error message in the designated spot within the modal
+        // Display the specific error message from the backend or the fetch error
         editErrorMsg.textContent = `Erro ao atualizar: ${error.message}`;
         editErrorMsg.style.display = 'block';
     }
@@ -283,15 +288,29 @@ function formatCEP(cep) {
 
 function validateForm() {
     resetErrorMessages();
-    var valid = validateEmptyFields();
+    var fieldsValid = validateEmptyFields();
+    var passwordValid = true; // Assume valid if empty
 
-    if (valid) {
+    // Only validate password if the field is not empty
+    if (editPasswordInput.value.trim() !== '') {
+        passwordValid = validatePasswordEdit();
+    }
+
+    if (fieldsValid && passwordValid) {
         document.getElementById("submitButton").click();
     }
 }
 
 function resetErrorMessages() {
     document.getElementById("errorFields").style.display = 'none';
+    errorPasswordEdit.style.display = 'none'; // Reset password error
+    // Reset other specific errors if needed (CEP, CPF, etc.)
+    document.getElementById("errorCep").style.display = 'none';
+    document.getElementById("errorCpf").style.display = 'none';
+    document.getElementById("errorPhone").style.display = 'none';
+    // Remove error classes
+    const errorFields = editForm.querySelectorAll('.error, .empty-field');
+    errorFields.forEach(field => field.classList.remove('error', 'empty-field'));
 }
 
 function validateEmptyFields() {
@@ -415,3 +434,37 @@ function formatPhone() {
     }
 }
 
+// Add password validation function for the edit form
+function validatePasswordEdit() {
+    const password = editPasswordInput.value;
+    // If password field is empty, it's considered valid (no change)
+    if (!password || password.trim() === '') {
+        editPasswordInput.classList.remove("error");
+        errorPasswordEdit.style.display = 'none';
+        return true;
+    }
+
+    // Regex: At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}$/;
+    if (!passwordRegex.test(password)) {
+        editPasswordInput.classList.add("error");
+        errorPasswordEdit.style.display = 'block';
+        return false;
+    } else {
+        editPasswordInput.classList.remove("error");
+        errorPasswordEdit.style.display = 'none';
+        return true;
+    }
+}
+
+// Add function to toggle password visibility in the edit form
+function togglePasswordVisibilityEdit() {
+    if (editSeePasswordCheckbox.checked) {
+        editPasswordInput.type = 'text';
+    } else {
+        editPasswordInput.type = 'password';
+    }
+}
+
+    }
+}

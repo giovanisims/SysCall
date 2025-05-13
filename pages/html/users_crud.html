@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://kit.fontawesome.com/a97e2a6b17.js" crossorigin="anonymous"></script>
-    <link rel="icon" type="image/png" href="../images/logo.png">
+    <link rel="icon" type="image/x-icon" href="/static/images/logo.ico">
     <link rel="stylesheet" href="static/css/users_crud.css">
     <title>SysCall</title>
 
@@ -27,11 +27,13 @@
             <!-- python verification hell yeah -->
             {% if user_name %}
                 <p class="hello-user"><a href="logout">Olá, {{ user_name }}</a></p>
+                <a href="logout"><i class="fa-solid fa-circle-user"></i></a>
+                <i id="menuButton" class="fa-solid fa-bars"></i>
             {% else %}
                 <p class="hello-user" style="display: none;"></p>
+                <a href="/login"><i class="fa-solid fa-circle-user"></i></a>
+                <i id="menuButton" class="fa-solid fa-bars"></i>
             {% endif %}
-            <a href="/login"><i class="fa-solid fa-circle-user"></i></a>
-            <i id="menuButton" class="fa-solid fa-bars"></i>
         </div>
     </header>
     <div class="title">
@@ -43,8 +45,8 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Nome</th>
-                    <th>Sobrenome</th>
+                    <th>Username</th>
+                    <th>Nome Completo</th>
                     <th>Email</th>
                     <th>CPF</th>
                     <th>Telefone</th>
@@ -95,6 +97,16 @@
     
                 <label for="editComplement">Complemento:</label>
                 <input type="text" id="editComplement" name="complement">
+
+                <label for="editPassword">Nova Senha (deixe em branco para não alterar):</label>
+                <input type="password" id="editPassword" name="editPassword">
+                <div class="see-password">
+                    <div class="input-see-password">
+                        <input type="checkbox" id="editSeePassword" class="see-password-check">
+                    </div>
+                    <label for="editSeePassword" class="see-password-text">Mostrar a senha</label>
+                </div>
+
                 <div class="error-msg">
                     <p id="errorCep">CEP inválido</p>
                     <p id="errorCpf">CPF inválido</p>
@@ -102,6 +114,7 @@
                     <p id="errorEmail">Email inválido</p>
                     <p id="errorName">Nome inválido</p>
                     <p id="errorSurname">Sobrenome inválido</p>
+                    <p id="errorPasswordEdit">A senha deve conter uma letra maiúscula, uma letra minúscula, um número, um caractere especial e 8 digitos</p>
                     <p id="errorFields">Preencha os campos obrigatórios</p>
                 </div>
     

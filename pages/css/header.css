@@ -5,7 +5,7 @@ header{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #1e1e35;
+    background-color: #2C1E5A;
 }
 
 nav{
@@ -46,7 +46,7 @@ nav{
         position: absolute;
         top: 11vh;
         right: 0;
-        background-color: #1e1e35;
+        background-color: #2C1E5A;
         width: 100%;
         flex-direction: column;
         align-items: center;

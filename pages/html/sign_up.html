@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://kit.fontawesome.com/a97e2a6b17.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="static/css/sign_up.css">
-    <link rel="icon" type="image/png" href="../images/logo.png">
+    <link rel="icon" type="image/x-icon" href="/static/images/logo.ico">
     <title>Cadastre-se</title>
 </head>
 <body>
@@ -17,9 +17,9 @@
         </div>
         <nav id="navBar">
             <ul class="menu">
-                <li class="menu-items"><a href="/tickets">Meus chamados</a></li>
-                <li class="menu-items"><a href="users_crud">Usuários</a></li>
-                <li class="menu-items"><a href="#">Contato</a></li>
+                <li class="menu-items"><a href="/login">Meus chamados</a></li>
+                <li class="menu-items"><a href="/login">Usuários</a></li>
+                <li class="menu-items"><a href="/login">Contato</a></li>
             </ul>
         </nav>
         <div class="icons">
@@ -37,12 +37,12 @@
             <form action="/sign_up" method="post">
                 <div class="input-group">
                     <div class="input-container">
-                        <input type="text" id="name" name="name" placeholder=" " class="required">
-                        <label for="name">Nome *</label>
+                        <input type="text" id="namesurname" name="namesurname" placeholder=" " class="required">
+                        <label for="namesurname">Nome completo *</label>
                     </div>
                     <div class="input-container">
-                        <input type="text" id="surname" name="surname" placeholder=" " class="required">
-                        <label for="surname">Sobrenome *</label>
+                        <input type="text" id="username" name="username" placeholder=" " class="required">
+                        <label for="username">Username *</label>
                     </div>
                 </div>
                 <div class="input-container">
@@ -71,10 +71,16 @@
                     </div>
                 </div>
                <div class="input-container">
-                <input type="text" id="address" name="address" placeholder=" ">
+                    <input type="text" id="address" name="address" placeholder=" ">
                     <label for="address">Endereço </label>
                 </div>
-                
+                <div class="input-container">
+                    <select name="role" id="role" class="required">
+                        <option value="0">Selecione seu papel</option>
+                        <option value="1">Usuário</option>
+                        <option value="2">Técnico</option>
+                    </select>
+                </div>
                 <div class="input-container">
                     <input type="password" id="password" name="password" placeholder="" class="required">
                     <label for="password">Senha *</label>
@@ -96,7 +102,7 @@
                     <p id="errorPhone">Telefone inválido</p>
                     <p id="errorEmail">Email inválido</p>
                     <p id="errorName">Nome inválido</p>
-                    <p id="errorSurname">Sobrenome inválido</p>
+                    <p id="errorUsername">Username já existente</p>
                     <p id="errorFields">Preencha os campos obrigatórios</p>
                     <p id="errorPassword">A senha deve conter uma letra maiúscula, uma letra minúscula, um número, um caractere especial e 8 digitos</p>
                     <p id="errorEqualPasswords" class="errorPassword">As senhas devem ser iguais</p>
