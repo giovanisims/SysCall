@@ -4,6 +4,7 @@ import hashlib
 from typing import Optional, Annotated
 import re
 
+from datetime import datetime, timedelta
 import pymysql
 from pymysql import cursors
 from fastapi import (
@@ -25,8 +26,8 @@ DB_CONFIG = {
     # pwsh: [Environment]::SetEnvironmentVariable("foo", "bar", "User")
     'host': os.getenv('DB_HOST', 'localhost'),
     'port' : int(os.getenv('DB_PORT', '3306')),
-    'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'admin'),
+    'user': os.getenv('DB_USER', 'Lucas'),
+    'password': os.getenv('DB_PASSWORD', '2525'),
     'db': 'SysCall',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor,
@@ -35,10 +36,31 @@ DB_CONFIG = {
 def get_db():
     return pymysql.connect(**DB_CONFIG) 
 
+SESSION_TIMEOUT = 10 #seconds
+
 app = FastAPI()
 
+@app.middleware("http")
+async def session_timeout_middleware(request: Request, call_next):
+    if request.url.path in ["/login", "/sign_up", "/static"]:
+        return await call_next(request)
+    
+    last_activity = request.session.get("last_activity")
+    now = datetime.now()
+    
+    if last_activity:
+        # Corrigido o formato para corresponder à data armazenada
+        last_activity = datetime.strptime(last_activity, "%Y-%m-%d %H:%M:%S")
+        if (now - last_activity) > timedelta(seconds=SESSION_TIMEOUT):
+            request.session.clear()
+            return RedirectResponse("/login", status_code=302)
+    
+    request.session["last_activity"] = now.strftime("%Y-%m-%d %H:%M:%S")
+    response = await call_next(request)
+    return response
+
 # Configuração de sessão (chave secreta para cookies de sessão)
-app.add_middleware(SessionMiddleware, secret_key="Syscall", max_age=69)
+app.add_middleware(SessionMiddleware, secret_key="Syscall")
 
 # Configuração de arquivos estáticos
 static_dir = os.path.join(os.path.dirname(__file__), "pages")
@@ -119,7 +141,8 @@ async def read_main(request: Request):
 
 @app.get("/login", response_class=HTMLResponse)
 async def read_login(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    error = request.query_params.get("error")
+    return templates.TemplateResponse("login.html", {"request": request, "error": error})
 
 @app.get("/sign_up", response_class=HTMLResponse)
 async def read_register(request: Request):
@@ -162,7 +185,9 @@ async def login(
                 # Armazena o nome do usuário na sessão
                 request.session["user_name"] = user["NameSurname"]
                 # Agora user["UserRole"] conterá a string do nome da role
-                request.session["user_role"] = user["UserRole"] 
+                request.session["user_role"] = user["UserRole"]
+                
+                request.session["last_activity"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S") 
                 return RedirectResponse("/", status_code=302)
             else:
                 error_message = "Email ou senha inválidos"
