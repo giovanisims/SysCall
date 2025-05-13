@@ -7,6 +7,11 @@ CREATE TABLE Role (
     Role VARCHAR(255)
 );
 
+CREATE TABLE Priority (
+    idPriority INT PRIMARY KEY AUTO_INCREMENT,
+    Priority VARCHAR(255) 
+);
+
 CREATE TABLE User (
     idUser INT PRIMARY KEY AUTO_INCREMENT,
     Username VARCHAR(255) UNIQUE NOT NULL,
@@ -16,7 +21,9 @@ CREATE TABLE User (
     Number VARCHAR(11) NOT NULL,
     Password VARCHAR(32) NOT NULL,
     fk_Role_idRole INT,
-    FOREIGN KEY (fk_Role_idRole) REFERENCES Role(idRole) ON DELETE CASCADE 
+    fk_Priority_idPriority INT,
+    FOREIGN KEY (fk_Role_idRole) REFERENCES Role(idRole) ON DELETE CASCADE,
+    FOREIGN KEY (fk_Priority_idPriority) REFERENCES Priority(idPriority) ON DELETE CASCADE 
 );
 
 

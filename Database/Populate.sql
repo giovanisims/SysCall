@@ -4,6 +4,8 @@ USE SysCall;
 -- Assuming idRole for 'User' will be 1, 'Technician' will be 2, 'System Administrator' will be 3 due to AUTO_INCREMENT
 INSERT INTO Role (Role) VALUES ('User'), ('Technician'), ('System Administrator');
 
+INSERT INTO Role (Role) VALUES ('Baixa'), ('Media'), ('Alta');
+
 -- Insert users  
 INSERT INTO User (Username, Email, NameSurname, CPF, Number, Password, fk_Role_idRole)
 VALUES 
