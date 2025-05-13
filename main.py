@@ -26,7 +26,7 @@ DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'port' : int(os.getenv('DB_PORT', '3306')),
     'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'Lili2209*'),
+    'password': os.getenv('DB_PASSWORD', 'admin'),
     'db': 'SysCall',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor,
@@ -85,6 +85,12 @@ async def read_register(request: Request):
     user_name = request.session.get("user_name", None)
     user_role = request.session.get("user_role", None)
     return templates.TemplateResponse("tickets.html", {"request": request, "user_name": user_name, "user_role": user_role})
+
+@app.get("/ticket_detail", response_class=HTMLResponse)
+async def read_register(request: Request):
+    user_name = request.session.get("user_name", None)
+    user_role = request.session.get("user_role", None)
+    return templates.TemplateResponse("ticket_detail.html", {"request": request, "user_name": user_name, "user_role": user_role})
 
 @app.post("/login")
 async def login(
