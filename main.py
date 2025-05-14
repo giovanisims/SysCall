@@ -182,7 +182,7 @@ async def login(
                     r.role AS UserRole,
                     u.idUser
                 FROM User u
-                JOIN role r ON u.fk_Role_idRole = r.idRole 
+                JOIN Role r ON u.fk_Role_idRole = r.idRole 
                 WHERE u.Email = %s AND u.Password = %s
             """
             cursor.execute(sql_query, (email, hashed_password))
