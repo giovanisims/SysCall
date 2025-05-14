@@ -26,8 +26,8 @@ DB_CONFIG = {
     # pwsh: [Environment]::SetEnvironmentVariable("foo", "bar", "User")
     'host': os.getenv('DB_HOST', 'localhost'),
     'port' : int(os.getenv('DB_PORT', '3306')),
-    'user': os.getenv('DB_USER', 'Lucas'),
-    'password': os.getenv('DB_PASSWORD', '2525'),
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', 'admin'),
     'db': 'SysCall',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor,
@@ -36,7 +36,7 @@ DB_CONFIG = {
 def get_db():
     return pymysql.connect(**DB_CONFIG) 
 
-SESSION_TIMEOUT = 10 #seconds
+SESSION_TIMEOUT = 300 #seconds
 
 app = FastAPI()
 
@@ -179,7 +179,8 @@ async def login(
             sql_query = """
                 SELECT 
                     u.NameSurname, 
-                    r.role AS UserRole 
+                    r.role AS UserRole,
+                    u.idUser
                 FROM User u
                 JOIN role r ON u.fk_Role_idRole = r.idRole 
                 WHERE u.Email = %s AND u.Password = %s
@@ -190,6 +191,10 @@ async def login(
             if user:
                 # Armazena o nome do usuário na sessão
                 request.session["user_name"] = user["NameSurname"]
+
+                #armazena o ID do usuario
+                request.session["user_id"] = user["idUser"]
+
                 # Agora user["UserRole"] conterá a string do nome da role
                 request.session["user_role"] = user["UserRole"]
                 
@@ -517,6 +522,41 @@ async def update_user(
     finally:
         if db:
             db.close()
+
+
+@app.get("/tickets/data")
+async def ticket(
+    request: Request,
+    db=Depends(get_db)
+):
+    try:
+        with db.cursor() as cursor:
+            sql_query = """
+                SELECT 
+                    i.idIssue AS id,
+                    i.Title AS title,
+                    i.Description AS description,
+                    p.Priority AS priority
+                FROM 
+                    Issue i
+                LEFT JOIN 
+                    Priority p ON i.fk_Priority_idPriority = p.idPriority
+                WHERE fk_User_idUser = %s
+            """
+            user_id = request.session.get("user_id")
+            if not user_id:
+                raise HTTPException(status_code=401, detail="User not authenticated")
+            
+            cursor.execute(sql_query, (user_id,))
+            ticket = cursor.fetchall()
+
+            if ticket:
+                return ticket
+            else:
+                error_message = "Ticket não encontrado"
+                return templates.TemplateResponse("tickets.html", {"request": request, "error": error_message})
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":
