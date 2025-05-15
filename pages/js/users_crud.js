@@ -16,7 +16,6 @@ const errorPasswordEdit = document.getElementById('errorPasswordEdit');
 let deleteUrl = null; // To store the URL for deletion
 
 // --- Fetch and Populate Table ---
-// ...existing code...
 async function fetchUsers() {
     try {
         const response = await fetch('/users');
@@ -67,10 +66,6 @@ function hideDeleteModal() {
 
 confirmBtn.addEventListener('click', () => {
     if (deleteUrl) {
-        // Instead of immediate redirect, trigger the delete request from JS
-        // This allows handling the response (like showing the success modal)
-        // For now, we'll keep the redirect approach as implemented in main.py
-        // but a fetch approach here would be more robust for SPA-like behavior.
         window.location.href = deleteUrl;
     }
     hideDeleteModal();
