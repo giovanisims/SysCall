@@ -26,8 +26,8 @@ DB_CONFIG = {
     # pwsh: [Environment]::SetEnvironmentVariable("foo", "bar", "User")
     'host': os.getenv('DB_HOST', 'localhost'),
     'port' : int(os.getenv('DB_PORT', '3306')),
-    'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'admin'),
+    'user': os.getenv('DB_USER', 'Lucas'),
+    'password': os.getenv('DB_PASSWORD', '2525'),
     'db': 'SysCall',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor,
@@ -529,34 +529,67 @@ async def ticket(
     request: Request,
     db=Depends(get_db)
 ):
-    try:
-        with db.cursor() as cursor:
-            sql_query = """
-                SELECT 
-                    i.idIssue AS id,
-                    i.Title AS title,
-                    i.Description AS description,
-                    p.Priority AS priority
-                FROM 
-                    Issue i
-                LEFT JOIN 
-                    Priority p ON i.fk_Priority_idPriority = p.idPriority
-                WHERE fk_User_idUser = %s
-            """
-            user_id = request.session.get("user_id")
-            if not user_id:
-                raise HTTPException(status_code=401, detail="User not authenticated")
-            
-            cursor.execute(sql_query, (user_id,))
-            ticket = cursor.fetchall()
+    user_role = request.session.get("user_role", None)
+    if user_role == "User" or user_role == "System Administrator":
+        try:
+            with db.cursor() as cursor:
+                sql_query = """
+                    SELECT 
+                        i.idIssue AS id,
+                        i.Title AS title,
+                        i.Description AS description,
+                        p.Priority AS priority
+                    FROM 
+                        Issue i
+                    LEFT JOIN 
+                        Priority p ON i.fk_Priority_idPriority = p.idPriority
+                    WHERE fk_User_idUser = %s
+                """
+                user_id = request.session.get("user_id")
+                if not user_id:
+                    raise HTTPException(status_code=401, detail="User not authenticated")
+                
+                cursor.execute(sql_query, (user_id,))
+                ticket = cursor.fetchall()
 
-            if ticket:
-                return ticket
-            else:
-                error_message = "Ticket não encontrado"
-                return templates.TemplateResponse("tickets.html", {"request": request, "error": error_message})
-    finally:
-        db.close()
+                if ticket:
+                    return ticket
+                else:
+                    error_message = "Ticket não encontrado"
+                    return templates.TemplateResponse("tickets.html", {"request": request, "error": error_message})
+        finally:
+            db.close()
+    else:
+        if user_role == "Technician":
+            try:
+                with db.cursor() as cursor:
+                    sql_query = """
+                        SELECT 
+                        i.idIssue AS id,
+                        i.Title AS title,
+                        i.Description AS description,
+                        p.Priority AS priority
+                        FROM 
+                            Issue i
+                        LEFT JOIN 
+                            Priority p ON i.fk_Priority_idPriority = p.idPriority
+                        WHERE fk_User_idUser != %s
+                """
+                    user_id = request.session.get("user_id")
+                    if not user_id:
+                        raise HTTPException(status_code=401, detail="User not authenticated")
+                    
+                    cursor.execute(sql_query, (user_id,))
+                    ticket = cursor.fetchall()
+
+                    if ticket:
+                        return ticket
+                    else:
+                        error_message = "Ticket não encontrado"
+                        return templates.TemplateResponse("tickets.html", {"request": request, "error": error_message})
+            finally:
+                db.close()
+            
 
 
 if __name__ == "__main__":
