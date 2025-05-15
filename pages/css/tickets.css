@@ -100,16 +100,16 @@
     font-weight: bold;
   }
 
-  .high{
+  .Alta{
     background-color: #e74c3c; /* vermelho */
   }
 
-  .medium {
+  .Media {
     background-color: #f1c40f; /* amarelo */
     color: black;
   }
 
-  .low {
+  .Baixa {
     background-color: #2ecc71; /* verde */
   }
   .description{

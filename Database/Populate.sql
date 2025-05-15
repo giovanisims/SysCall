@@ -50,13 +50,13 @@ VALUES
 ('Task');
 
 -- Insert issues associated with the users  
-INSERT INTO Issue (Title, Description, fk_User_idUser, fk_IssueProgress_idIssueProgress, fk_IssueType_idIssueType)
+INSERT INTO Issue (Title, Description, fk_User_idUser, fk_IssueProgress_idIssueProgress, fk_IssueType_idIssueType,fk_Priority_idPriority)
 VALUES 
-('Issue with login functionality', 'User cannot login due to incorrect password validation.', 1, 1, 1),
-('Request for new feature', 'Would like to see a dark mode feature implemented.', 2, 2, 2),
-('System slow on user login', 'User reports system is slow after login.', 3, 1, 1),
-('Cannot access technician panel', 'Technician unable to access specific panel.', 4, 1, 1),
-('Admin dashboard not loading', 'Admin dashboard shows blank page.', 5, 1, 1);
+('Issue with login functionality', 'User cannot login due to incorrect password validation.', 1, 1, 1,1),
+('Request for new feature', 'Would like to see a dark mode feature implemented.', 2, 2, 2, 2),
+('System slow on user login', 'User reports system is slow after login.', 3, 1, 1, 1),
+('Cannot access technician panel', 'Technician unable to access specific panel.', 4, 1, 1, 1),
+('Admin dashboard not loading', 'Admin dashboard shows blank page.', 5, 1, 1, 1);
 
 -- Insert issue history  
 INSERT INTO IssueHistory (fk_Issue_idIssue, Title, Description, fk_IssueProgress_idIssueProgress)

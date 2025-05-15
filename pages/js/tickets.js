@@ -25,7 +25,7 @@ async function fetchTickets() {
                 <div id="${ticket.id}" class="none"></div>
                 <div class="title">
                     ${ticket.title}
-                    <span class="priority medium">${ticket.priority}</span>
+                    <span class="priority ${ticket.priority}">${ticket.priority}</span>
                 </div>
                 <div class="description">${ticket.description}</div>
         
