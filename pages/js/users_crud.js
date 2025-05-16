@@ -18,7 +18,7 @@ let deleteUrl = null; // To store the URL for deletion
 // --- Fetch and Populate Table ---
 async function fetchUsers() {
     try {
-        const response = await fetch('/users');
+        const response = await fetch('/users/crud');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const users = await response.json();
         tableBody.innerHTML = '';

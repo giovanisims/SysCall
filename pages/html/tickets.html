@@ -93,81 +93,16 @@
     </div>
 
     <section id="ticketsList">
-      <div id="tickets" class="tickets">
-
-        <div class="card">
-          <div class="title">
-            Título
-            <span class="priority medium">Média</span>
-          </div>
-          <div class="description">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Sed, atque. Natus ratione hic quis, deleniti at quam vero alias laudantium tempore expedita totam reprehenderit dolorem rem earum, quisquam cumque repellendus!</div>
-        </div>
-        <div class="card">
-          <div class="title">
-            Título
-            <span class="priority low">Baixa</span>
-          </div>
-          <div class="description">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Sed, atque. Natus ratione hic quis, deleniti at quam vero alias laudantium tempore expedita totam reprehenderit dolorem rem earum, quisquam cumque repellendus!</div>
-        </div>
-        <div class="card">
-          <div class="title">
-            Título
-            <span class="priority high">Alta</span>
-          </div>
-          <div class="description">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Sed, atque. Natus ratione hic quis, deleniti at quam vero alias laudantium tempore expedita totam reprehenderit dolorem rem earum, quisquam cumque repellendus!</div>
-        </div>
-        <div class="card">
-          <div class="title">
-            Título
-            <span class="priority medium">Média</span>
-          </div>
-          <div class="description">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Sed, atque. Natus ratione hic quis, deleniti at quam vero alias laudantium tempore expedita totam reprehenderit dolorem rem earum, quisquam cumque repellendus!</div>
-        </div>
-        <div class="card">
-          <div class="title">
-            Título
-            <span class="priority high">Alta</span>
-          </div>
-          <div class="description">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Sed, atque. Natus ratione hic quis, deleniti at quam vero alias laudantium tempore expedita totam reprehenderit dolorem rem earum, quisquam cumque repellendus!</div>
-        </div>
-        <div class="card">
-          <div class="title">
-            Título
-            <span class="priority low">Baixa</span>
-          </div>
-          <div class="description">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Sed, atque. Natus ratione hic quis, deleniti at quam vero alias laudantium tempore expedita totam reprehenderit dolorem rem earum, quisquam cumque repellendus!</div>
-        </div>
-        <div class="card">
-          <div class="title">
-            Título
-            <span class="priority medium">Média</span>
-          </div>
-          <div class="description">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Sed, atque. Natus ratione hic quis, deleniti at quam vero alias laudantium tempore expedita totam reprehenderit dolorem rem earum, quisquam cumque repellendus!</div>
-        </div>
-        <div class="card">
-          <div class="title">
-            Título
-            <span class="priority low">Baixa</span>
-          </div>
-          <div class="description">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Sed, atque. Natus ratione hic quis, deleniti at quam vero alias laudantium tempore expedita totam reprehenderit dolorem rem earum, quisquam cumque repellendus!</div>
-        </div>
-        <div class="card">
-          <div class="title">
-            Título
-            <span class="priority high">Alta</span>
-          </div>
-          <div class="description">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Sed, atque. Natus ratione hic quis, deleniti at quam vero alias laudantium tempore expedita totam reprehenderit dolorem rem earum, quisquam cumque repellendus!</div>
-        </div>
-      
-      </div>
+      <div id="tickets" class="tickets">      
         <!-- Lista de chamados será carregada aqui via JS -->
+      </div>
       </section>
       
     <div id="modalOpenTicket" class="modal hidden">
         <div class="modal-content">
           <span class="close closeModalTicket">&times;</span>
           <h2>Abrir Novo Chamado</h2>
-          <form id="formTicket">
+          <form id="formTicket" action="/tickets/submit" method="POST">
             <label for="title">Título:</label>
             <input type="text" id="title" name="title" required />
     
@@ -176,9 +111,15 @@
     
             <label for="priority">Prioridade:</label>
             <select id="priority" name="priority">
-              <option value="low">Baixa</option>
-              <option value="medium">Média</option>
-              <option value="high">Alta</option>
+              <option value="1">Baixa</option>
+              <option value="2">Média</option>
+              <option value="3">Alta</option>
+            </select>
+            <label for="priority">Tipo:</label>
+            <select id="priority" name="priority">
+              <option value="1">Bug</option>
+              <option value="2">Feature Request</option>
+              <option value="3">Task</option>
             </select>
             <div class="form-actions-container">
                 <div class="form-actions">
