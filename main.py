@@ -165,10 +165,37 @@ async def getTicketDetail(
 
 
 @app.get("/ticket_detail_form", response_class=HTMLResponse)
-async def read_register(request: Request):
-    user_name = request.session.get("user_name", None)
-    user_role = request.session.get("user_role", None)
-    return templates.TemplateResponse("ticket_detail_form.html", {"request": request, "user_name": user_name, "user_role": user_role})
+async def getTicketDetail(
+    request: Request,
+    ticketId: int,
+    db=Depends(get_db)
+):
+    try:
+        with db.cursor() as cursor:
+            sql_query = """
+                SELECT
+                    i.idIssue,
+                    i.Title,
+                    i.Description
+                FROM
+                    Issue i
+                WHERE idIssue = %s
+            """
+
+            cursor.execute(sql_query, (ticketId,))
+            TicketEdit = cursor.fetchone()
+
+            user_name = request.session.get("user_name", None)
+            user_role = request.session.get("user_role", None)
+
+        if TicketEdit:
+            return templates.TemplateResponse("ticket_detail_form.html", {"request": request, "user_name": user_name, "user_role": user_role, "ticket": TicketEdit})
+        else:
+            error_message = "Ticket não encontrado"
+            return templates.TemplateResponse("ticket_detail_form.html", {"request": request, "user_name": user_name, "user_role": user_role, "error": error_message})
+
+    finally:
+        db.close()
 
 
 @app.post("/login")
@@ -627,7 +654,7 @@ async def ticket(
 
 
 @app.post("/tickets/submit")
-async def sign_up(
+async def ticketsSubmit(
     request: Request,
     title: str = Form(...),
     description: str = Form(...),
@@ -651,6 +678,64 @@ async def sign_up(
             return RedirectResponse("/tickets", status_code=302)
     finally:
         if db:
+            db.close()
+
+@app.post("/tickets/answer")
+async def ticketsAnswer(
+    request: Request,
+    ticketId: int = Form(...),
+    answer_title: str = Form(...),
+    answer_description: str = Form(...),
+
+    db=Depends(get_db)
+):
+    Title =  answer_title
+    Description = answer_description
+    TicketId = ticketId
+
+    try:
+        with db.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO IssueHistory (fk_Issue_idIssue, Title, Description) VALUES (%s, %s, %s)",
+                (TicketId, Title, Description)
+            )
+            cursor.execute(
+                "UPDATE Issue SET fk_IssueProgress_idIssueProgress = %s WHERE idIssue = %s",
+                (2, TicketId) 
+            )
+            db.commit()
+            return RedirectResponse(f"/ticket_detail?ticketId={TicketId}", status_code=302)
+    finally:
+        if db:
+            db.close()
+
+
+@app.get("/tickets/history")
+async def ticketHistory(
+    request: Request,
+    ticketId: int,
+    db=Depends(get_db)
+):
+        try:
+            with db.cursor() as cursor:
+                sql_query = """
+                    SELECT
+                        Title,
+                        Description
+                    FROM
+                        issueHistory
+                    WHERE fk_Issue_idIssue = %s
+                    ORDER BY 1 DESC;
+                """
+                cursor.execute(sql_query, (ticketId,))
+                ticket = cursor.fetchall()
+
+                if ticket:
+                    return ticket
+                else:
+                    error_message = "Ticket não encontrado"
+                    return templates.TemplateResponse("ticket.html", {"request": request, "error": error_message})
+        finally:
             db.close()
 
 

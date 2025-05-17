@@ -76,34 +76,23 @@
     <div class="ticket-form-container">
     <div class="form-container">
         <div class="title">Chamados</div>
-        <form action="">
+        <form action="/tickets/answer" method="POST">
+            <input id="ticketId" name="ticketId" type="text" value="{{ ticket.idIssue }}" class="none" readonly/>
             <div class="form-group">
                 <label for="title">Título</label>
-                <input id="title" type="text" placeholder="Título" readonly/>
+                <input id="title" type="text" placeholder="{{ ticket.Title }}" readonly/>
             </div>
             <div class="form-group">
                 <label for="description">Descrição</label>
-                <textarea name="description" id="description" readonly>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? O Lucas é lindo? Corrupti doloremque itaque obcaecati!Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? Illo at libero nostrum vero? Corrupti doloremque itaque obcaecati!Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? O Lucas é lindo? Corrupti doloremque itaque obcaecati!Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? Illo at libero nostrum vero? Corrupti doloremque itaque obcaecati!</textarea>
+                <textarea name="description" id="description" readonly>{{ ticket.Description }}</textarea>
             </div>
             <div class="form-group">
-                <label for="technician">Técnico</label>
-                <input type="text" name="technician" id="technician" placeholder="Atribuir a mim" readonly>
+                <label for="answer_title">Título da Resolução *</label>
+                <input type="text" name="answer_title" id="answer_title"/>
             </div>
             <div class="form-group">
-                <label for="progress">Progresso</label>
-                <select name="progress" id="progress">
-                    <option value="open">Em aberto</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="type">Tipo</label>
-                <select name="type" id="type">
-                    <option value="bug">Bug</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="comments">Comentário</label>
-                <textarea name="comments" id="comments"></textarea>
+                <label for="answer_description">Resolução/comentário *</label>
+                <textarea name="answer_description" id="answer_description"></textarea>
             </div>
             <button>Enviar</button>
         </form>

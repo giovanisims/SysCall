@@ -38,16 +38,18 @@ VALUES
 -- Insert issue progress states  
 INSERT INTO IssueProgress (StateName)
 VALUES 
-('Open'),
-('In Progress'),
-('Closed');
+('Em aberto'),
+('Em andamento'),
+('Resolvido'),
+('Fechado');
 
 -- Insert issue types  
 INSERT INTO IssueType (StateName)
 VALUES 
-('Bug'),
-('Feature Request'),
-('Task');
+('Erro'),
+('Melhoria'),
+('Tarefa');
+
 
 -- Insert issues associated with the users  
 INSERT INTO Issue (Title, Description, fk_User_idUser, fk_IssueProgress_idIssueProgress, fk_IssueType_idIssueType,fk_Priority_idPriority)
