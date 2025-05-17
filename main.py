@@ -1,4 +1,4 @@
-import uvicorn  
+import uvicorn
 import os
 import hashlib
 from typing import Optional, Annotated
@@ -33,28 +33,31 @@ DB_CONFIG = {
     'cursorclass': cursors.DictCursor,
 }
 
-def get_db():
-    return pymysql.connect(**DB_CONFIG) 
 
-SESSION_TIMEOUT = 300 #seconds
+def get_db():
+    return pymysql.connect(**DB_CONFIG)
+
+
+SESSION_TIMEOUT = 300  # seconds
 
 app = FastAPI()
+
 
 @app.middleware("http")
 async def session_timeout_middleware(request: Request, call_next):
     if request.url.path in ["/login", "/sign_up", "/static"]:
         return await call_next(request)
-    
+
     last_activity = request.session.get("last_activity")
     now = datetime.now()
-    
+
     if last_activity:
         # Corrigido o formato para corresponder à data armazenada
         last_activity = datetime.strptime(last_activity, "%Y-%m-%d %H:%M:%S")
         if (now - last_activity) > timedelta(seconds=SESSION_TIMEOUT):
             request.session.clear()
             return RedirectResponse("/login", status_code=302)
-    
+
     request.session["last_activity"] = now.strftime("%Y-%m-%d %H:%M:%S")
     response = await call_next(request)
     return response
@@ -65,11 +68,11 @@ app.add_middleware(SessionMiddleware, secret_key="Syscall")
 # Configuração de arquivos estáticos
 static_dir = os.path.join(os.path.dirname(__file__), "pages")
 if not os.path.exists(static_dir):
-     # Handle case where directory might not exist yet or path is wrong
-     print(f"Warning: Static directory not found at {static_dir}")
-     # Decide how to handle this - maybe create it, or just proceed cautiously.
-     # For now, we'll let the mount potentially fail if it doesn't exist.
-     pass
+    # Handle case where directory might not exist yet or path is wrong
+    print(f"Warning: Static directory not found at {static_dir}")
+    # Decide how to handle this - maybe create it, or just proceed cautiously.
+    # For now, we'll let the mount potentially fail if it doesn't exist.
+    pass
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
@@ -82,7 +85,6 @@ if not os.path.exists(templates_dir):
 templates = Jinja2Templates(directory=templates_dir)
 
 
-
 # Endpoints das páginas estáticas
 @app.get("/users_crud", response_class=HTMLResponse)
 async def read_register(request: Request):
@@ -90,20 +92,24 @@ async def read_register(request: Request):
     user_role = request.session.get("user_role", None)
     return templates.TemplateResponse("users_crud.html", {"request": request, "user_name": user_name, "user_role": user_role})
 
+
 @app.get("/", response_class=HTMLResponse)
 async def read_main(request: Request):
     user_name = request.session.get("user_name", None)
     user_role = request.session.get("user_role", None)
     return templates.TemplateResponse("main.html", {"request": request, "user_name": user_name, "user_role": user_role})
 
+
 @app.get("/login", response_class=HTMLResponse)
 async def read_login(request: Request):
     error = request.query_params.get("error")
     return templates.TemplateResponse("login.html", {"request": request, "error": error})
 
+
 @app.get("/sign_up", response_class=HTMLResponse)
 async def read_register(request: Request):
     return templates.TemplateResponse("sign_up.html", {"request": request})
+
 
 @app.get("/tickets", response_class=HTMLResponse)
 async def read_register(request: Request):
@@ -111,17 +117,59 @@ async def read_register(request: Request):
     user_role = request.session.get("user_role", None)
     return templates.TemplateResponse("tickets.html", {"request": request, "user_name": user_name, "user_role": user_role})
 
+
 @app.get("/ticket_detail", response_class=HTMLResponse)
-async def read_register(request: Request):
-    user_name = request.session.get("user_name", None)
-    user_role = request.session.get("user_role", None)
-    return templates.TemplateResponse("ticket_detail.html", {"request": request, "user_name": user_name, "user_role": user_role})
+async def getTicketDetail(
+    request: Request,
+    ticketId: int,
+    db=Depends(get_db)
+):
+    try:
+        with db.cursor() as cursor:
+            sql_query = """
+                SELECT
+                    i.idIssue,
+                    i.Title,
+                    i.Description,
+                    i.CreatedDate,
+                    u.Username,
+                    ip.StateName AS ProgressName,
+                    it.StateName AS TypeName,
+                    p.Priority AS PriorityName
+                FROM
+                    Issue i
+                LEFT JOIN User u ON i.fk_User_idUser = u.idUser
+                LEFT JOIN IssueProgress ip ON i.fk_IssueProgress_idIssueProgress = ip.idIssueProgress
+                LEFT JOIN IssueType it ON i.fk_IssueType_idIssueType = it.idIssueType
+                LEFT JOIN Priority p ON i.fk_Priority_idPriority = p.idPriority
+                WHERE idIssue = %s
+            """
+
+            cursor.execute(sql_query, (ticketId,))
+            TicketDetail = cursor.fetchone()
+
+            if TicketDetail and "CreatedDate" in TicketDetail:
+                TicketDetail["CreatedDate"] = TicketDetail["CreatedDate"].strftime("%d/%m/%Y")
+
+            user_name = request.session.get("user_name", None)
+            user_role = request.session.get("user_role", None)
+
+        if TicketDetail:
+            return templates.TemplateResponse("ticket_detail.html", {"request": request, "user_name": user_name, "user_role": user_role, "ticket": TicketDetail})
+        else:
+            error_message = "Ticket não encontrado"
+            return templates.TemplateResponse("ticket_detail.html", {"request": request, "user_name": user_name, "user_role": user_role, "error": error_message})
+
+    finally:
+        db.close()
+
 
 @app.get("/ticket_detail_form", response_class=HTMLResponse)
 async def read_register(request: Request):
     user_name = request.session.get("user_name", None)
     user_role = request.session.get("user_role", None)
     return templates.TemplateResponse("ticket_detail_form.html", {"request": request, "user_name": user_name, "user_role": user_role})
+
 
 @app.post("/login")
 async def login(
@@ -149,20 +197,22 @@ async def login(
                 # Armazena o nome do usuário na sessão
                 request.session["user_name"] = user["NameSurname"]
 
-                #armazena o ID do usuario
+                # armazena o ID do usuario
                 request.session["user_id"] = user["idUser"]
 
                 # Agora user["UserRole"] conterá a string do nome da role
                 request.session["user_role"] = user["UserRole"]
-                
-                request.session["last_activity"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S") 
+
+                request.session["last_activity"] = datetime.utcnow().strftime(
+                    "%Y-%m-%d %H:%M:%S")
                 return RedirectResponse("/", status_code=302)
             else:
                 error_message = "Email ou senha inválidos"
                 return templates.TemplateResponse("login.html", {"request": request, "error": error_message})
     finally:
         db.close()
-        
+
+
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()
@@ -180,7 +230,7 @@ async def sign_up(
     cep: str = Form(...),
     address: str = Form(...),
     role: int = Form(...),
-    observation: str = Form(None), # None lets the field be null
+    observation: str = Form(None),  # None lets the field be null
     password: str = Form(...),
     db=Depends(get_db)
 ):
@@ -192,9 +242,10 @@ async def sign_up(
     Email = email
     CPF = cpf.replace('.', '').replace('-', '')
     CEP = cep.replace('-', '').replace('.', '')
-    Number = phone.replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
-    Address_text = address # Renamed to avoid conflict with Address table name
-    Complement_text = observation # Renamed for clarity
+    Number = phone.replace('(', '').replace(
+        ')', '').replace('-', '').replace(' ', '')
+    Address_text = address  # Renamed to avoid conflict with Address table name
+    Complement_text = observation  # Renamed for clarity
     fk_Role_idRole = role
 
     # Hash the password using MD5
@@ -203,16 +254,17 @@ async def sign_up(
     try:
         with db.cursor() as cursor:
             # Checks if the username or email are already in use, if so returns an error menssage
-            cursor.execute("SELECT * FROM User WHERE Username = %s OR Email = %s", (Username, Email))
+            cursor.execute(
+                "SELECT * FROM User WHERE Username = %s OR Email = %s", (Username, Email))
             existing_user = cursor.fetchone()
-
 
             if existing_user:
                 error_message = "Username or email already in use."
                 return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
 
             # Validate the role ID against the Role table
-            cursor.execute("SELECT idRole FROM Role WHERE idRole = %s", (fk_Role_idRole,))
+            cursor.execute(
+                "SELECT idRole FROM Role WHERE idRole = %s", (fk_Role_idRole,))
             role_exists = cursor.fetchone()
 
             if not role_exists:
@@ -224,22 +276,25 @@ async def sign_up(
             # First, insert the user into the User table
             cursor.execute(
                 "INSERT INTO User (Username, Email, NameSurname, CPF, Number, Password, fk_Role_idRole) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (Username, Email, NameSurname, CPF, Number, Password, fk_Role_idRole)
+                (Username, Email, NameSurname, CPF,
+                 Number, Password, fk_Role_idRole)
             )
             user_id = cursor.lastrowid
             # No commit here yet, do it after all related inserts
 
             # Now, insert the address into the Address table, referencing the User
-            cursor.execute("INSERT INTO Address (Address, fk_User_idUser, CEP) VALUES (%s, %s, %s)", (Address_text, user_id, CEP))
-            address_id = cursor.lastrowid # Get the ID of the inserted address
+            cursor.execute(
+                "INSERT INTO Address (Address, fk_User_idUser, CEP) VALUES (%s, %s, %s)", (Address_text, user_id, CEP))
+            address_id = cursor.lastrowid  # Get the ID of the inserted address
             # No commit here yet
 
             # Insert the complement into the DB if it exists, referencing the Address
             if Complement_text:
-                 cursor.execute("INSERT INTO Complement (Complement, fk_Address_idAddress) VALUES (%s, %s)", (Complement_text, address_id)) # Use address_id
-                 # No commit here yet
+                cursor.execute("INSERT INTO Complement (Complement, fk_Address_idAddress) VALUES (%s, %s)", (
+                    Complement_text, address_id))  # Use address_id
+                # No commit here yet
 
-            db.commit() # Commit all changes together
+            db.commit()  # Commit all changes together
 
             return RedirectResponse("/login", status_code=302)
 
@@ -259,6 +314,8 @@ async def sign_up(
             db.close()
 
 # User reference model
+
+
 class UserUpdate(BaseModel):
     Username: str
     NameSurname: str
@@ -268,8 +325,9 @@ class UserUpdate(BaseModel):
     CEP: Annotated[str, Field(pattern=r'^\d{8}$')]
     Address: Optional[str] = None
     Complement: Optional[str] = None
-    Password: Optional[str] = None # Add optional password field
+    Password: Optional[str] = None  # Add optional password field
     fk_Role_idRole: int
+
 
 @app.get("/delete_user")
 async def delete_user(
@@ -279,32 +337,36 @@ async def delete_user(
     try:
         with db.cursor() as cursor:
             # 1. Find the address ID associated with the user
-            cursor.execute("SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))
+            cursor.execute(
+                "SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))
             address_result = cursor.fetchone()
 
             if address_result:
                 address_id = address_result['idAddress']
                 # 2. Delete related records from Complement using the address ID
-                cursor.execute("DELETE FROM Complement WHERE fk_Address_idAddress = %s", (address_id,))
+                cursor.execute(
+                    "DELETE FROM Complement WHERE fk_Address_idAddress = %s", (address_id,))
                 # No commit yet
 
             # 3. Delete related records from Address
-            cursor.execute("DELETE FROM Address WHERE fk_User_idUser = %s", (user_id,))
+            cursor.execute(
+                "DELETE FROM Address WHERE fk_User_idUser = %s", (user_id,))
             # No commit yet
 
             # 4. Finally, delete the user
             cursor.execute("DELETE FROM User WHERE idUser = %s", (user_id,))
 
-            db.commit() # Commit all deletions together
+            db.commit()  # Commit all deletions together
 
             # Redirect back with a success flag
             return RedirectResponse("/users_crud?deleted=true", status_code=302)
     except Exception as e:
-        db.rollback() # Rollback all changes if any step fails
+        db.rollback()  # Rollback all changes if any step fails
         print(f"Error deleting user {user_id}: {e}")
         # Raise HTTPException which FastAPI/Starlette can handle
         # You might want a specific error page or message on the frontend
-        raise HTTPException(status_code=500, detail=f"Failed to delete user: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to delete user: {e}")
     finally:
         if db:
             db.close()
@@ -335,6 +397,7 @@ async def get_users(db=Depends(get_db)):
         if db:
             db.close()
 
+
 @app.get("/user/{user_id}", response_class=JSONResponse)
 async def get_user(user_id: int, db=Depends(get_db)):
     try:
@@ -353,10 +416,10 @@ async def get_user(user_id: int, db=Depends(get_db)):
             cursor.execute(sql, (user_id,))
             user = cursor.fetchone()
             if not user:
-                raise HTTPException(status_code=404, detail="User not found") 
+                raise HTTPException(status_code=404, detail="User not found")
             return user
     except HTTPException as http_exc:
-         raise http_exc # Re-raise HTTPException
+        raise http_exc  # Re-raise HTTPException
     except Exception as e:
         print(f"Error fetching user {user_id}: {e}")
         # Return error as JSON for the frontend to handle
@@ -380,13 +443,15 @@ async def update_user(
     if len(clean_cpf) != 11:
         raise HTTPException(status_code=400, detail="Invalid CPF format.")
     if not (10 <= len(clean_number) <= 11):
-        raise HTTPException(status_code=400, detail="Invalid phone number format.")
+        raise HTTPException(
+            status_code=400, detail="Invalid phone number format.")
     if len(clean_cep) != 8:
         raise HTTPException(status_code=400, detail="Invalid CEP format.")
 
     # Validate new password if provided
     hashed_password = None
-    if user_data.Password and user_data.Password.strip():  # Check if password is provided and not just whitespace
+    # Check if password is provided and not just whitespace
+    if user_data.Password and user_data.Password.strip():
         if not re.match(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}", user_data.Password):
             raise HTTPException(
                 status_code=400,
@@ -402,7 +467,8 @@ async def update_user(
                 (user_data.Email, user_data.Username, user_id)
             )
             if cursor.fetchone():
-                raise HTTPException(status_code=409, detail="Email or Username already in use by another user.")
+                raise HTTPException(
+                    status_code=409, detail="Email or Username already in use by another user.")
 
             # 2. Update User table
             user_sql_base = """
@@ -423,10 +489,12 @@ async def update_user(
             user_sql = user_sql_base + " WHERE idUser = %s"
             params.append(user_id)
 
-            cursor.execute(user_sql, tuple(params))  # Execute with all parameters
+            # Execute with all parameters
+            cursor.execute(user_sql, tuple(params))
 
             # 3. Find or Create Address and get its ID
-            cursor.execute("SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))
+            cursor.execute(
+                "SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))
             address_row = cursor.fetchone()
             address_id = None
 
@@ -435,16 +503,20 @@ async def update_user(
                 # Update existing address if provided
                 if user_data.Address is not None or user_data.CEP is not None:  # Check if address or CEP data is provided
                     addr_sql = "UPDATE Address SET Address = %s, CEP = %s WHERE idAddress = %s"
-                    cursor.execute(addr_sql, (user_data.Address, clean_cep, address_id))
-            elif user_data.Address is not None or user_data.CEP is not None:  # Only insert if address or CEP data is provided
+                    cursor.execute(
+                        addr_sql, (user_data.Address, clean_cep, address_id))
+            # Only insert if address or CEP data is provided
+            elif user_data.Address is not None or user_data.CEP is not None:
                 # Insert new address
                 addr_sql = "INSERT INTO Address (Address, fk_User_idUser, CEP) VALUES (%s, %s, %s)"
-                cursor.execute(addr_sql, (user_data.Address, user_id, clean_cep))
+                cursor.execute(
+                    addr_sql, (user_data.Address, user_id, clean_cep))
                 address_id = cursor.lastrowid  # Get the new address ID
 
             # 4. Update Complement table using the address_id (if address exists)
             if address_id:  # Only manage complement if an address exists/was created
-                cursor.execute("SELECT idComplement FROM Complement WHERE fk_Address_idAddress = %s", (address_id,))
+                cursor.execute(
+                    "SELECT idComplement FROM Complement WHERE fk_Address_idAddress = %s", (address_id,))
                 complement_row = cursor.fetchone()
 
                 if complement_row:
@@ -452,7 +524,8 @@ async def update_user(
                     if user_data.Complement:
                         # Update existing complement
                         comp_sql = "UPDATE Complement SET Complement = %s WHERE idComplement = %s"
-                        cursor.execute(comp_sql, (user_data.Complement, complement_id))
+                        cursor.execute(
+                            comp_sql, (user_data.Complement, complement_id))
                     else:
                         # Delete existing complement if new value is empty/null
                         comp_sql = "DELETE FROM Complement WHERE idComplement = %s"
@@ -460,7 +533,8 @@ async def update_user(
                 elif user_data.Complement:  # Only insert if complement is provided
                     # Insert new complement
                     comp_sql = "INSERT INTO Complement (Complement, fk_Address_idAddress) VALUES (%s, %s)"
-                    cursor.execute(comp_sql, (user_data.Complement, address_id))
+                    cursor.execute(
+                        comp_sql, (user_data.Complement, address_id))
 
             db.commit()  # Commit all changes together
             return {"message": "User updated successfully"}
@@ -471,11 +545,13 @@ async def update_user(
     except pymysql.err.IntegrityError as ie:
         db.rollback()
         print(f"Integrity error updating user {user_id}: {ie}")
-        raise HTTPException(status_code=400, detail=f"Database integrity error: {ie}")
+        raise HTTPException(
+            status_code=400, detail=f"Database integrity error: {ie}")
     except Exception as e:
         db.rollback()
         print(f"Error updating user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to update user: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to update user: {e}")
     finally:
         if db:
             db.close()
@@ -504,8 +580,9 @@ async def ticket(
                 """
                 user_id = request.session.get("user_id")
                 if not user_id:
-                    raise HTTPException(status_code=401, detail="User not authenticated")
-                
+                    raise HTTPException(
+                        status_code=401, detail="User not authenticated")
+
                 cursor.execute(sql_query, (user_id,))
                 ticket = cursor.fetchall()
 
@@ -534,8 +611,9 @@ async def ticket(
                 """
                     user_id = request.session.get("user_id")
                     if not user_id:
-                        raise HTTPException(status_code=401, detail="User not authenticated")
-                    
+                        raise HTTPException(
+                            status_code=401, detail="User not authenticated")
+
                     cursor.execute(sql_query, (user_id,))
                     ticket = cursor.fetchall()
 
@@ -546,25 +624,28 @@ async def ticket(
                         return templates.TemplateResponse("tickets.html", {"request": request, "error": error_message})
             finally:
                 db.close()
-            
+
+
 @app.post("/tickets/submit")
 async def sign_up(
     request: Request,
     title: str = Form(...),
     description: str = Form(...),
     priority: int = Form(...),
+    type: int = Form(...),
     db=Depends(get_db)
 ):
     Title = title
     Description = description
     Priority = priority
+    Type = type
 
     try:
         with db.cursor() as cursor:
             user_id = request.session.get("user_id")
             cursor.execute(
-                "INSERT INTO Issue (Title, Description, fk_User_idUser, fk_Priority_idPriority) VALUES (%s, %s, %s, %s)",
-                (Title, Description, user_id, Priority)
+                "INSERT INTO Issue (Title, Description, fk_User_idUser, fk_Priority_idPriority, fk_IssueType_idIssueType) VALUES (%s, %s, %s, %s, %s)",
+                (Title, Description, user_id, Priority, Type)
             )
             db.commit()
             return RedirectResponse("/tickets", status_code=302)

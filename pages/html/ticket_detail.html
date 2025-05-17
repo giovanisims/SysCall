@@ -77,10 +77,9 @@
         <div class="ticket">
             <div class="main">
                 <div class="ticket-info">
-                    <div class="title">Título</div>
+                    <div class="title">{{ ticket.Title }}</div>
                     <div class="description">
-                        Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? O Lucas é lindo? Corrupti doloremque itaque obcaecati!Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? Illo at libero nostrum vero? Corrupti doloremque itaque obcaecati!
-                        Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? O Lucas é lindo? Corrupti doloremque itaque obcaecati!Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam, voluptate! Sunt iste sed maiores nam voluptate eos id nisi ad impedit? Illo at libero nostrum vero? Corrupti doloremque itaque obcaecati!
+                        {{ticket.Description }}
                     </div>
                 </div>
                 <div class="ticket-history">
@@ -104,7 +103,7 @@
                             <span class="label">Cliente</span>
                         </div>
                         <div class="data">
-                            <span>Username</span>
+                            <span>{{ ticket.Username }}</span>
                         </div>
                     </div>
                     <div class="details-line">
@@ -120,7 +119,7 @@
                             <span class="label">Tipo</span>
                         </div>
                         <div class="data">
-                            <span>Bug</span>
+                            <span>{{ ticket.TypeName }}</span>
                         </div>
                     </div>
                     <div class="details-line">
@@ -128,7 +127,7 @@
                             <span class="label">Data de criação</span>
                         </div>
                         <div class="data">
-                            <span>12/05/2025</span>
+                            <span>{{ ticket.CreatedDate }}</span>
                         </div>
                     </div>
                     <div class="details-line">
@@ -136,7 +135,7 @@
                             <span class="label">Progresso</span>
                         </div>
                         <div class="data">
-                            <span>Em aberto</span>
+                            <span>{{ ticket.ProgressName }}</span>
                         </div>
                     </div>
                     <div class="button-edit">

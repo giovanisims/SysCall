@@ -1,7 +1,7 @@
 function openModalForm() {
     document.getElementById('modalOpenTicket').classList.remove('hidden');
 }
-  
+
 function closeModalForm() {
     document.getElementById('modalOpenTicket').classList.add('hidden');
     document.getElementById('formTicket').reset();
@@ -16,18 +16,19 @@ async function fetchTickets() {
         const tickets = await response.json();
 
         ticketList.innerHTML = '';
-        console.log(tickets); 
+        console.log(tickets);
 
         tickets.forEach(ticket => {
             const card = document.createElement('div');
             card.classList.add('card');
             card.innerHTML = `
-                <div id="${ticket.id}" class="none"></div>
-                <div class="title">
-                    ${ticket.title}
-                    <span class="priority ${ticket.priority}">${ticket.priority}</span>
+                <div onclick="window.location.href='/ticket_detail?ticketId=${ticket.id}'">
+                    <div class="title">
+                        ${ticket.title}
+                        <span class="priority ${ticket.priority}">${ticket.priority}</span>
+                    </div>
+                    <div class="description">${ticket.description}</div>
                 </div>
-                <div class="description">${ticket.description}</div>
         
             `;
             ticketList.appendChild(card);
