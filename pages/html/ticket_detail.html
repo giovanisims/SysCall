@@ -90,26 +90,6 @@
                 <div class="ticket-history">
                     <div class="title">Histórico</div>
                     <div id="ticketHistory" class="history">
-                        <div class="history-card">
-                            <div class="card-title">Título</div>
-                            <div class="card-description">Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                                Expedita, veniam quaerat? Soluta pariatur vitae laborum quia, corporis doloribus
-                                dignissimos neque deleniti reprehenderit dolor inventore minima sapiente delectus
-                                officiis nobis in! Lorem ipsum dolor sit amet consectetur, adipisicing elit. Atque
-                                accusamus, eveniet quisquam eaque veritatis suscipit quod odit ipsum, adipisci
-                                temporibus corporis perspiciatis harum incidunt. Voluptate rem quo sed tempore harum.
-                            </div>
-                        </div>
-                        <div class="history-card">
-                            <div class="card-title">Título</div>
-                            <div class="card-description">Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                                Expedita, veniam quaerat? Soluta pariatur vitae laborum quia, corporis doloribus
-                                dignissimos neque deleniti reprehenderit dolor inventore minima sapiente delectus
-                                officiis nobis in! Lorem ipsum dolor sit amet consectetur, adipisicing elit. Atque
-                                accusamus, eveniet quisquam eaque veritatis suscipit quod odit ipsum, adipisci
-                                temporibus corporis perspiciatis harum incidunt. Voluptate rem quo sed tempore harum.
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -155,41 +135,68 @@
                             <span>{{ ticket.ProgressName }}</span>
                         </div>
                     </div>
+                    {% if user_role == "Technician" and ticket.ProgressName != "Resolvido" %}
                     <div class="button-edit">
                         <button type="button"
                             onclick="window.location.href='/ticket_detail_form?ticketId={{ticket.idIssue}}'">Responder</button>
+                    </div>
+                    {% elif user_role == "User" and ticket.ProgressName != "Resolvido" %}
+                    <div class="button-edit">
+                        <button type="button"
+                            onclick="window.location.href='/tickets/finish?ticketId={{ticket.idIssue}}'">
+                            Marcar como resolvido
+                        </button>
+                        <div id="answerHistory" style="display: none;">
+                            <button type="button"
+                                onclick="window.location.href='/ticket_detail_form?ticketId={{ticket.idIssue}}'">Responder</button>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            fetchHistory();
-        });
-        async function fetchHistory() {
-            try {
-                const ticketId = document.getElementById("ticketId").dataset.ticketId;
-                var divHistory = document.getElementById("ticketHistory");
-                const response = await fetch(`/tickets/history?ticketId=${ticketId}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const historyItems = await response.json();
-                divHistory.innerHTML = '';
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                fetchHistory();
 
-                historyItems.forEach(item => {
-                    const div = document.createElement('div');
-                    div.classList.add("history-card")
-                    div.innerHTML = `
-                <div class="card-title">${item.Title}</div>
-                <div class="card-description">${item.Description}</div>
-            `;
-                    divHistory.appendChild(div);
-                });
-            } catch (error) {
-                console.error("Erro ao buscar histórico:", error);
-                divHistory.innerHTML = '<div class="no-history-message">Nenhum histórico disponível para este chamado.</div>';
+            });
+            async function fetchHistory() {
+                try {
+                    const ticketId = document.getElementById("ticketId").dataset.ticketId;
+                    const divHistory = document.getElementById("ticketHistory");
+                    const response = await fetch(`/tickets/history?ticketId=${ticketId}`);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const historyItems = await response.json();
+
+                    divHistory.innerHTML = '';
+
+                    if (!Array.isArray(historyItems) || historyItems.length === 0) {
+                        divHistory.innerHTML = '<div class="no-history-message">Nenhum histórico disponível para este chamado.</div>';
+                        return;
+                    }
+
+
+                    const answerButton = document.getElementById("answerHistory");
+                    if (answerButton) {
+                        answerButton.style.display = "block";
+                    }
+
+                    historyItems.forEach(item => {
+                        const div = document.createElement('div');
+                        div.classList.add("history-card")
+                        div.innerHTML = `
+                            <div class="card-title">${item.Title}</div>
+                            <div class="card-description">${item.Description}</div>
+                        `;
+                        divHistory.appendChild(div);
+                    });
+
+                } catch (error) {
+                    console.error("Erro ao buscar histórico:", error);
+                    divHistory.innerHTML = '<div class="no-history-message">Erro ao carregar histórico.</div>';
+                }
             }
-        }
 
     </script>
 </body>

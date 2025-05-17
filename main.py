@@ -152,7 +152,8 @@ async def getTicketDetail(
             TicketDetail = cursor.fetchone()
 
             if TicketDetail and "CreatedDate" in TicketDetail:
-                TicketDetail["CreatedDate"] = TicketDetail["CreatedDate"].strftime("%d/%m/%Y")
+                TicketDetail["CreatedDate"] = TicketDetail["CreatedDate"].strftime(
+                    "%d/%m/%Y")
 
             if TicketDetail and TicketDetail.get("TechnicianUsername") is None:
                 TicketDetail["TechnicianUsername"] = "-"
@@ -686,6 +687,7 @@ async def ticketsSubmit(
         if db:
             db.close()
 
+
 @app.post("/tickets/history/submit")
 async def ticketsAnswer(
     request: Request,
@@ -695,7 +697,7 @@ async def ticketsAnswer(
 
     db=Depends(get_db)
 ):
-    Title =  answer_title
+    Title = answer_title
     Description = answer_description
     TicketId = ticketId
     TechnicianId = request.session.get("user_id")
@@ -707,11 +709,11 @@ async def ticketsAnswer(
             )
             cursor.execute(
                 "UPDATE Issue SET fk_IssueProgress_idIssueProgress = %s WHERE idIssue = %s",
-                (2, TicketId) 
+                (2, TicketId)
             )
             cursor.execute(
                 "UPDATE Issue SET fk_Technician_idUser = %s WHERE idIssue = %s",
-                (TechnicianId, TicketId) 
+                (TechnicianId, TicketId)
             )
             db.commit()
             return RedirectResponse(f"/ticket_detail?ticketId={TicketId}", status_code=302)
@@ -726,9 +728,9 @@ async def ticketHistory(
     ticketId: int,
     db=Depends(get_db)
 ):
-        try:
-            with db.cursor() as cursor:
-                sql_query = """
+    try:
+        with db.cursor() as cursor:
+            sql_query = """
                     SELECT
                         Title,
                         Description
@@ -737,16 +739,34 @@ async def ticketHistory(
                     WHERE fk_Issue_idIssue = %s
                     ORDER BY 1 DESC;
                 """
-                cursor.execute(sql_query, (ticketId,))
-                ticket = cursor.fetchall()
+            cursor.execute(sql_query, (ticketId,))
+            ticket = cursor.fetchall()
 
-                if ticket:
-                    return ticket
-                else:
-                    error_message = "Ticket não encontrado"
-                    return templates.TemplateResponse("ticket.html", {"request": request, "error": error_message})
-        finally:
-            db.close()
+            if ticket:
+                return ticket
+            else:
+                return []
+    finally:
+        db.close()
+
+
+@app.get("/tickets/finish")
+async def finish_ticket(
+request: Request,
+    ticketId: int,
+    db=Depends(get_db)
+):
+    
+    try:
+        with db.cursor() as cursor:
+            cursor.execute(
+                "UPDATE Issue SET fk_IssueProgress_idIssueProgress = %s WHERE idIssue = %s",
+                (3, ticketId)
+            )
+            db.commit()
+        return RedirectResponse(f"/ticket_detail?ticketId={ticketId}", status_code=302)
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":
