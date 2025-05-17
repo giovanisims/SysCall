@@ -58,10 +58,12 @@ CREATE TABLE Issue (
     Description TEXT,
     CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
     fk_User_idUser INT,
+    fk_Technician_idUser INT NULL,
     fk_IssueProgress_idIssueProgress INT DEFAULT(1) NOT NULL,
     fk_IssueType_idIssueType INT,
     fk_Priority_idPriority INT,
     FOREIGN KEY (fk_User_idUser) REFERENCES User(idUser) ON DELETE SET NULL,
+    FOREIGN KEY (fk_Technician_idUser) REFERENCES User(idUser) ON DELETE SET NULL,
     FOREIGN KEY (fk_IssueProgress_idIssueProgress) REFERENCES IssueProgress(idIssueProgress),
     FOREIGN KEY (fk_IssueType_idIssueType) REFERENCES IssueType(idIssueType),
     FOREIGN KEY (fk_Priority_idPriority) REFERENCES Priority(idPriority)
