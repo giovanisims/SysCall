@@ -132,17 +132,20 @@ async def getTicketDetail(
                     i.Title,
                     i.Description,
                     i.CreatedDate,
-                    u.Username,
+                    u.Username AS ClientUsername,
+                    t.Username AS TechnicianUsername, -- aqui está o nome do técnico
                     ip.StateName AS ProgressName,
                     it.StateName AS TypeName,
                     p.Priority AS PriorityName
                 FROM
                     Issue i
                 LEFT JOIN User u ON i.fk_User_idUser = u.idUser
+                LEFT JOIN User t ON i.fk_Technician_idUser = t.idUser
                 LEFT JOIN IssueProgress ip ON i.fk_IssueProgress_idIssueProgress = ip.idIssueProgress
                 LEFT JOIN IssueType it ON i.fk_IssueType_idIssueType = it.idIssueType
                 LEFT JOIN Priority p ON i.fk_Priority_idPriority = p.idPriority
-                WHERE idIssue = %s
+                WHERE
+                    i.idIssue = %s;
             """
 
             cursor.execute(sql_query, (ticketId,))
@@ -150,6 +153,9 @@ async def getTicketDetail(
 
             if TicketDetail and "CreatedDate" in TicketDetail:
                 TicketDetail["CreatedDate"] = TicketDetail["CreatedDate"].strftime("%d/%m/%Y")
+
+            if TicketDetail and TicketDetail.get("TechnicianUsername") is None:
+                TicketDetail["TechnicianUsername"] = "-"
 
             user_name = request.session.get("user_name", None)
             user_role = request.session.get("user_role", None)
@@ -680,7 +686,7 @@ async def ticketsSubmit(
         if db:
             db.close()
 
-@app.post("/tickets/answer")
+@app.post("/tickets/history/submit")
 async def ticketsAnswer(
     request: Request,
     ticketId: int = Form(...),
@@ -692,7 +698,7 @@ async def ticketsAnswer(
     Title =  answer_title
     Description = answer_description
     TicketId = ticketId
-
+    TechnicianId = request.session.get("user_id")
     try:
         with db.cursor() as cursor:
             cursor.execute(
@@ -702,6 +708,10 @@ async def ticketsAnswer(
             cursor.execute(
                 "UPDATE Issue SET fk_IssueProgress_idIssueProgress = %s WHERE idIssue = %s",
                 (2, TicketId) 
+            )
+            cursor.execute(
+                "UPDATE Issue SET fk_Technician_idUser = %s WHERE idIssue = %s",
+                (TechnicianId, TicketId) 
             )
             db.commit()
             return RedirectResponse(f"/ticket_detail?ticketId={TicketId}", status_code=302)

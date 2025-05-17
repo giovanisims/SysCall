@@ -120,7 +120,7 @@
                             <span class="label">Cliente</span>
                         </div>
                         <div class="data">
-                            <span>{{ ticket.Username }}</span>
+                            <span>{{ ticket.ClientUsername }}</span>
                         </div>
                     </div>
                     <div class="details-line">
@@ -128,7 +128,7 @@
                             <span class="label">Técnico</span>
                         </div>
                         <div class="data">
-                            <span>Tecnico nome</span>
+                            <span>{{ ticket.TechnicianUsername | default('') }}</span>
                         </div>
                     </div>
                     <div class="details-line">
