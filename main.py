@@ -743,17 +743,26 @@ async def ticket(
 @app.post("/tickets/submit")
 async def ticketsSubmit(
     request: Request,
+    where: int,
     title: str = Form(...),
     description: str = Form(...),
     priority: int = Form(...),
     type: int = Form(...),
     db=Depends(get_db)
 ):
+    
+    form = await request.form()
+    print("Form recebido:", form)
+
     Title = title
     Description = description
     Priority = priority
     Type = type
 
+    print(title)
+    print(description)
+    print(priority)
+    print(type)
     try:
         with db.cursor() as cursor:
             user_id = request.session.get("user_id")
@@ -762,7 +771,12 @@ async def ticketsSubmit(
                 (Title, Description, user_id, Priority, Type)
             )
             db.commit()
-            return RedirectResponse("/tickets", status_code=302)
+
+            if where == 1:
+                return RedirectResponse("/tickets", status_code=302)
+            elif where == 2:
+                return RedirectResponse("/tickets_crud", status_code=302)
+
     finally:
         if db:
             db.close()
