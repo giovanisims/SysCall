@@ -21,3 +21,21 @@ window.addEventListener('resize', function () {
     }
 });
 
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('userModal');
+    const userIcon = document.querySelector('.fa-circle-user');
+
+    // Open modal when clicking on user icon
+    userIcon.addEventListener('click', function (e) {
+        e.preventDefault();
+        const isVisible = modal.style.display === 'block';
+        modal.style.display = isVisible ? 'none' : 'block';
+    });
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function (event) {
+        if (event.target !== modal && !modal.contains(event.target) && event.target !== userIcon) {
+            modal.style.display = 'none';
+        }
+    });
+});

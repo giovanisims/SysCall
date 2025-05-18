@@ -27,7 +27,7 @@ DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'port' : int(os.getenv('DB_PORT', '3306')),
     'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'Admin123'),
+    'password': os.getenv('DB_PASSWORD', 'PUC@1234'),
     'db': 'SysCall',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor,
@@ -84,6 +84,81 @@ if not os.path.exists(templates_dir):
     pass
 templates = Jinja2Templates(directory=templates_dir)
 
+
+# Profile
+@app.get("/profile", response_class=HTMLResponse)
+async def read_profile(request: Request, db=Depends(get_db)):
+    try:
+        user_id = request.session.get("user_id", None)
+        if not user_id:
+            return RedirectResponse("/login", status_code=302)
+
+        with db.cursor() as cursor:
+            # Query para buscar os dados do usuário
+            sql_query = """
+                SELECT
+                    u.Username,
+                    u.NameSurname,
+                    u.Email,
+                    u.CPF,
+                    u.Number,
+                    a.Address,
+                    a.CEP,
+                    c.Complement
+                FROM User u
+                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
+                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
+                WHERE u.idUser = %s
+            """
+            cursor.execute(sql_query, (user_id,))
+            user_data = cursor.fetchone()
+
+        if not user_data:
+            return RedirectResponse("/login", status_code=302)
+
+        # Renderiza o template com os dados do usuário
+        return templates.TemplateResponse("profile.html", {"request": request, "user": user_data})
+    except Exception as e:
+        print(f"Erro ao carregar o perfil: {e}")
+        return JSONResponse(content={"error": "Erro ao carregar o perfil"}, status_code=500)
+    finally:
+        if db:
+            db.close()
+            
+
+@app.get("/profile/data", response_class=JSONResponse)
+async def get_profile_data(request: Request, db=Depends(get_db)):
+    try:
+        user_id = request.session.get("user_id", None)
+        if not user_id:
+            return JSONResponse(content={"error": "Usuário não autenticado"}, status_code=401)
+
+        with db.cursor() as cursor:
+            sql_query = """
+                SELECT
+                    u.Username,
+                    u.NameSurname,
+                    u.Email,
+                    u.CPF,
+                    u.Number,
+                    a.Address,
+                    a.CEP,
+                    c.Complement
+                FROM User u
+                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
+                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
+                WHERE u.idUser = %s
+            """
+            cursor.execute(sql_query, (user_id,))
+            user_data = cursor.fetchone()
+
+        return user_data if user_data else JSONResponse(content={"error": "Usuário não encontrado"}, status_code=404)
+    except Exception as e:
+        print(f"Erro ao carregar os dados do perfil: {e}")
+        return JSONResponse(content={"error": "Erro ao carregar os dados do perfil"}, status_code=500)
+    finally:
+        if db:
+            db.close()
 
 # Endpoints das páginas estáticas
 @app.get("/users_crud", response_class=HTMLResponse)
@@ -325,6 +400,9 @@ async def login(
                 return templates.TemplateResponse("login.html", {"request": request, "error": error_message})
     finally:
         db.close()
+        
+        
+
 
 
 @app.get("/logout")
