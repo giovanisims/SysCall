@@ -27,7 +27,7 @@ DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'port' : int(os.getenv('DB_PORT', '3306')),
     'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'admin'),
+    'password': os.getenv('DB_PASSWORD', 'Admin123'),
     'db': 'SysCall',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor,
@@ -92,7 +92,87 @@ async def read_register(request: Request):
     user_role = request.session.get("user_role", None)
     return templates.TemplateResponse("users_crud.html", {"request": request, "user_name": user_name, "user_role": user_role})
 
+@app.get("/tickets_crud", response_class=HTMLResponse)
+async def tickets_crud(request: Request, db=Depends(get_db)):
+    try:
+        with db.cursor() as cursor:
+            # Consulta SQL para buscar os tickets
+            sql_query = """
+                SELECT
+                    i.idIssue AS id,
+                    i.Title AS title,
+                    i.Description AS description,
+                    DATE_FORMAT(i.CreatedDate, '%d/%m/%Y') AS creation_date,
+                    ip.StateName AS progress,
+                    it.StateName AS type,
+                    p.Priority AS priority,
+                    u.NameSurname AS creator
+                FROM
+                    Issue i
+                LEFT JOIN User u ON i.fk_User_idUser = u.idUser
+                LEFT JOIN IssueProgress ip ON i.fk_IssueProgress_idIssueProgress = ip.idIssueProgress
+                LEFT JOIN IssueType it ON i.fk_IssueType_idIssueType = it.idIssueType
+                LEFT JOIN Priority p ON i.fk_Priority_idPriority = p.idPriority
+            """
+            cursor.execute(sql_query)
+            tickets = cursor.fetchall()  # Busca todos os resultados
 
+        # Passa os tickets para o template
+        return templates.TemplateResponse("tickets_crud.html", {"request": request, "tickets": tickets})
+    except Exception as e:
+        print(f"Erro ao buscar tickets: {e}")
+        return JSONResponse(content={"error": "Falha ao buscar tickets"}, status_code=500)
+    finally:
+        if db:
+            db.close()
+            
+@app.get("/tickets/delete/{ticket_id}", response_class=RedirectResponse)
+async def delete_ticket(ticket_id: int, db=Depends(get_db)):
+    print(ticket_id)
+    try:
+        with db.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM Issue WHERE idIssue = %s", (ticket_id)
+            )
+            db.commit()
+            return RedirectResponse("/tickets_crud", status_code=302)
+    except Exception as e:
+        db.rollback()
+        print(f"Erro: {e}")
+        raise HTTPException(
+            status_code=500, detail="Erro ao deletar o ticket"
+        )
+    finally:
+        if db:
+            db.close()
+            
+@app.post("/tickets/edit")
+async def edit_ticket(
+    ticket_id: int = Form(...),
+    title: str = Form(...),
+    description: str = Form(...),
+    priority: str = Form(...),
+    db=Depends(get_db)
+):
+    try:
+        with db.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE Issue
+                SET Title = %s, Description = %s, fk_Priority_idPriority = (
+                    SELECT idPriority FROM Priority WHERE Priority = %s
+                )
+                WHERE idIssue = %s
+                """,
+                (title, description, priority, ticket_id)
+            )
+            db.commit()
+        return RedirectResponse("/tickets_crud", status_code=302)
+    except Exception as e:
+        db.rollback()
+        print(f"Erro ao editar o ticket: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao editar o ticket")
+            
 @app.get("/", response_class=HTMLResponse)
 async def read_main(request: Request):
     user_name = request.session.get("user_name", None)
