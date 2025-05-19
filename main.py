@@ -46,7 +46,7 @@ app = FastAPI()
 @app.middleware("http")
 async def session_timeout_middleware(request: Request, call_next):
     # Rotas públicas que não precisam de autenticação
-    public_routes = ["/login", "/sign_up", "/static"]
+    public_routes = ["/login", "/sign_up", "/static", "/"]
 
     # Verifica se a rota atual é pública
     if any(request.url.path.startswith(route) for route in public_routes):
@@ -854,15 +854,16 @@ async def ticket(
         try:
             with db.cursor() as cursor:
                 sql_query = """
-                    SELECT 
+                    SELECT
                         i.idIssue AS id,
                         i.Title AS title,
                         i.Description AS description,
-                        p.Priority AS priority
-                    FROM 
+                        p.Priority AS priority,
+                        ip.StateName AS progress
+                    FROM
                         Issue i
-                    LEFT JOIN 
-                        Priority p ON i.fk_Priority_idPriority = p.idPriority
+                    LEFT JOIN Priority p ON i.fk_Priority_idPriority = p.idPriority
+                    LEFT JOIN IssueProgress ip ON i.fk_IssueProgress_idIssueProgress = ip.idIssueProgress
                     WHERE fk_User_idUser = %s
                 """
                 user_id = request.session.get("user_id")
@@ -885,17 +886,18 @@ async def ticket(
             try:
                 with db.cursor() as cursor:
                     sql_query = """
-                        SELECT 
+                        SELECT
                         i.idIssue AS id,
                         i.Title AS title,
                         i.Description AS description,
-                        p.Priority AS priority
-                        FROM 
+                        p.Priority AS priority,
+                        ip.StateName AS progress
+                        FROM
                             Issue i
-                        LEFT JOIN 
-                            Priority p ON i.fk_Priority_idPriority = p.idPriority
+                        LEFT JOIN Priority p ON i.fk_Priority_idPriority = p.idPriority
+                        LEFT JOIN IssueProgress ip ON i.fk_IssueProgress_idIssueProgress = ip.idIssueProgress
                         WHERE fk_User_idUser != %s
-                """
+                    """
                     user_id = request.session.get("user_id")
                     if not user_id:
                         raise HTTPException(
@@ -1027,6 +1029,56 @@ request: Request,
         return RedirectResponse(f"/ticket_detail?ticketId={ticketId}", status_code=302)
     finally:
         db.close()
+
+
+@app.get("/tickets/search", response_class=JSONResponse)
+async def search_tickets(q: str, request: Request, db=Depends(get_db)):
+    """
+    Search tickets by title or description containing the query string (case-insensitive),
+    filtered by user role (same logic as /tickets/data).
+    """
+    user_role = request.session.get("user_role", None)
+    user_id = request.session.get("user_id", None)
+    search_value = f"%{q}%"
+    try:
+        with db.cursor() as cursor:
+            if user_role in ("User", "System Administrator"):
+                sql_query = """
+                    SELECT
+                        i.idIssue AS id,
+                        i.Title AS title,
+                        i.Description AS description,
+                        p.Priority AS priority
+                    FROM
+                        Issue i
+                    LEFT JOIN Priority p ON i.fk_Priority_idPriority = p.idPriority
+                    WHERE fk_User_idUser = %s AND (i.Title LIKE %s OR i.Description LIKE %s)
+                """
+                cursor.execute(sql_query, (user_id, search_value, search_value))
+            elif user_role == "Technician":
+                sql_query = """
+                    SELECT
+                        i.idIssue AS id,
+                        i.Title AS title,
+                        i.Description AS description,
+                        p.Priority AS priority
+                    FROM
+                        Issue i
+                    LEFT JOIN Priority p ON i.fk_Priority_idPriority = p.idPriority
+                    WHERE fk_User_idUser != %s AND (i.Title LIKE %s OR i.Description LIKE %s)
+                """
+                cursor.execute(sql_query, (user_id, search_value, search_value))
+            else:
+                # Não autenticado ou sem role válida
+                return []
+            tickets = cursor.fetchall()
+            return tickets
+    except Exception as e:
+        print(f"Erro ao buscar tickets: {e}")
+        return JSONResponse(content={"error": "Falha ao buscar tickets"}, status_code=500)
+    finally:
+        if db:
+            db.close()
 
 
 if __name__ == "__main__":
