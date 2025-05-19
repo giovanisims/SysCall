@@ -210,9 +210,7 @@ th {
         font-size: 0.9em;
     }
 
-    #editUserForm input[type="text"],
-    #editUserForm input[type="email"],
-    #editUserForm input[type="tel"] {
+    #editUserForm input, #editUserForm select {
         padding: 8px; /* Reduce padding in inputs */
         margin-bottom: 10px; /* Reduce space below inputs */
         font-size: 0.9em;
@@ -273,13 +271,22 @@ th {
 }
 
 #confirmDeleteBtn {
-    background-color: #d9534f; /* Red */
+    background-color: #921f1f;
+    border-radius: 15px;
     color: white;
+    transition: 0.3s ease-in-out;
 }
 
 #cancelDeleteBtn {
-    background-color: #ccc; /* Grey */
-    color: #333;
+    background-color: #918d8d;
+    border-radius: 15px;
+    color: white;
+    transition: 0.3s ease-in-out;
+}
+
+#confirmDeleteBtn:hover,
+#cancelDeleteBtn:hover {
+    transform: scale(1.1);
 }
 
 /* css for edit popup*/
@@ -303,9 +310,7 @@ th {
     color: #555;
 }
 
-#editUserForm input[type="text"],
-#editUserForm input[type="email"],
-#editUserForm input[type="tel"] {
+#editUserForm input, #editUserForm select {
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
@@ -314,27 +319,20 @@ th {
     box-sizing: border-box; /* Include padding in width */
 }
 
+.see-password{
+    width: 50%;
+    display: flex;
+    align-items: center;
+}
+
+.input-see-password{
+    padding-right: 10px;
+}
+
 .modal-buttons {
-    text-align: center;
-    margin-top: 20px;
-}
-
-.modal-buttons button {
-     padding: 10px 20px;
-    margin: 0 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.modal-buttons #submitButtonVisible {
-    background-color: #5cb85c; /* Green */
-    color: white;
-}
-
- .modal-buttons button[type="button"] {
-    background-color: #ccc; /* Grey */
-    color: #333;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
 }
 
 .error-message {
@@ -363,3 +361,28 @@ th {
     border-radius: 4px;
     cursor: pointer;
 }
+
+.save-button, .cancel-button {
+    border: none;
+    border-radius: 15px;
+    color: #f2e9e4;
+    font-weight: bold;
+    transition: 0.3s ease;
+}
+
+.save-button {
+    background-color: #1e5a2c;
+}
+
+.save-button:hover {
+    background-color: #297c3c;
+}
+
+.cancel-button {
+    background-color: #921f1f;
+}
+
+.cancel-button:hover {
+    background-color: #aa2424;
+}
+

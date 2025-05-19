@@ -22,8 +22,7 @@ async function fetchUsers() {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const users = await response.json();
         tableBody.innerHTML = '';
-        console.log(users); // Verifique no console do navegador os dados retornados
-
+    
         users.forEach(user => {
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -36,6 +35,7 @@ async function fetchUsers() {
                 <td data-label="CEP">${user.CEP ? formatCEP(user.CEP) : ''}</td>
                 <td data-label="Endereço">${user.Address || ''}</td>
                 <td data-label="Complemento">${user.Complement || ''}</td>
+                <td data-label="Papel">${user.Role}</td>
                 <td class="action-button" data-label="Ações">
                     <a href="#" class="edit-link" data-user-id="${user.idUser}">
                         <i class="fa-solid fa-pen-to-square" style="color: #125dde;"></i>
@@ -107,6 +107,7 @@ async function openEditModal(userId) {
         document.getElementById('editCEP').value = formatCEP(user.CEP || '');
         document.getElementById('editAddress').value = user.Address || '';
         document.getElementById('editComplement').value = user.Complement || '';
+        document.getElementById('editRole').value = user.idRole || '';
         document.getElementById('editPassword').value = ''; // Ensure password field is empty
 
         // Remove previous listeners to avoid duplicates if modal is reopened
@@ -152,7 +153,8 @@ editForm.addEventListener('submit', async (event) => {
         Number: formData.get('number').replace(/\D/g, ''),
         CEP: formData.get('cep').replace(/\D/g, ''),
         Address: formData.get('address'),
-        Complement: formData.get('complement') || null // Send null if empty
+        Complement: formData.get('complement') || null, // Send null if empty
+        Role: formData.get('editRole')
     };
 
     // Only include password if it's not empty
@@ -162,8 +164,10 @@ editForm.addEventListener('submit', async (event) => {
     }
     // --- End of change ---
 
+    console.log("JSON enviado:", JSON.stringify(data, null, 2));
+
     try {
-        const response = await fetch(`/update_user/${userId}`, {
+        const response = await fetch(`/user/update/${userId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data), // Send the correctly structured data

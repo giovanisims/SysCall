@@ -128,14 +128,13 @@ async def tickets_crud(request: Request, db=Depends(get_db)):
             
 @app.get("/tickets/delete/{ticket_id}", response_class=RedirectResponse)
 async def delete_ticket(ticket_id: int, db=Depends(get_db)):
-    print(ticket_id)
     try:
         with db.cursor() as cursor:
             cursor.execute(
                 "DELETE FROM Issue WHERE idIssue = %s", (ticket_id)
             )
             db.commit()
-            return RedirectResponse("/tickets_crud", status_code=302)
+            return RedirectResponse("/tickets_crud?deleted=true", status_code=302)
     except Exception as e:
         db.rollback()
         print(f"Erro: {e}")
@@ -167,7 +166,7 @@ async def edit_ticket(
                 (title, description, priority, ticket_id)
             )
             db.commit()
-        return RedirectResponse("/tickets_crud", status_code=302)
+        return RedirectResponse("/tickets_crud?edited=true", status_code=302)
     except Exception as e:
         db.rollback()
         print(f"Erro ao editar o ticket: {e}")
@@ -440,7 +439,7 @@ class UserUpdate(BaseModel):
     Address: Optional[str] = None
     Complement: Optional[str] = None
     Password: Optional[str] = None  # Add optional password field
-    fk_Role_idRole: int
+    Role: int
 
 
 @app.get("/delete_user")
@@ -495,14 +494,16 @@ async def get_users(db=Depends(get_db)):
                     u.idUser, u.Username, u.NameSurname, u.Email, u.CPF, u.Number,
                     a.Address,
                     a.CEP,
-                    c.Complement
+                    c.Complement,
+                    r.Role
                 FROM User u
                 LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
                 LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
+                LEFT JOIN Role r ON u.fk_Role_idRole = r.idRole
             """
             cursor.execute(sql)
             users = cursor.fetchall()
-            print(users)  # Adicione este print para verificar os dados retornados
+
             return users
     except Exception as e:
         print(f"Erro ao buscar usuários: {e}")
@@ -520,15 +521,18 @@ async def get_user(user_id: int, db=Depends(get_db)):
             sql = """
                 SELECT
                     u.idUser, u.Username, u.Email, u.NameSurname, u.CPF, u.Number,
-                    a.idAddress, a.Address, -- Select address ID as well
-                    c.idComplement, c.Complement -- Select complement ID as well
+                    a.idAddress, a.Address, a.CEP, -- Select address ID as well
+                    c.idComplement, c.Complement, -- Select complement ID as well
+                    r.idRole, r.Role
                 FROM User u
                 LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
                 LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress -- Join Complement via Address
+                LEFT JOIN Role r ON u.fk_Role_idRole = r.idRole
                 WHERE u.idUser = %s
             """
             cursor.execute(sql, (user_id,))
             user = cursor.fetchone()
+            
             if not user:
                 raise HTTPException(status_code=404, detail="User not found")
             return user
@@ -543,7 +547,7 @@ async def get_user(user_id: int, db=Depends(get_db)):
             db.close()
 
 
-@app.put("/update_user/{user_id}", response_class=JSONResponse)
+@app.put("/user/update/{user_id}", response_class=JSONResponse)
 async def update_user(
     user_id: int,
     user_data: UserUpdate,  # Assuming UserUpdate has fields like 'address' and 'complement'
@@ -588,11 +592,11 @@ async def update_user(
             user_sql_base = """
                 UPDATE User SET
                     Username = %s, Email = %s, NameSurname = %s,
-                    CPF = %s, Number = %s
+                    CPF = %s, Number = %s, fk_Role_idRole = %s
             """
             params = [
                 user_data.Username, user_data.Email, user_data.NameSurname,
-                clean_cpf, clean_number
+                clean_cpf, clean_number, user_data.Role
             ]
 
             # Conditionally add password update
@@ -750,19 +754,12 @@ async def ticketsSubmit(
     type: int = Form(...),
     db=Depends(get_db)
 ):
-    
-    form = await request.form()
-    print("Form recebido:", form)
 
     Title = title
     Description = description
     Priority = priority
     Type = type
 
-    print(title)
-    print(description)
-    print(priority)
-    print(type)
     try:
         with db.cursor() as cursor:
             user_id = request.session.get("user_id")
@@ -773,9 +770,9 @@ async def ticketsSubmit(
             db.commit()
 
             if where == 1:
-                return RedirectResponse("/tickets", status_code=302)
+                return RedirectResponse("/tickets?added=true", status_code=302)
             elif where == 2:
-                return RedirectResponse("/tickets_crud", status_code=302)
+                return RedirectResponse("/tickets_crud?added=true", status_code=302)
 
     finally:
         if db:
