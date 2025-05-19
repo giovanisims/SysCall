@@ -1,20 +1,68 @@
 @import url('global.css');
 @import url('login.css');
 
-.login-container {
-    border: 2px solid red;
-}
-.login-data form input {
-    border: none;
-    border: 1px solid #4a4e69;
-    background-color: transparent;
-    padding: 10px;
-    width: 100%;
+.profile-container {
+  margin-top: 40px;
+  display: flex;
+  width: 100%;  
 }
 
-.login-data form select {
+.profile {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap:50px;
+}
+
+.profile-photo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+}
+
+.profile-photo img{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #4a4e69;
+}
+
+.picture-edit{
+  color: #2C1E5A;
+  cursor: pointer;
+}
+
+.profile-picture{
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #4a4e69;
+}
+
+.profile-data {
+  margin-left: 40px;
+  padding-top: 40px;
+}
+
+.profile-data form input {  
     border: none;
-    border: 1px solid #4a4e69;
+    border-bottom: 1px solid #4a4e69;
+    background-color: transparent;
+    padding: 10px;
+    width: 400px;
+    border-radius: 0px;
+}
+
+.profile-data form select {
+    border: none;
+    border-bottom: 1px solid #4a4e69;
     padding: 10px;
     width: 100%;
     color: #6e7082;
@@ -37,8 +85,7 @@
 .input-container input {
     width: 100%;
     padding: 12px 10px;
-    border: 1px solid #4a4e69;
-    border-radius: 5px;
+    border-bottom: 1px solid #4a4e69;
     outline: none;
     font-size: 16px;
     background: transparent;
@@ -48,8 +95,7 @@
 .input-container select {
     width: 100%;
     padding: 12px 10px;
-    border: 1px solid #4a4e69;
-    border-radius: 5px;
+    border-bottom: 1px solid #4a4e69;
     outline: none;
     font-size: 16px;
     background: transparent;
@@ -79,17 +125,19 @@
     color: #4a4e69;
 }
 
-
-.see-password{
-    width: 50%;
-    display: flex;
-    align-items: center;
+.save-button {
+    background-color: #4a4e69;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
 }
 
-.input-see-password{
-    padding-right: 10px;
+.save-button:hover {
+    background-color: #2C1E5A;
 }
-
 
 input[type="checkbox"]:checked {
     accent-color: #4a4e69;
@@ -134,3 +182,5 @@ input[type="checkbox"]:checked {
         width: 75%;
     }
 }
+/* 
+ */

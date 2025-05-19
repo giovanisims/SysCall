@@ -27,7 +27,7 @@ DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'port' : int(os.getenv('DB_PORT', '3306')),
     'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'Admin123'),
+    'password': os.getenv('DB_PASSWORD', "Admin123"),
     'db': 'SysCall',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor,
@@ -45,20 +45,34 @@ app = FastAPI()
 
 @app.middleware("http")
 async def session_timeout_middleware(request: Request, call_next):
-    if request.url.path in ["/login", "/sign_up", "/static"]:
+    # Rotas públicas que não precisam de autenticação
+    public_routes = ["/login", "/sign_up", "/static"]
+
+    # Verifica se a rota atual é pública
+    if any(request.url.path.startswith(route) for route in public_routes):
         return await call_next(request)
 
+    # Verifica se o usuário está logado
+    user_id = request.session.get("user_id")
+    if not user_id:
+        # Redireciona para a página de login se o usuário não estiver logado
+        return RedirectResponse("/login", status_code=302)
+
+    # Verifica o timeout da sessão
     last_activity = request.session.get("last_activity")
     now = datetime.now()
 
     if last_activity:
-        # Corrigido o formato para corresponder à data armazenada
+        # Corrige o formato para corresponder à data armazenada
         last_activity = datetime.strptime(last_activity, "%Y-%m-%d %H:%M:%S")
         if (now - last_activity) > timedelta(seconds=SESSION_TIMEOUT):
             request.session.clear()
             return RedirectResponse("/login", status_code=302)
 
+    # Atualiza o timestamp da última atividade
     request.session["last_activity"] = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Continua para a próxima etapa da requisição
     response = await call_next(request)
     return response
 
@@ -84,6 +98,158 @@ if not os.path.exists(templates_dir):
     pass
 templates = Jinja2Templates(directory=templates_dir)
 
+
+# Profile
+@app.get("/profile", response_class=HTMLResponse)
+
+async def read_profile(request: Request, db=Depends(get_db)):
+    user_name = request.session.get("user_name", None)
+    user_role = request.session.get("user_role", None)
+    try:
+        user_id = request.session.get("user_id", None)
+        if not user_id:
+            return RedirectResponse("/login", status_code=302)
+
+        with db.cursor() as cursor:
+            # Query para buscar os dados do usuário
+            sql_query = """
+                SELECT
+                    u.Username,
+                    u.NameSurname,
+                    u.Email,
+                    u.CPF,
+                    u.Number,
+                    a.Address,
+                    a.CEP,
+                    c.Complement
+                FROM User u
+                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
+                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
+                WHERE u.idUser = %s
+            """
+            cursor.execute(sql_query, (user_id,))
+            user_data = cursor.fetchone()
+
+        if not user_data:
+            return RedirectResponse("/login", status_code=302)
+
+        # Renderiza o template com os dados do usuário
+        return templates.TemplateResponse("profile.html", {"request": request, "user_name": user_name, "user_role": user_role, "user" : user_data})
+    except Exception as e:
+        print(f"Erro ao carregar o perfil: {e}")
+        return JSONResponse(content={"error": "Erro ao carregar o perfil"}, status_code=500)
+    finally:
+        if db:
+            db.close()
+            
+
+@app.get("/profile/data", response_class=JSONResponse)
+async def get_profile_data(request: Request, db=Depends(get_db)):
+    try:
+        user_id = request.session.get("user_id", None)
+        if not user_id:
+            return JSONResponse(content={"error": "Usuário não autenticado"}, status_code=401)
+
+        with db.cursor() as cursor:
+            sql_query = """
+                SELECT
+                    u.Username,
+                    u.NameSurname,
+                    u.Email,
+                    u.CPF,
+                    u.Number,
+                    a.Address,
+                    a.CEP,
+                    c.Complement
+                FROM User u
+                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
+                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
+                WHERE u.idUser = %s
+            """
+            cursor.execute(sql_query, (user_id,))
+            user_data = cursor.fetchone()
+
+        return user_data if user_data else JSONResponse(content={"error": "Usuário não encontrado"}, status_code=404)
+    except Exception as e:
+        print(f"Erro ao carregar os dados do perfil: {e}")
+        return JSONResponse(content={"error": "Erro ao carregar os dados do perfil"}, status_code=500)
+    finally:
+        if db:
+            db.close()
+            
+            
+@app.post("/profile/edit")
+async def edit_profile(
+    request: Request,
+    username: str = Form(...),
+    namesurname: str = Form(...),
+    email: str = Form(...),
+    cpf: str = Form(...),
+    phone: str = Form(...),
+    cep: str = Form(...),
+    address: str = Form(...),
+    observation: str = Form(None),  # Campo opcional
+    db=Depends(get_db)
+):
+    try:
+        user_id = request.session.get("user_id", None)
+        if not user_id:
+            return RedirectResponse("/login", status_code=302)
+
+        # Limpeza dos dados (remover caracteres indesejados)
+        clean_phone = phone.replace("(", "").replace(")", "").replace("-", "").replace(" ", "")
+        clean_cep = cep.replace("-", "")
+
+        with db.cursor() as cursor:
+            # Atualiza os dados do usuário na tabela `User`
+            cursor.execute(
+                """
+                UPDATE User
+                SET Username =%s, NameSurname =%s, Email =%s, CPF =%s, Number =%s
+                WHERE idUser =%s
+                """,
+                (username, namesurname, email, cpf, clean_phone, user_id)
+            )
+
+            # Atualiza os dados do endereço na tabela `Address`
+            cursor.execute(
+                """
+                UPDATE Address
+                SET Address =%s, CEP =%s
+                WHERE fk_User_idUser =%s
+                """,
+                (address, clean_cep, user_id)
+            )
+
+            # Se o complemento for vazio, remova-o
+            if observation:
+                cursor.execute(
+                    """
+                    INSERT INTO Complement (Complement, fk_Address_idAddress)
+                    VALUES (%s, (SELECT idAddress FROM Address WHERE fk_User_idUser = %s))
+                    ON DUPLICATE KEY UPDATE Complement = %s
+                    """,
+                    (observation, user_id, observation)
+                )
+            else:
+                cursor.execute(
+                    """
+                    DELETE FROM Complement
+                    WHERE fk_Address_idAddress = (SELECT idAddress FROM Address WHERE fk_User_idUser = %s)
+                    """,
+                    (user_id,)
+                )
+
+            db.commit()  
+
+        return RedirectResponse("/profile", status_code=302)
+    except Exception as e:
+        db.rollback()  
+        print(f"Erro ao atualizar o perfil: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao atualizar o perfil")
+    finally:
+        if db:
+            db.close()
 
 # Endpoints das páginas estáticas
 @app.get("/users_crud", response_class=HTMLResponse)
@@ -324,6 +490,9 @@ async def login(
                 return templates.TemplateResponse("login.html", {"request": request, "error": error_message})
     finally:
         db.close()
+        
+        
+
 
 
 @app.get("/logout")
