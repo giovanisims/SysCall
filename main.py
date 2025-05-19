@@ -3,6 +3,7 @@ import os
 import hashlib
 from typing import Optional, Annotated
 import re
+import base64
 
 from datetime import datetime, timedelta
 import pymysql
@@ -12,7 +13,9 @@ from fastapi import (
     Request,
     Form,
     Depends,
-    HTTPException
+    HTTPException,
+    File,
+    UploadFile
 )
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -101,7 +104,6 @@ templates = Jinja2Templates(directory=templates_dir)
 
 # Profile
 @app.get("/profile", response_class=HTMLResponse)
-
 async def read_profile(request: Request, db=Depends(get_db)):
     user_name = request.session.get("user_name", None)
     user_role = request.session.get("user_role", None)
@@ -121,7 +123,8 @@ async def read_profile(request: Request, db=Depends(get_db)):
                     u.Number,
                     a.Address,
                     a.CEP,
-                    c.Complement
+                    c.Complement,
+                    u.ProfilePicture
                 FROM User u
                 LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
                 LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
@@ -132,9 +135,22 @@ async def read_profile(request: Request, db=Depends(get_db)):
 
         if not user_data:
             return RedirectResponse("/login", status_code=302)
+        
+        profile_picture = None
+        if user_data.get("ProfilePicture"):
+            profile_picture = base64.b64encode(user_data["ProfilePicture"]).decode("utf-8")
 
         # Renderiza o template com os dados do usuário
-        return templates.TemplateResponse("profile.html", {"request": request, "user_name": user_name, "user_role": user_role, "user" : user_data})
+        return templates.TemplateResponse(
+            "profile.html",
+            {
+                "request": request,
+                "user_name": user_name,
+                "user_role": user_role,
+                "user": user_data,
+                "profile_picture": profile_picture,
+            },
+        )
     except Exception as e:
         print(f"Erro ao carregar o perfil: {e}")
         return JSONResponse(content={"error": "Erro ao carregar o perfil"}, status_code=500)
@@ -181,6 +197,7 @@ async def get_profile_data(request: Request, db=Depends(get_db)):
 @app.post("/profile/edit")
 async def edit_profile(
     request: Request,
+    file: Optional[UploadFile] = File(None),
     username: str = Form(...),
     namesurname: str = Form(...),
     email: str = Form(...),
@@ -222,6 +239,18 @@ async def edit_profile(
             )
 
             # Se o complemento for vazio, remova-o
+            
+            if file:
+                image_data = await file.read()  # Lê o conteúdo do arquivo
+                cursor.execute(
+                    """
+                    UPDATE User
+                    SET ProfilePicture = %s
+                    WHERE idUser = %s
+                    """,
+                    (image_data, user_id)
+                )
+            
             if observation:
                 cursor.execute(
                     """
