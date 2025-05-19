@@ -41,15 +41,20 @@
     <div class="profile">
 
 
+      
+      <div class="profile-data">
+      <form action="/profile/edit" method="post" enctype="multipart/form-data">
+
       <div class="profile-photo">
-        <img src="/pages/images/logo.ico" alt="" />
+        {% if profile_picture %}
+        <img src="data:image/jpeg;base64,{{ profile_picture }}" alt="Foto de Perfil" />
+        {% else %}
+        <img src="/static/images/default-profile.png" alt="Foto de Perfil Padrão" />
+        {% endif %}
         <label for="file" class="picture-edit">Editar imagem de perfil</label>
         <input type="file" name="file" accept="image/*" id="file" style="display:none;" />
       </div>
 
-
-      <div class="profile-data">
-        <form action="/profile/edit" method="post">
           <div class="input-container">
             <input type="text" id="username" name="username" placeholder=" " value="{{ user.Username }}" />
             <label for="username">Username</label>
@@ -94,6 +99,25 @@
   </div>
   <script src="static/js/sign_up.js"></script>
   <script src="static/js/header.js"></script>
+
+
+  <script>
+  const fileInput = document.getElementById("file");
+  const profileImage = document.querySelector(".profile-photo img");
+
+  fileInput.addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        profileImage.src = e.target.result;
+      };
+
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
 </body>
 
 </html>
