@@ -34,6 +34,7 @@
   flex: 1 1 60%;
   display: flex;
   align-self: flex-end;
+  margin-top: 24px;
 }
 
 .search input {
@@ -279,6 +280,7 @@
 
   .search {
     width: 100%;
+    margin-top: 48px;
   }
 
   .filter-plus-button {

@@ -6,6 +6,7 @@ header{
     justify-content: space-between;
     align-items: center;
     background-color: #2C1E5A;
+    color: #fff;
 }
 
 nav{
@@ -55,6 +56,9 @@ nav{
         width: 100%;
         text-align: center;
         padding: 10px 0;
+    }
+    #navBar li:last-child {
+        border-bottom: 2px solid #fff;
     }
     #navBar a {
         width: 100%;

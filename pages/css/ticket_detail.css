@@ -95,7 +95,8 @@ body{
 
 button{
     height: 40px;
-    width: 250px;
+    max-width: 250px;
+    min-width: 170px;
     border: none;
     background-color: #2C1E5A;
     border-radius: 15px;
@@ -112,4 +113,69 @@ button:hover{
     background-color: #5322b5;
     transform: scale(1.1);
     cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .ticket {
+    flex-direction: column;
+    width: 98%;
+  }
+  .main, .aside {
+    width: 100%;
+    border-left: none;
+  }
+  .ticket-info, .ticket-history {
+    padding: 20px;
+  }
+  .ticket-details {
+    margin-top: 0;
+    padding: 20px 0;
+  }
+  .details-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 8px 0;
+  }
+  .data {
+    width: 100%;
+    padding: 20px;
+  }
+  .title {
+    font-size: 26px;
+  }
+  button {
+    width: 100%;
+    min-width: 120px;
+    max-width: 100%;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .ticket-container {
+    padding: 0 2vw;
+  }
+  .ticket {
+    margin-top: 10px;
+    width: 100%;
+  }
+  .ticket-info, .ticket-history {
+    padding: 10px;
+  }
+  .title {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  .card-title {
+    font-size: 15px;
+  }
+  .card-description {
+    font-size: 12px;
+  }
+  button {
+    font-size: 14px;
+    padding: 10px;
+    height: auto;
+  }
 }
