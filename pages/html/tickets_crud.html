@@ -63,14 +63,14 @@
             <tbody id="tickets-table-body">
                 {% for ticket in tickets %}
                 <tr>
-                    <td>{{ ticket.id }}</td>
-                    <td>{{ ticket.title }}</td>
-                    <td>{{ ticket.description }}</td>
-                    <td>{{ ticket.creation_date }}</td>
-                    <td>{{ ticket.progress }}</td>
-                    <td>{{ ticket.type }}</td>
-                    <td>{{ ticket.priority }}</td>
-                    <td>{{ ticket.creator }}</td>
+                    <td data-label="ID">{{ ticket.id }}</td>
+                    <td data-label="Titulo">{{ ticket.title }}</td>
+                    <td data-label="Descrição">{{ ticket.description }}</td>
+                    <td data-label="Data de criação">{{ ticket.creation_date }}</td>
+                    <td data-label="Progresso">{{ ticket.progress }}</td>
+                    <td data-label="Tipo">{{ ticket.type }}</td>
+                    <td data-label="Prioridade">{{ ticket.priority }}</td>
+                    <td data-label="Criador">{{ ticket.creator }}</td>
                     <td class="action-button-table" data-label="Ações">
                         <button class="edit-link" title="Editar chamado"
                             onclick="openEditModal('{{ ticket.id }}', '{{ ticket.title }}', '{{ ticket.description }}', '{{ ticket.priority }}')">
