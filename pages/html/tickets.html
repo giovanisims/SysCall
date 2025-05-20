@@ -78,16 +78,19 @@
     </div>
   </header>
   <div class="welcome">
-    <div class="text">
-      <h1>Bem-vindo ao SysCall</h1>
-      <p>Gerencie seus chamados de T.I.</p>
+  <div class="text">
+    <h1>Bem-vindo ao SysCall</h1>
+    <p>Gerencie seus chamados de T.I.</p>
+  </div>
+
+  <div class="action-button">
+    <div class="search">
+      <input type="text" placeholder="Pesquisar ">
+      <i class="fa-solid fa-magnifying-glass"></i>
     </div>
-    <div class="action-button">
-      <div class="search">
-        <input type="text" placeholder="Pesquisar ">
-        <i class="fa-solid fa-magnifying-glass"></i>
-      </div>
-      <div class="filters" id="filterStatus" class="filter-group">
+
+    <div class="filter-plus-button">
+      <div class="filters filter-group" id="filterStatus">
         <label for="filterStatusSelect">Filtrar por status:</label>
         <select id="filterStatusSelect">
           <option value="all">Todos</option>
@@ -96,7 +99,8 @@
           <option value="done">Resolvido</option>
         </select>
       </div>
-      <div class="filters" id="filtersPriority" class="filter-group">
+
+      <div class="filters filter-group" id="filtersPriority">
         <label for="filtersPrioritySelect">Filtrar por prioridade:</label>
         <select id="filtersPrioritySelect">
           <option value="0">Todas</option>
@@ -105,10 +109,14 @@
           <option value="3">Alta</option>
         </select>
       </div>
-      <button id="openModalTicket" class="new-ticket" onclick="openModalForm()"><i class="fa-solid fa-plus"
-          style="color: #f2e9e4;"></i>Novo chamado</button>
+
+      <button id="openModalTicket" class="new-ticket" onclick="openModalForm()">
+        <i class="fa-solid fa-plus" style="color: #f2e9e4;"></i> Novo chamado
+      </button>
     </div>
   </div>
+</div>
+
 
   <section id="ticketsList">
     <div id="tickets" class="tickets">
