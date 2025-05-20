@@ -2,7 +2,7 @@
 @import url('login.css');
 
 .profile-container {
-  margin-top: 40px;
+  margin-top: 35px;
   display: flex;
   width: 100%;  
 }
@@ -143,6 +143,39 @@ input[type="checkbox"]:checked {
     accent-color: #4a4e69;
 }
 
+@media (max-width: 800px) {
+  .profile-container {
+    margin-top: 100px;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 10px;
+  }
+  .profile {
+    flex-direction: column;
+    gap: 30px;
+    align-items: center;
+    width: 100%;
+  }
+  .profile-photo {
+    width: 100%;
+    gap: 10px;
+  }
+  .profile-photo img, .profile-picture {
+    width: 110px;
+    height: 110px;
+  }
+  .profile-data {
+    margin-left: 0;
+    padding-top: 10px;
+    width: 100%;
+    max-width: 400px;
+  }
+  .profile-data form input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 @media (max-width: 768px) {
     .login {
         flex-direction: column; 
@@ -165,6 +198,38 @@ input[type="checkbox"]:checked {
 }
 
 @media (max-width: 480px) {
+  .profile-container {
+    margin-top: 20px;
+    padding: 0 5px;
+    margin-top: 55px;
+  }
+  .profile {
+    gap: 15px;
+  }
+  .profile-photo img, .profile-picture {
+    width: 80px;
+    height: 80px;
+  }
+  .profile-data {
+    padding-top: 0;
+    max-width: 100%;
+  }
+  .profile-data form input, .profile-data form select {
+    font-size: 14px;
+    padding: 8px;
+    width: 100%;
+  }
+  .input-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .save-button {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 480px) {
     .login {
         padding: 15px;
     }
@@ -182,5 +247,3 @@ input[type="checkbox"]:checked {
         width: 75%;
     }
 }
-/* 
- */
