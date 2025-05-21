@@ -100,6 +100,13 @@ header{
   color: #1E1E35;
 }
 
+
+@media (max-width: 800px) {
+    #navBar {
+        background-color: #4f1eb9;
+    }
+}
+
 @media (max-width: 768px) {
     .start-pag h1 {
         max-width: 90%; /* melhor que 300px fixo */

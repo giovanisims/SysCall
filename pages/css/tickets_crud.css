@@ -103,12 +103,6 @@ th {
 }
 
 @media (max-width: 800px) {
-    /* .title {
-        flex-direction: column;
-        gap: 20px;
-        padding-top: 20px;
-    } */
-
     h1 {
         font-size: 1.5rem;
     }
@@ -137,6 +131,11 @@ th {
         width: 100px;
         height: 35px;
         font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        gap: 5px;
+        margin-bottom: 20px;
     }
 
     .title {
@@ -191,7 +190,7 @@ th {
         position: relative;
         border: none;
         /* Remove individual cell borders */
-        border-bottom: 1px dotted #ccc;
+        border-bottom: 1px dotted #bbb;
         /* Add separator between "fields" */
         font-size: 0.9rem;
         /* Slightly larger font for readability */
@@ -218,6 +217,12 @@ th {
         text-align: left;
         font-weight: bold;
         color: #555;
+        font-size: 1.1em;
+        opacity: 1;
+        letter-spacing: 0.2px;
+        line-height: 1.2;
+        top: 50%;
+        transform: translateY(-50%);
     }
 
     /* Adjust action buttons layout */

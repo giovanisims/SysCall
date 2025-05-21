@@ -37,9 +37,9 @@
 
       <nav id="navBar">
         <ul class="menu">
-          <li class="menu-items"><a href="/tickets">Meus chamados</a></li>
+          <li class="menu-items"><a href="/tickets_crud">Chamados</a></li>
           <li class="menu-items"><a href="users_crud">Usuários</a></li>
-          <li class="menu-items"><a href="#">Contato</a></li>
+          <li class="menu-items"><a href="/contact">Contato</a></li>
         </ul>
       </nav>
 
@@ -48,7 +48,7 @@
       <nav id="navBar">
         <ul class="menu">
           <li class="menu-items"><a href="/tickets">Meus chamados</a></li>
-          <li class="menu-items"><a href="#">Contato</a></li>
+          <li class="menu-items"><a href="/contact">Contato</a></li>
         </ul>
       </nav>
 
@@ -57,7 +57,7 @@
       <nav id="navBar">
         <ul class="menu">
           <li class="menu-items"><a href="/tickets">Chamados</a></li>
-          <li class="menu-items"><a href="#">Contato</a></li>
+          <li class="menu-items"><a href="/contact">Contato</a></li>
         </ul>
       </nav>
 
@@ -94,6 +94,12 @@
             {% endif %}
           </ul>
         </div>
+      </div>
+        {% else %}
+        <p class="hello-user" style="display: none"></p>
+        <a href="/login">Login</a>
+        <i id="menuButton" class="fa-solid fa-bars"></i>
+        {% endif %}
       </div>
     </header>
 
