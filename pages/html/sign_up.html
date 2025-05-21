@@ -22,8 +22,27 @@
             </ul>
         </nav>
         <div class="icons">
-            <a href="login"><i class="fa-solid fa-circle-user"></i></a>
-            <i id="menuButton" class="fa-solid fa-bars"></i>
+        {% if user_name %}
+        <p class="hello-user"><a href="">Olá, {{ user_name }}</a></p>
+        {% else %}
+        <p class="hello-user" style="visibility: hidden">Olá, Usuário</p>
+        {% endif %}
+        <a href=""><i class="fa-solid fa-circle-user"></i></a>
+        <i id="menuButton" class="fa-solid fa-bars"></i>
+      </div>
+      <div id="userModal" class="dropdown-modal">
+        <div class="triangle"></div>
+        <div class="modal-content">
+          <ul>
+            {% if not user_name %}
+            <li><a href="/login">Entrar</a></li>
+            <li><a href="/sign_up">Cadastrar-se</a></li>
+            {% else %}
+            <li><a href="/profile">Editar Perfil</a></li>
+            <li><a href="/logout">Sair</a></li>
+            {% endif %}
+          </ul>
+        </div>
         </div>
     </header>
     <div class="login-container">
