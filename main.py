@@ -283,12 +283,16 @@ async def edit_profile(
 # Endpoints das páginas estáticas
 @app.get("/users_crud", response_class=HTMLResponse)
 async def read_register(request: Request):
+    if request.session.get("user_role") != "System Administrator":
+        return RedirectResponse("/", status_code=302)
     user_name = request.session.get("user_name", None)
     user_role = request.session.get("user_role", None)
     return templates.TemplateResponse("users_crud.html", {"request": request, "user_name": user_name, "user_role": user_role})
 
 @app.get("/tickets_crud", response_class=HTMLResponse)
 async def tickets_crud(request: Request, db=Depends(get_db)):
+    if request.session.get("user_role") != "System Administrator":
+        return RedirectResponse("/", status_code=302)
     try:
         with db.cursor() as cursor:
             # Consulta SQL para buscar os tickets
@@ -313,7 +317,7 @@ async def tickets_crud(request: Request, db=Depends(get_db)):
             tickets = cursor.fetchall()  # Busca todos os resultados
 
         # Passa os tickets para o template
-        return templates.TemplateResponse("tickets_crud.html", {"request": request, "tickets": tickets})
+        return templates.TemplateResponse("tickets_crud.html", {"request": request, "tickets": tickets, "user_name": request.session.get("user_name"), "user_role": request.session.get("user_role")})
     except Exception as e:
         print(f"Erro ao buscar tickets: {e}")
         return JSONResponse(content={"error": "Falha ao buscar tickets"}, status_code=500)

@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Open modal when clicking on user icon
     userIcon.addEventListener('click', function (e) {
-        e.preventDefault();
+        
         const isVisible = modal.style.display === 'block';
         modal.style.display = isVisible ? 'none' : 'block';
     });
