@@ -93,6 +93,129 @@ if not os.path.exists(static_dir):
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
+@app.get("/users_crud", response_class=HTMLResponse)
+async def users_crud(request: Request, db=Depends(get_db)):
+    if request.session.get("user_role") != "System Administrator":
+        return RedirectResponse("/", status_code=302)
+    try:
+        with db.cursor() as cursor:
+            sql_query = """
+                SELECT
+                    u.idUser,
+                    u.NameSurname,
+                    u.Username,
+                    u.Email,
+                    u.CPF,
+                    u.Number,
+                    a.Address,
+                    r.Role
+                FROM User u
+                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
+                LEFT JOIN Role r ON u.fk_Role_idRole = r.idRole
+            """
+            cursor.execute(sql_query)
+            users = cursor.fetchall()
+        return templates.TemplateResponse("users_crud.html", {
+            "request": request,
+            "users": users,
+            "user_name": request.session.get("user_name"),
+            "user_role": request.session.get("user_role"),
+        })
+    except Exception as e:
+        print(f"Erro ao buscar usuários: {e}")
+        return JSONResponse(content={"error": "Falha ao buscar usuários"}, status_code=500)
+    finally:
+        if db:
+            db.close()
+
+@app.post("/users/edit")
+async def edit_user(
+    user_id: int = Form(...),
+    name: str = Form(...),
+    username: str = Form(...),
+    email: str = Form(...),
+    cpf: str = Form(...),
+    phone: str = Form(...),
+    address: str = Form(...),
+    role: int = Form(...),
+    db=Depends(get_db)
+):
+    try:
+        with db.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE User
+                SET NameSurname = %s, Username = %s, Email = %s, CPF = %s, Number = %s, fk_Role_idRole = %s
+                WHERE idUser = %s
+                """,
+                (name, username, email, cpf, phone, role, user_id)
+            )
+            cursor.execute(
+                """
+                UPDATE Address
+                SET Address = %s
+                WHERE fk_User_idUser = %s
+                """,
+                (address, user_id)
+            )
+            db.commit()
+        return RedirectResponse("/users_crud?edited=true", status_code=302)
+    except Exception as e:
+        db.rollback()
+        print(f"Erro ao editar usuário: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao editar usuário")
+    finally:
+        if db:
+            db.close()
+
+@app.get("/users/delete/{user_id}", response_class=RedirectResponse)
+async def delete_user(user_id: int, db=Depends(get_db)):
+    try:
+        with db.cursor() as cursor:
+            cursor.execute("DELETE FROM Address WHERE fk_User_idUser = %s", (user_id,))
+            cursor.execute("DELETE FROM User WHERE idUser = %s", (user_id,))
+            db.commit()
+        return RedirectResponse("/users_crud?deleted=true", status_code=302)
+    except Exception as e:
+        db.rollback()
+        print(f"Erro ao deletar usuário: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao deletar usuário")
+    finally:
+        if db:
+            db.close()
+
+@app.post("/users/submit")
+async def add_user(
+    name: str = Form(...),
+    username: str = Form(...),
+    email: str = Form(...),
+    cpf: str = Form(...),
+    phone: str = Form(...),
+    address: str = Form(...),
+    role: int = Form(...),
+    db=Depends(get_db)
+):
+    try:
+        with db.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO User (NameSurname, Username, Email, CPF, Number, fk_Role_idRole, Password) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (name, username, email, cpf, phone, role, "12345678")  # senha padrão, ajuste como quiser
+            )
+            user_id = cursor.lastrowid
+            cursor.execute(
+                "INSERT INTO Address (Address, fk_User_idUser, CEP) VALUES (%s, %s, %s)",
+                (address, user_id, "00000000")
+            )
+            db.commit()
+        return RedirectResponse("/users_crud?added=true", status_code=302)
+    except Exception as e:
+        db.rollback()
+        print(f"Erro ao adicionar usuário: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao adicionar usuário")
+    finally:
+        if db:
+            db.close()
+
 # Configuração de templates Jinja2
 templates_dir = os.path.join(os.path.dirname(__file__), "pages", "html")
 if not os.path.exists(templates_dir):
@@ -285,13 +408,7 @@ async def edit_profile(
             db.close()
 
 # Endpoints das páginas estáticas
-@app.get("/users_crud", response_class=HTMLResponse)
-async def read_register(request: Request):
-    if request.session.get("user_role") != "System Administrator":
-        return RedirectResponse("/", status_code=302)
-    user_name = request.session.get("user_name", None)
-    user_role = request.session.get("user_role", None)
-    return templates.TemplateResponse("users_crud.html", {"request": request, "user_name": user_name, "user_role": user_role})
+
 
 @app.get("/tickets_crud", response_class=HTMLResponse)
 async def tickets_crud(request: Request, db=Depends(get_db)):
@@ -381,6 +498,12 @@ async def read_main(request: Request):
     user_role = request.session.get("user_role", None)
     return templates.TemplateResponse("main.html", {"request": request, "user_name": user_name, "user_role": user_role})
 
+
+@app.get("/contact", response_class=HTMLResponse)
+async def read_main(request: Request):
+    user_name = request.session.get("user_name", None)
+    user_role = request.session.get("user_role", None)
+    return templates.TemplateResponse("contact.html", {"request": request, "user_name": user_name, "user_role": user_role})
 
 @app.get("/login", response_class=HTMLResponse)
 async def read_login(request: Request):
@@ -648,237 +771,7 @@ class UserUpdate(BaseModel):
     Role: int
 
 
-@app.get("/delete_user")
-async def delete_user(
-    user_id: int,
-    db=Depends(get_db)
-):
-    try:
-        with db.cursor() as cursor:
-            # 1. Find the address ID associated with the user
-            cursor.execute(
-                "SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))
-            address_result = cursor.fetchone()
 
-            if address_result:
-                address_id = address_result['idAddress']
-                # 2. Delete related records from Complement using the address ID
-                cursor.execute(
-                    "DELETE FROM Complement WHERE fk_Address_idAddress = %s", (address_id,))
-                # No commit yet
-
-            # 3. Delete related records from Address
-            cursor.execute(
-                "DELETE FROM Address WHERE fk_User_idUser = %s", (user_id,))
-            # No commit yet
-
-            # 4. Finally, delete the user
-            cursor.execute("DELETE FROM User WHERE idUser = %s", (user_id,))
-
-            db.commit()  # Commit all deletions together
-
-            # Redirect back with a success flag
-            return RedirectResponse("/users_crud?deleted=true", status_code=302)
-    except Exception as e:
-        db.rollback()  # Rollback all changes if any step fails
-        print(f"Error deleting user {user_id}: {e}")
-        # Raise HTTPException which FastAPI/Starlette can handle
-        # You might want a specific error page or message on the frontend
-        raise HTTPException(
-            status_code=500, detail=f"Failed to delete user: {e}")
-    finally:
-        if db:
-            db.close()
-
-
-@app.get("/users/crud", response_class=JSONResponse)
-async def get_users(db=Depends(get_db)):
-    try:
-        with db.cursor() as cursor:
-            sql = """
-                SELECT
-                    u.idUser, u.Username, u.NameSurname, u.Email, u.CPF, u.Number,
-                    a.Address,
-                    a.CEP,
-                    c.Complement,
-                    r.Role
-                FROM User u
-                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
-                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
-                LEFT JOIN Role r ON u.fk_Role_idRole = r.idRole
-            """
-            cursor.execute(sql)
-            users = cursor.fetchall()
-
-            return users
-    except Exception as e:
-        print(f"Erro ao buscar usuários: {e}")
-        return JSONResponse(content={"error": "Falha ao buscar usuários"}, status_code=500)
-    finally:
-        if db:
-            db.close()
-
-
-@app.get("/user/{user_id}", response_class=JSONResponse)
-async def get_user(user_id: int, db=Depends(get_db)):
-    try:
-        with db.cursor() as cursor:
-            # Fetch user data along with address and complement via address
-            sql = """
-                SELECT
-                    u.idUser, u.Username, u.Email, u.NameSurname, u.CPF, u.Number,
-                    a.idAddress, a.Address, a.CEP, -- Select address ID as well
-                    c.idComplement, c.Complement, -- Select complement ID as well
-                    r.idRole, r.Role
-                FROM User u
-                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
-                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress -- Join Complement via Address
-                LEFT JOIN Role r ON u.fk_Role_idRole = r.idRole
-                WHERE u.idUser = %s
-            """
-            cursor.execute(sql, (user_id,))
-            user = cursor.fetchone()
-            
-            if not user:
-                raise HTTPException(status_code=404, detail="User not found")
-            return user
-    except HTTPException as http_exc:
-        raise http_exc  # Re-raise HTTPException
-    except Exception as e:
-        print(f"Error fetching user {user_id}: {e}")
-        # Return error as JSON for the frontend to handle
-        return JSONResponse(content={"error": f"Failed to fetch user data: {e}"}, status_code=500)
-    finally:
-        if db:
-            db.close()
-
-
-@app.put("/user/update/{user_id}", response_class=JSONResponse)
-async def update_user(
-    user_id: int,
-    user_data: UserUpdate,  # Assuming UserUpdate has fields like 'address' and 'complement'
-    db=Depends(get_db)
-):
-    # Cleanse input data
-    clean_cpf = re.sub(r'\D', '', user_data.CPF)
-    clean_number = re.sub(r'\D', '', user_data.Number)
-    clean_cep = re.sub(r'\D', '', user_data.CEP)
-
-    if len(clean_cpf) != 11:
-        raise HTTPException(status_code=400, detail="Invalid CPF format.")
-    if not (10 <= len(clean_number) <= 11):
-        raise HTTPException(
-            status_code=400, detail="Invalid phone number format.")
-    if len(clean_cep) != 8:
-        raise HTTPException(status_code=400, detail="Invalid CEP format.")
-
-    # Validate new password if provided
-    hashed_password = None
-    # Check if password is provided and not just whitespace
-    if user_data.Password and user_data.Password.strip():
-        if not re.match(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}", user_data.Password):
-            raise HTTPException(
-                status_code=400,
-                detail="Password doesn't match the requirements (min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character)."
-            )
-        hashed_password = hashlib.md5(user_data.Password.encode()).hexdigest()
-
-    try:
-        with db.cursor() as cursor:
-            # 1. Check for potential email/username conflicts (excluding the current user)
-            cursor.execute(
-                "SELECT idUser FROM User WHERE (Email = %s OR Username = %s) AND idUser != %s",
-                (user_data.Email, user_data.Username, user_id)
-            )
-            if cursor.fetchone():
-                raise HTTPException(
-                    status_code=409, detail="Email or Username already in use by another user.")
-
-            # 2. Update User table
-            user_sql_base = """
-                UPDATE User SET
-                    Username = %s, Email = %s, NameSurname = %s,
-                    CPF = %s, Number = %s, fk_Role_idRole = %s
-            """
-            params = [
-                user_data.Username, user_data.Email, user_data.NameSurname,
-                clean_cpf, clean_number, user_data.Role
-            ]
-
-            # Conditionally add password update
-            if hashed_password:
-                user_sql_base += ", Password = %s"
-                params.append(hashed_password)
-
-            user_sql = user_sql_base + " WHERE idUser = %s"
-            params.append(user_id)
-
-            # Execute with all parameters
-            cursor.execute(user_sql, tuple(params))
-
-            # 3. Find or Create Address and get its ID
-            cursor.execute(
-                "SELECT idAddress FROM Address WHERE fk_User_idUser = %s", (user_id,))
-            address_row = cursor.fetchone()
-            address_id = None
-
-            if address_row:
-                address_id = address_row['idAddress']
-                # Update existing address if provided
-                if user_data.Address is not None or user_data.CEP is not None:  # Check if address or CEP data is provided
-                    addr_sql = "UPDATE Address SET Address = %s, CEP = %s WHERE idAddress = %s"
-                    cursor.execute(
-                        addr_sql, (user_data.Address, clean_cep, address_id))
-            # Only insert if address or CEP data is provided
-            elif user_data.Address is not None or user_data.CEP is not None:
-                # Insert new address
-                addr_sql = "INSERT INTO Address (Address, fk_User_idUser, CEP) VALUES (%s, %s, %s)"
-                cursor.execute(
-                    addr_sql, (user_data.Address, user_id, clean_cep))
-                address_id = cursor.lastrowid  # Get the new address ID
-
-            # 4. Update Complement table using the address_id (if address exists)
-            if address_id:  # Only manage complement if an address exists/was created
-                cursor.execute(
-                    "SELECT idComplement FROM Complement WHERE fk_Address_idAddress = %s", (address_id,))
-                complement_row = cursor.fetchone()
-
-                if complement_row:
-                    complement_id = complement_row['idComplement']
-                    if user_data.Complement:
-                        # Update existing complement
-                        comp_sql = "UPDATE Complement SET Complement = %s WHERE idComplement = %s"
-                        cursor.execute(
-                            comp_sql, (user_data.Complement, complement_id))
-                    else:
-                        # Delete existing complement if new value is empty/null
-                        comp_sql = "DELETE FROM Complement WHERE idComplement = %s"
-                        cursor.execute(comp_sql, (complement_id,))
-                elif user_data.Complement:  # Only insert if complement is provided
-                    # Insert new complement
-                    comp_sql = "INSERT INTO Complement (Complement, fk_Address_idAddress) VALUES (%s, %s)"
-                    cursor.execute(
-                        comp_sql, (user_data.Complement, address_id))
-
-            db.commit()  # Commit all changes together
-            return {"message": "User updated successfully"}
-
-    except HTTPException as http_exc:
-        db.rollback()  # Rollback on validation errors too
-        raise http_exc
-    except pymysql.err.IntegrityError as ie:
-        db.rollback()
-        print(f"Integrity error updating user {user_id}: {ie}")
-        raise HTTPException(
-            status_code=400, detail=f"Database integrity error: {ie}")
-    except Exception as e:
-        db.rollback()
-        print(f"Error updating user {user_id}: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to update user: {e}")
-    finally:
-        if db:
-            db.close()
 
 
 @app.get("/tickets/data")
