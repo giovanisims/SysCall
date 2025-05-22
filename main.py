@@ -30,7 +30,7 @@ DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'port' : int(os.getenv('DB_PORT', '3306')),
     'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', "PUC@1234"),
+    'password': os.getenv('DB_PASSWORD', "Admin123"),
     'db': 'SysCall',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor,
@@ -135,6 +135,10 @@ async def read_profile(request: Request, db=Depends(get_db)):
 
         if not user_data:
             return RedirectResponse("/login", status_code=302)
+        
+        if not user_data.get("Complement"):
+            #I know that`s not the best way of doin this, but idc
+            user_data["Complement"] = " "
         
         profile_picture = None
         if user_data.get("ProfilePicture"):
