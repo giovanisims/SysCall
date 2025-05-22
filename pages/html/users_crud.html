@@ -6,6 +6,7 @@
     <script src="https://kit.fontawesome.com/a97e2a6b17.js" crossorigin="anonymous"></script>
     <link rel="icon" type="image/x-icon" href="/static/images/logo.ico">
     <link rel="stylesheet" href="/static/css/users_crud.css">
+    <link rel="stylesheet" href="/static/css/tickets_crud.css">
     <title>SysCall - Usuários</title>
 </head>
 <body>
@@ -98,6 +99,7 @@
                     <th>Username</th>
                     <th>Email</th>
                     <th>CPF</th>
+                    <th>CEP</th>
                     <th>Telefone</th>
                     <th>Endereço</th>
                     <th>Função</th>
@@ -112,12 +114,14 @@
                     <td data-label="Username">{{ user.Username }}</td>
                     <td data-label="Email">{{ user.Email }}</td>
                     <td data-label="CPF">{{ user.CPF }}</td>
+                    <td data-label="CPF">{{ user.CEP }}</td>
                     <td data-label="Telefone">{{ user.Number }}</td>
                     <td data-label="Endereço">{{ user.Address }}</td>
                     <td data-label="Função">{{ user.Role }}</td>
                     <td class="action-button-table" data-label="Ações">
                         <button class="edit-link" title="Editar usuário"
-                            onclick="openEditModal('{{ user.idUser }}', '{{ user.NameSurname }}', '{{ user.Username }}', '{{ user.Email }}', '{{ user.CPF }}', '{{ user.Number }}', '{{ user.Address }}', '{{ user.Role }}')">
+                            o<button class="edit-link" title="Editar usuário"
+    onclick="openEditModal('{{ user.idUser }}', '{{ user.NameSurname }}', '{{ user.Username }}', '{{ user.Email }}', '{{ user.CPF }}', '{{ user.CEP }}', '{{ user.Number }}', '{{ user.Address }}', '{{ user.Role }}')">
                             <i class="fa-solid fa-pen-to-square" style="color: #125dde;"></i>
                         </button>
                         <button class="delete-link" title="Excluir usuário" onclick="openModal('{{ user.idUser }}')">
@@ -137,101 +141,111 @@
             <button id="cancelDeleteBtn" onclick="closeModal()">Cancelar</button>
         </div>
     </div>
-    <!-- Modal de Edição -->
-    <div id="editModal" class="modal">
-        <div class="modal-content edit-modal-content">
-            <h2>Editar Usuário</h2>
-            <form id="editUserForm" method="post" action="/users/edit">
-                <input type="hidden" id="editUserId" name="user_id">
-                <div class="form-group">
-                    <label for="editName">Nome:</label>
-                    <input type="text" id="editName" name="name" class="required">
-                </div>
-                <div class="form-group">
-                    <label for="editUsername">Username:</label>
-                    <input type="text" id="editUsername" name="username" class="required">
-                </div>
-                <div class="form-group">
-                    <label for="editEmail">Email:</label>
-                    <input type="email" id="editEmail" name="email" class="required">
-                </div>
-                <div class="form-group">
-                    <label for="editCPF">CPF:</label>
-                    <input type="text" id="editCPF" name="cpf" class="required">
-                </div>
-                <div class="form-group">
-                    <label for="editPhone">Telefone:</label>
-                    <input type="text" id="editPhone" name="phone" class="required">
-                </div>
-                <div class="form-group">
-                    <label for="editAddress">Endereço:</label>
-                    <input type="text" id="editAddress" name="address" class="required">
-                </div>
-                <div class="form-group">
-                    <label for="editRole">Função:</label>
-                    <select id="editRole" name="role">
-                        <option value="3">Administrador</option>
-                        <option value="1">Usuário</option>
-                        <option value="2">Técnico</option>
-                    </select>
-                </div>
-                <div class="action-button-modal">
-                    <button type="submit" class="save-button">Salvar</button>
-                    <button type="button" class="cancel-button" onclick="closeEditModal()">Cancelar</button>
-                </div>
-            </form>
-        </div>
+    <!-- ...existing code... -->
+<!-- Modal de Edição -->
+<div id="editModal" class="modal">
+    <div class="modal-content edit-modal-content">
+        <h2>Editar Usuário</h2>
+        <form id="editUserForm" method="post" action="/users/edit">
+            <input type="hidden" id="editUserId" name="user_id">
+            <div class="form-group">
+                <label for="editName">Nome:</label>
+                <input type="text" id="editName" name="name" class="required">
+            </div>
+            <div class="form-group">
+                <label for="editUsername">Username:</label>
+                <input type="text" id="editUsername" name="username" class="required">
+            </div>
+            <div class="form-group">
+                <label for="editEmail">Email:</label>
+                <input type="email" id="editEmail" name="email" class="required">
+            </div>
+            <div class="form-group">
+                <label for="editCPF">CPF:</label>
+                <input type="text" id="editCPF" name="cpf" class="required">
+            </div>
+            <div class="form-group">
+                <label for="editCEP">CEP:</label>
+                <input type="text" id="editCEP" name="cep" class="required">
+            </div>
+            <div class="form-group">
+                <label for="editPhone">Telefone:</label>
+                <input type="text" id="editPhone" name="phone" class="required">
+            </div>
+            <div class="form-group">
+                <label for="editAddress">Endereço:</label>
+                <input type="text" id="editAddress" name="address" class="required">
+            </div>
+            <div class="form-group">
+                <label for="editRole">Função:</label>
+                <select id="editRole" name="role">
+                    <option value="3">Administrador</option>
+                    <option value="1">Usuário</option>
+                    <option value="2">Técnico</option>
+                </select>
+            </div>
+            <div class="action-button-modal">
+                <button type="submit" class="save-button">Salvar</button>
+                <button type="button" class="cancel-button" onclick="closeEditModal()">Cancelar</button>
+            </div>
+        </form>
     </div>
-    <!-- Modal de Adição -->
-    <div id="modalOpenUser" class="modal hidden">
-        <div class="modal-content add-modal-content">
-            <h2>Adicionar Novo Usuário</h2>
-            <form id="formUser" action="/users/submit" method="POST">
-                <div class="form-group">
-                    <label for="addName">Nome:</label>
-                    <input type="text" id="addName" name="name" required />
-                </div>
-                <div class="form-group">
-                    <label for="addUsername">Username:</label>
-                    <input type="text" id="addUsername" name="username" required />
-                </div>
-                <div class="form-group">
-                    <label for="addEmail">Email:</label>
-                    <input type="email" id="addEmail" name="email" required />
-                </div>
-                <div class="form-group">
-                    <label for="addCPF">CPF:</label>
-                    <input type="text" id="addCPF" name="cpf" required />
-                </div>
-                <div class="form-group">
-                    <label for="addPhone">Telefone:</label>
-                    <input type="text" id="addPhone" name="phone" required />
-                </div>
-                <div class="form-group">
-                    <label for="addAddress">Endereço:</label>
-                    <input type="text" id="addAddress" name="address" required />
-                </div>
-                <div class="form-group">
-                    <label for="addRole">Função:</label>
-                    <select id="addRole" name="role" required>
-                        <option value="3">Administrador</option>
-                        <option value="1">Usuário</option>
-                        <option value="2">tecnico</option>
-                    </select>
-                </div>
-                <div class="action-button-modal-add">
-                    <button class="sendForm btn" type="submit">Enviar</button>
-                </div>
-            </form>
-        </div>
+</div>
+<div id="modalOpenUser" class="modal">
+    <div class="modal-content edit-modal-content">
+        <h2>Adicionar Novo Usuário</h2>
+        <form id="formUser" action="/users/submit" method="POST">
+            <div class="form-group">
+                <label for="addName">Nome:</label>
+                <input type="text" id="addName" name="name" required />
+            </div>
+            <div class="form-group">
+                <label for="addUsername">Username:</label>
+                <input type="text" id="addUsername" name="username" required />
+            </div>
+            <div class="form-group">
+                <label for="addEmail">Email:</label>
+                <input type="email" id="addEmail" name="email" required />
+            </div>
+            <div class="form-group">
+                <label for="addCPF">CPF:</label>
+                <input type="text" id="addCPF" name="cpf" required />
+            </div>
+            <div class="form-group">
+                <label for="addCEP">CEP:</label>
+                <input type="text" id="addCEP" name="cep" required />
+            </div>
+            <div class="form-group">
+                <label for="addPhone">Telefone:</label>
+                <input type="text" id="addPhone" name="phone" required />
+            </div>
+            <div class="form-group">
+                <label for="addAddress">Endereço:</label>
+                <input type="text" id="addAddress" name="address" required />
+            </div>
+            <div class="form-group">
+                <label for="addRole">Função:</label>
+                <select id="addRole" name="role" required>
+                    <option value="3">Administrador</option>
+                    <option value="1">Usuário</option>
+                    <option value="2">Técnico</option>
+                </select>
+            </div>
+            <div class="action-button-modal">
+                <button class="sendForm btn" type="submit">Enviar</button>
+                <button type="button" class="cancel-button" onclick="closeModalForm()">Cancelar</button>
+            </div>
+        </form>
     </div>
+</div>
     <script>
-        function openEditModal(userId, name, username, email, cpf, phone, address, role) {
+        function openEditModal(userId, name, username, email, cpf, cep, phone, address, role) {
     document.getElementById("editUserId").value = userId;
     document.getElementById("editName").value = name;
     document.getElementById("editUsername").value = username;
     document.getElementById("editEmail").value = email;
     document.getElementById("editCPF").value = cpf;
+    document.getElementById("editCEP").value = cep;
     document.getElementById("editPhone").value = phone;
     document.getElementById("editAddress").value = address;
     document.getElementById("editRole").value = role;

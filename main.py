@@ -107,6 +107,7 @@ async def users_crud(request: Request, db=Depends(get_db)):
                     u.Email,
                     u.CPF,
                     u.Number,
+                    a.CEP,
                     a.Address,
                     r.Role
                 FROM User u
@@ -135,6 +136,7 @@ async def edit_user(
     username: str = Form(...),
     email: str = Form(...),
     cpf: str = Form(...),
+    cep: str = Form(...),
     phone: str = Form(...),
     address: str = Form(...),
     role: int = Form(...),
@@ -153,10 +155,10 @@ async def edit_user(
             cursor.execute(
                 """
                 UPDATE Address
-                SET Address = %s
+                SET Address = %s, CEP = %s
                 WHERE fk_User_idUser = %s
                 """,
-                (address, user_id)
+                (address, cep, user_id)
             )
             db.commit()
         return RedirectResponse("/users_crud?edited=true", status_code=302)
@@ -190,6 +192,7 @@ async def add_user(
     username: str = Form(...),
     email: str = Form(...),
     cpf: str = Form(...),
+    cep: str = Form(...),
     phone: str = Form(...),
     address: str = Form(...),
     role: int = Form(...),
@@ -199,12 +202,12 @@ async def add_user(
         with db.cursor() as cursor:
             cursor.execute(
                 "INSERT INTO User (NameSurname, Username, Email, CPF, Number, fk_Role_idRole, Password) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (name, username, email, cpf, phone, role, "12345678")  # senha padrão, ajuste como quiser
+                (name, username, email, cpf, phone, role, "12345678")
             )
             user_id = cursor.lastrowid
             cursor.execute(
                 "INSERT INTO Address (Address, fk_User_idUser, CEP) VALUES (%s, %s, %s)",
-                (address, user_id, "00000000")
+                (address, user_id, cep)
             )
             db.commit()
         return RedirectResponse("/users_crud?added=true", status_code=302)
