@@ -104,6 +104,7 @@
                     <th>CEP</th>
                     <th>Telefone</th>
                     <th>Endereço</th>
+                    <th>Complemento</th>
                     <th>Função</th>
                     <th colspan="2">Ações</th>
                 </tr>
@@ -116,13 +117,14 @@
                     <td data-label="Username">{{ user.Username }}</td>
                     <td data-label="Email">{{ user.Email }}</td>
                     <td data-label="CPF">{{ user.CPF }}</td>
-                    <td data-label="CPF">{{ user.CEP }}</td>
+                    <td data-label="CEP">{{ user.CEP }}</td>
                     <td data-label="Telefone">{{ user.Number }}</td>
                     <td data-label="Endereço">{{ user.Address }}</td>
+                    <td data-label="Complemento">{{ user.Complement }}</td>
                     <td data-label="Função">{{ user.Role }}</td>
                     <td class="action-button-table" data-label="Ações">
                         <button class="edit-link" title="Editar usuário"
-                            onclick="openEditModal('{{ user.idUser }}', '{{ user.NameSurname }}', '{{ user.Username }}', '{{ user.Email }}', '{{ user.CPF }}', '{{ user.CEP }}', '{{ user.Number }}', '{{ user.Address }}', '{{ user.Role }}')">
+                            onclick="openEditModal('{{ user.idUser }}', '{{ user.NameSurname }}', '{{ user.Username }}', '{{ user.Email }}', '{{ user.CPF }}', '{{ user.CEP }}', '{{ user.Number }}', '{{ user.Address }}', '{{ user.Role }}', '{{ user.Complement }}')">
                             <i class="fa-solid fa-pen-to-square" style="color: #125dde;"></i>
                         </button>
                         <button class="delete-link" title="Excluir usuário" onclick="openModal('{{ user.idUser }}')">
@@ -163,30 +165,55 @@
                 </div>
                 <div class="form-group">
                     <label for="editCPF">CPF:</label>
-                    <input type="text" id="editCPF" name="cpf" class="required">
+                    <input type="text" id="editCPF" name="cpf" class="required" maxlength="11">
                 </div>
                 <div class="form-group">
                     <label for="editCEP">CEP:</label>
-                    <input type="text" id="editCEP" name="cep" class="required">
+                    <input type="text" id="editCEP" name="cep" class="required" maxlength="9">
                 </div>
                 <div class="form-group">
                     <label for="editPhone">Telefone:</label>
-                    <input type="text" id="editPhone" name="phone" class="required">
+                    <input type="text" id="editPhone" name="phone" class="required" maxlength="12">
                 </div>
                 <div class="form-group">
                     <label for="editAddress">Endereço:</label>
                     <input type="text" id="editAddress" name="address" class="required">
                 </div>
                 <div class="form-group">
+                    <label for="editObservation">Complemento:</label>
+                    <input type="text" id="editObservation" name="observation">
+                </div>
+                <div class="form-group">
                     <label for="editRole">Função:</label>
-                    <select id="editRole" name="role">
+                    <select id="editRole" name="role" class="required">
                         <option value="3">Administrador</option>
                         <option value="1">Usuário</option>
                         <option value="2">Técnico</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="editPassword">Senha:</label>
+                    <input type="password" id="editPassword" name="password">
+                </div>
+                <div class="form-group see-password-container">
+                    <div class="see-password-checkbox-container">
+                        <input type="checkbox" id="editSeePassword" name="seePassword" class="see-password-checkbox">
+                    </div>
+                    <label for="editSeePassword" class="see-password-label">Mostrar a senha</label>
+                </div>
+                <div class="error-message-container">
+                    <p id="errorEditName" class="error-message" style="display: none;">Nome inválido. Use apenas letras e espaços.</p>
+                    <p id="errorEditUsername" class="error-message" style="display: none;">Username inválido.</p>
+                    <p id="errorEditEmail" class="error-message" style="display: none;">Email inválido.</p>
+                    <p id="errorEditCpf" class="error-message" style="display: none;">CPF inválido.</p>
+                    <p id="errorEditCep" class="error-message" style="display: none;">CEP inválido.</p>
+                    <p id="errorEditPhone" class="error-message" style="display: none;">Telefone inválido.</p>
+                    <p id="errorEditPassword" class="error-message" style="display: none;">A senha deve conter uma letra maiúscula, uma letra minúscula, um número, um caractere especial e 8 digitos.</p>
+                    <p id="errorEditFields" class="error-message" style="display: none;">Preencha todos os campos obrigatórios.</p>
+                </div>
                 <div class="action-button-modal">
-                    <button type="submit" class="save-button">Salvar</button>
+                    <button type="button" id="editSubmitButtonVisible" class="save-button">Salvar</button>
+                    <button type="submit" id="editSubmitButton" style="display: none;"></button>
                     <button type="button" class="cancel-button" onclick="closeEditModal()">Cancelar</button>
                 </div>
             </form>
@@ -196,44 +223,75 @@
         <div class="modal-content edit-modal-content">
             <h2>Adicionar Novo Usuário</h2>
             <form id="formUser" action="/users/submit" method="POST">
+                <input type="hidden" name="where" value="2">
                 <div class="form-group">
                     <label for="addName">Nome:</label>
-                    <input type="text" id="addName" name="name" required />
+                    <input type="text" id="addName" name="namesurname" class="required" />
                 </div>
                 <div class="form-group">
                     <label for="addUsername">Username:</label>
-                    <input type="text" id="addUsername" name="username" required />
+                    <input type="text" id="addUsername" name="username" class="required" />
                 </div>
                 <div class="form-group">
                     <label for="addEmail">Email:</label>
-                    <input type="email" id="addEmail" name="email" required />
+                    <input type="email" id="addEmail" name="email" class="required" />
                 </div>
                 <div class="form-group">
                     <label for="addCPF">CPF:</label>
-                    <input type="text" id="addCPF" name="cpf" required />
+                    <input type="text" id="addCPF" name="cpf" class="required" maxlength="11" />
                 </div>
                 <div class="form-group">
                     <label for="addCEP">CEP:</label>
-                    <input type="text" id="addCEP" name="cep" required />
+                    <input type="text" id="addCEP" name="cep" class="required" maxlength="9" />
                 </div>
                 <div class="form-group">
                     <label for="addPhone">Telefone:</label>
-                    <input type="text" id="addPhone" name="phone" required />
+                    <input type="text" id="addPhone" name="phone" class="required" maxlength="12" />
                 </div>
                 <div class="form-group">
                     <label for="addAddress">Endereço:</label>
-                    <input type="text" id="addAddress" name="address" required />
+                    <input type="text" id="addAddress" name="address" class="required" />
+                </div>
+                <div class="form-group">
+                    <label for="addObservation">Complemento:</label>
+                    <input type="text" id="addObservation" name="observation" />
                 </div>
                 <div class="form-group">
                     <label for="addRole">Função:</label>
-                    <select id="addRole" name="role" required>
+                    <select id="addRole" name="role" class="required">
                         <option value="3">Administrador</option>
                         <option value="1">Usuário</option>
                         <option value="2">Técnico</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="addPassword">Senha:</label>
+                    <input type="password" id="addPassword" name="password" class="required" />
+                </div>
+                <div class="form-group">
+                    <label for="addPasswordConfirm">Confirmar senha:</label>
+                    <input type="password" id="addPasswordConfirm" name="passwordConfirm" class="required" />
+                </div>
+                <div class="form-group see-password-container">
+                    <div class="see-password-checkbox-container">
+                        <input type="checkbox" id="addSeePassword" name="seePassword" class="see-password-checkbox">
+                    </div>
+                    <label for="addSeePassword" class="see-password-label">Mostrar a senha</label>
+                </div>
+                <div class="error-message-container">
+                    <p id="errorAddName" class="error-message" style="display: none;">Nome inválido. Use apenas letras e espaços.</p>
+                    <p id="errorAddUsername" class="error-message" style="display: none;">Username inválido.</p>
+                    <p id="errorAddEmail" class="error-message" style="display: none;">Email inválido.</p>
+                    <p id="errorAddCpf" class="error-message" style="display: none;">CPF inválido.</p>
+                    <p id="errorAddCep" class="error-message" style="display: none;">CEP inválido.</p>
+                    <p id="errorAddPhone" class="error-message" style="display: none;">Telefone inválido.</p>
+                    <p id="errorAddPassword" class="error-message" style="display: none;">A senha deve conter uma letra maiúscula, uma letra minúscula, um número, um caractere especial e 8 digitos.</p>
+                    <p id="errorAddEqualPasswords" class="error-message" style="display: none;">As senhas devem ser iguais.</p>
+                    <p id="errorAddFields" class="error-message" style="display: none;">Preencha todos os campos obrigatórios.</p>
+                </div>
                 <div class="action-button-modal">
-                    <button class="sendForm btn" type="submit">Enviar</button>
+                    <button type="button" id="addSubmitButtonVisible" class="sendForm btn">Enviar</button>
+                    <button type="submit" id="addSubmitButton" style="display: none;"></button>
                     <button type="button" class="cancel-button" onclick="closeModalForm()">Cancelar</button>
                 </div>
             </form>

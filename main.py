@@ -109,10 +109,12 @@ async def users_crud(request: Request, db=Depends(get_db)):
                     u.Number,
                     a.CEP,
                     a.Address,
-                    r.Role
+                    r.Role,
+                    c.Complement
                 FROM User u
                 LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
                 LEFT JOIN Role r ON u.fk_Role_idRole = r.idRole
+                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
             """
             cursor.execute(sql_query)
             users = cursor.fetchall()
@@ -140,28 +142,94 @@ async def edit_user(
     phone: str = Form(...),
     address: str = Form(...),
     role: int = Form(...),
+    observation: str = Form(None),  # Optional complement field
+    password: str = Form(None),  # Optional password field
     db=Depends(get_db)
 ):
     try:
         with db.cursor() as cursor:
-            cursor.execute(
-                """
-                UPDATE User
-                SET NameSurname = %s, Username = %s, Email = %s, CPF = %s, Number = %s, fk_Role_idRole = %s
-                WHERE idUser = %s
-                """,
-                (name, username, email, cpf, phone, role, user_id)
-            )
+            # Clean up input data
+            CPF = cpf.replace('.', '').replace('-', '')
+            CEP = cep.replace('-', '').replace('.', '')
+            Number = phone.replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
+            
+            # Update User table
+            if password and password.strip():
+                # If password is provided, validate and hash it
+                if not re.match(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}", password):
+                    raise HTTPException(status_code=400, detail="Password doesn't match the requirements")
+                
+                # Hash the password using MD5
+                Password_hash = hashlib.md5(password.encode()).hexdigest()
+                
+                cursor.execute(
+                    """
+                    UPDATE User
+                    SET NameSurname = %s, Username = %s, Email = %s, CPF = %s, Number = %s, fk_Role_idRole = %s, Password = %s
+                    WHERE idUser = %s
+                    """,
+                    (name, username, email, CPF, Number, role, Password_hash, user_id)
+                )
+            else:
+                # If no password provided, update without changing password
+                cursor.execute(
+                    """
+                    UPDATE User
+                    SET NameSurname = %s, Username = %s, Email = %s, CPF = %s, Number = %s, fk_Role_idRole = %s
+                    WHERE idUser = %s
+                    """,
+                    (name, username, email, CPF, Number, role, user_id)
+                )
+            
+            # Update Address table
             cursor.execute(
                 """
                 UPDATE Address
                 SET Address = %s, CEP = %s
                 WHERE fk_User_idUser = %s
                 """,
-                (address, cep, user_id)
+                (address, CEP, user_id)
             )
+            
+            # Handle complement/observation
+            if observation:
+                # Check if complement already exists
+                cursor.execute(
+                    """
+                    SELECT c.idComplement, a.idAddress 
+                    FROM Address a
+                    LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
+                    WHERE a.fk_User_idUser = %s
+                    """, 
+                    (user_id,)
+                )
+                result = cursor.fetchone()
+                
+                if result and result.get('idComplement'):
+                    # Update existing complement
+                    cursor.execute(
+                        """
+                        UPDATE Complement
+                        SET Complement = %s
+                        WHERE idComplement = %s
+                        """,
+                        (observation, result['idComplement'])
+                    )
+                elif result:
+                    # Insert new complement
+                    cursor.execute(
+                        """
+                        INSERT INTO Complement (Complement, fk_Address_idAddress)
+                        VALUES (%s, %s)
+                        """,
+                        (observation, result['idAddress'])
+                    )
+            
             db.commit()
         return RedirectResponse("/users_crud?edited=true", status_code=302)
+    except HTTPException as he:
+        db.rollback()
+        raise he
     except Exception as e:
         db.rollback()
         print(f"Erro ao editar usuário: {e}")
@@ -182,39 +250,6 @@ async def delete_user(user_id: int, db=Depends(get_db)):
         db.rollback()
         print(f"Erro ao deletar usuário: {e}")
         raise HTTPException(status_code=500, detail="Erro ao deletar usuário")
-    finally:
-        if db:
-            db.close()
-
-@app.post("/users/submit")
-async def add_user(
-    name: str = Form(...),
-    username: str = Form(...),
-    email: str = Form(...),
-    cpf: str = Form(...),
-    cep: str = Form(...),
-    phone: str = Form(...),
-    address: str = Form(...),
-    role: int = Form(...),
-    db=Depends(get_db)
-):
-    try:
-        with db.cursor() as cursor:
-            cursor.execute(
-                "INSERT INTO User (NameSurname, Username, Email, CPF, Number, fk_Role_idRole, Password) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (name, username, email, cpf, phone, role, "12345678")
-            )
-            user_id = cursor.lastrowid
-            cursor.execute(
-                "INSERT INTO Address (Address, fk_User_idUser, CEP) VALUES (%s, %s, %s)",
-                (address, user_id, cep)
-            )
-            db.commit()
-        return RedirectResponse("/users_crud?added=true", status_code=302)
-    except Exception as e:
-        db.rollback()
-        print(f"Erro ao adicionar usuário: {e}")
-        raise HTTPException(status_code=500, detail="Erro ao adicionar usuário")
     finally:
         if db:
             db.close()
@@ -664,7 +699,7 @@ async def logout(request: Request):
     return RedirectResponse("/", status_code=302)
 
 
-@app.post("/sign_up")
+@app.post("/users/submit")
 async def sign_up(
     request: Request,
     namesurname: str = Form(...),
@@ -677,10 +712,14 @@ async def sign_up(
     role: int = Form(...),
     observation: str = Form(None),  # None lets the field be null
     password: str = Form(...),
+    where: int = Form(1),  # Default to 1 (sign_up page)
     db=Depends(get_db)
 ):
     if not re.match(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}", password):
-        return templates.TemplateResponse("signup.html", {"request": request, "error": "Password doesn't match the requirements"})
+        if where == 1:
+            return templates.TemplateResponse("sign_up.html", {"request": request, "error": "Password doesn't match the requirements"})
+        else:
+            return templates.TemplateResponse("users_crud.html", {"request": request, "error": "Password doesn't match the requirements"})
 
     NameSurname = namesurname
     Username = username
@@ -705,7 +744,10 @@ async def sign_up(
 
             if existing_user:
                 error_message = "Username or email already in use."
-                return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+                if where == 1:
+                    return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+                else:
+                    return templates.TemplateResponse("users_crud.html", {"request": request, "error": error_message, "users": [], "user_name": request.session.get("user_name"), "user_role": request.session.get("user_role")})
 
             # Validate the role ID against the Role table
             cursor.execute(
@@ -714,7 +756,10 @@ async def sign_up(
 
             if not role_exists:
                 error_message = "Invalid role ID provided."
-                return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+                if where == 1:
+                    return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+                else:
+                    return templates.TemplateResponse("users_crud.html", {"request": request, "error": error_message, "users": [], "user_name": request.session.get("user_name"), "user_role": request.session.get("user_role")})
 
             # Inserts into each table according to independence
 
@@ -741,19 +786,31 @@ async def sign_up(
 
             db.commit()  # Commit all changes together
 
-            return RedirectResponse("/login", status_code=302)
+            # Redirect based on where parameter (1 = sign_up page, 2 = users_crud)
+            if where == 1:
+                return RedirectResponse("/login", status_code=302)
+            elif where == 2:
+                return RedirectResponse("/users_crud?added=true", status_code=302)
+            else:
+                return RedirectResponse("/login", status_code=302)
 
     # Rollback safeguards for duplicate or incorrect entries
     except pymysql.err.IntegrityError as ie:
         db.rollback()
         print(f"Integrity error during sign up: {ie}")
         error_message = "Registration failed due to data conflict (e.g., duplicate entry or invalid foreign key)."
-        return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+        if where == 1:
+            return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+        else:
+            return templates.TemplateResponse("users_crud.html", {"request": request, "error": error_message, "users": [], "user_name": request.session.get("user_name"), "user_role": request.session.get("user_role")})
     except Exception as e:
         db.rollback()
         print(f"Error during sign up: {e}")
         error_message = "An error occurred during registration."
-        return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+        if where == 1:
+            return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+        else:
+            return templates.TemplateResponse("users_crud.html", {"request": request, "error": error_message, "users": [], "user_name": request.session.get("user_name"), "user_role": request.session.get("user_role")})
     finally:
         if db:
             db.close()

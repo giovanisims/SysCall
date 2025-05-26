@@ -391,6 +391,14 @@ th {
     flex-direction: column;
 }
 
+.see-password-container {
+    display: flex ;
+    flex-direction: row !important;
+    margin-bottom: 15px;
+    align-items: center;
+    gap: 10px;
+}
+
 .action-button-modal .sendForm {
     background-color: #1e5a2c;
     border: none;
@@ -412,8 +420,18 @@ th {
 }
 
 .error-message {
-    margin-top: 15px;
-    text-align: center;
+    color: #921f1f;
+    font-size: 0.85em;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.error {
+    border: 1px solid #921f1f !important;
+}
+
+.error-message-container {
+    margin: 10px 0;
 }
 
 /* Success Modal Specific Styles */
@@ -477,5 +495,10 @@ th {
     border: 1px solid #ccc;
     border-radius: 15px;
     box-sizing: border-box;
+}
+
+.empty-field {
+    border: 1px solid #ff9800 !important;
+    background-color: rgba(255, 152, 0, 0.05);
 }
 

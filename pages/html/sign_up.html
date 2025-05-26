@@ -92,7 +92,8 @@
             <p>Bem-vindo ao SysCall!</p>
         </div>
         <div class="login-data">
-            <form action="/sign_up" method="post">
+            <form action="/users/submit" method="post">
+                <input type="hidden" name="where" value="1">
                 <div class="input-group">
                     <div class="input-container">
                         <input type="text" id="namesurname" name="namesurname" placeholder=" " class="required">
