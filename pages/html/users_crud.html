@@ -120,7 +120,7 @@
                     <td data-label="CEP">{{ user.CEP }}</td>
                     <td data-label="Telefone">{{ user.Number }}</td>
                     <td data-label="Endereço">{{ user.Address }}</td>
-                    <td data-label="Complemento">{{ user.Complement }}</td>
+                    <td data-label="Complemento">{% if user.Complement == None or user.Complement == 'None' %}{% else %}{{ user.Complement }}{% endif %}</td>
                     <td data-label="Função">{{ user.Role }}</td>
                     <td class="action-button-table" data-label="Ações">
                         <button class="edit-link" title="Editar usuário"
@@ -144,7 +144,6 @@
             <button id="cancelDeleteBtn" onclick="closeModal()">Cancelar</button>
         </div>
     </div>
-    <!-- ...existing code... -->
     <!-- Modal de Edição -->
     <div id="editModal" class="modal">
         <div class="modal-content edit-modal-content">
@@ -295,6 +294,13 @@
                     <button type="button" class="cancel-button" onclick="closeModalForm()">Cancelar</button>
                 </div>
             </form>
+        </div>
+    </div>
+    <!-- Modal de Sucesso -->
+    <div id="successModal" class="modal">
+        <div class="modal-content success-modal-content">
+            <p id="successMessageText"></p>
+            <button id="closeSuccessBtn">OK</button>
         </div>
     </div>
     <script src="/static/js/users_crud.js"></script>

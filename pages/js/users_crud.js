@@ -7,6 +7,38 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Set up event listeners
     setupEventListeners();
+    
+    // Exibe modal de sucesso se a URL tiver ?deleted=true, ?added=true ou ?edited=true
+    const successModal = document.getElementById("successModal");
+    const successMsg = document.getElementById("successMessageText");
+    const closeBtn = document.getElementById("closeSuccessBtn");
+    const params = new URLSearchParams(window.location.search);
+
+    let message = "";
+    if (params.get("deleted") === "true") {
+        message = "Usuário excluído com sucesso!";
+    } else if (params.get("added") === "true") {
+        message = "Usuário adicionado com sucesso!";
+    } else if (params.get("edited") === "true") {
+        message = "Usuário editado com sucesso!";
+    }
+
+    if (successModal && successMsg) {
+        if (message) {
+            successMsg.innerText = message;
+            successModal.style.display = "block";
+            if (closeBtn) {
+                closeBtn.onclick = function() {
+                    successModal.style.display = "none";
+                    successMsg.innerText = "";
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                };
+            }
+        } else {
+            successModal.style.display = "none";
+            successMsg.innerText = "";
+        }
+    }
 });
 
 // Load selectors for the Edit form
@@ -426,6 +458,10 @@ function openEditModal(userId, name, username, email, cpf, cep, phone, address, 
         default:
             break;
     }
+
+    if (complement === null || complement === undefined || complement === "None" || complement === "none") {
+        complement = "";
+    }
     
     // Set form values
     document.getElementById("editUserId").value = userId;
@@ -545,13 +581,35 @@ function closeModal() {
     document.getElementById("confirmationModal").style.display = "none";
 }
 
+// Success Modal Logic
+function showSuccessModal(message) {
+    const modal = document.getElementById('successModal');
+    const messageText = document.getElementById('successMessageText');
+    const closeBtn = document.getElementById('closeSuccessBtn');
+    if (messageText) messageText.textContent = message;
+    if (modal) modal.style.display = 'block';
+    if (closeBtn) {
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        };
+    }
+    // Also close modal if user clicks outside
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
+}
+
 // Fecha modais ao clicar fora
 window.onclick = function (event) {
     const confirmationModal = document.getElementById("confirmationModal");
     const editModal = document.getElementById("editModal");
     const modalOpenUser = document.getElementById("modalOpenUser");
+    const successModal = document.getElementById("successModal");
 
     if (event.target === confirmationModal) confirmationModal.style.display = "none";
     if (event.target === editModal) closeEditModal();
     if (event.target === modalOpenUser) closeModalForm();
+    if (event.target === successModal) successModal.style.display = "none";
 };
