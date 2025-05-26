@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://kit.fontawesome.com/a97e2a6b17.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="static/css/sign_up.css">
+    <link rel="stylesheet" href="/static/css/sign_up.css">
     <link rel="icon" type="image/x-icon" href="/static/images/logo.ico">
     <title>Cadastre-se</title>
 </head>
@@ -96,55 +96,53 @@
                 <input type="hidden" name="where" value="1">
                 <div class="input-group">
                     <div class="input-container">
-                        <input type="text" id="namesurname" name="namesurname" placeholder=" " class="required">
+                        <input type="text" id="namesurname" name="namesurname" placeholder=" " class="required" value="{{ namesurname|default('') }}">
                         <label for="namesurname">Nome completo *</label>
                     </div>
                     <div class="input-container">
-                        <input type="text" id="username" name="username" placeholder=" " class="required">
+                        <input type="text" id="username" name="username" placeholder=" " class="required" value="{{ username|default('') }}">
                         <label for="username">Username *</label>
                     </div>
                 </div>
                 <div class="input-container">
-                    <input type="email" id="email" name="email" placeholder=" " class="required">
+                    <input type="email" id="email" name="email" placeholder=" " class="required" value="{{ email|default('') }}">
                     <label for="email">Email *</label>
                 </div>
                 <div class="input-group">
                     <div class="input-container">
-                        <input type="text" id="cpf" name="cpf" placeholder=" " maxlength="11" class="required">
+                        <input type="text" id="cpf" name="cpf" placeholder=" " maxlength="11" class="required" value="{{ cpf|default('') }}">
                         <label for="CPF">CPF *</label>
                     </div>
                     <div class="input-container">
-                        <input type="text" id="phone" name="phone" placeholder=" " maxlength="12" class="required">
+                        <input type="text" id="phone" name="phone" placeholder=" " maxlength="12" class="required" value="{{ phone|default('') }}">
                         <label for="phone">Telefone *</label>
                     </div>
                 </div>
-                
                 <div class="input-group">
                     <div class="input-container">
-                        <input type="text" id="cep" name="cep" placeholder=" " maxlength="9" class="required">
-                            <label for="cep">CEP *</label>
+                        <input type="text" id="cep" name="cep" placeholder=" " maxlength="9" class="required" value="{{ cep|default('') }}">
+                        <label for="cep">CEP *</label>
                     </div>
                     <div class="input-container">
-                        <input type="text" id="observation" name="observation" placeholder=" ">
+                        <input type="text" id="observation" name="observation" placeholder=" " value="{{ observation|default('') }}">
                         <label for="observation">Complemento </label>
                     </div>
                 </div>
-               <div class="input-container">
-                    <input type="text" id="address" name="address" placeholder=" ">
+                <div class="input-container">
+                    <input type="text" id="address" name="address" placeholder=" " value="{{ address|default('') }}">
                     <label for="address">Endereço </label>
                 </div>
                 <div class="input-container">
                     <select name="role" id="role" class="required">
-                        <option value="0">Selecione seu papel</option>
-                        <option value="1">Usuário</option>
-                        <option value="2">Técnico</option>
+                        <option value="0" {% if not role or role == 0 %}selected{% endif %}>Selecione seu papel</option>
+                        <option value="1" {% if role == 1 or role == '1' %}selected{% endif %}>Usuário</option>
+                        <option value="2" {% if role == 2 or role == '2' %}selected{% endif %}>Técnico</option>
                     </select>
                 </div>
                 <div class="input-container">
                     <input type="password" id="password" name="password" placeholder="" class="required">
                     <label for="password">Senha *</label>
                 </div>
-                
                 <div class="input-container">
                     <input type="password" id="passwordConfirm" name="passwordConfirm" placeholder=" " class="required">
                     <label for="passwordConfirm">Confirmar senha *</label>
@@ -155,6 +153,11 @@
                     </div>
                     <label for="seePassword" class="see-password-text">Mostrar a senha</label>
                 </div>
+                {% if error %}
+                    <div class="backend-error-msg">
+                        <p>{{ error }}</p>
+                    </div>
+                {% endif %}
                 <div class="error-msg">
                     <p id="errorCep">CEP inválido</p>
                     <p id="errorCpf">CPF inválido</p>
@@ -175,7 +178,7 @@
         </div>
     </div>
 </div>
-<script src="static/js/sign_up.js"></script>
-<script src="static/js/header.js"></script>
+<script src="/static/js/sign_up.js"></script>
+<script src="/static/js/header.js"></script>
 </body>
 </html>

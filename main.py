@@ -30,7 +30,7 @@ DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'port' : int(os.getenv('DB_PORT', '3306')),
     'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', "Admin123"),
+    'password': os.getenv('DB_PASSWORD', "admin123"),
     'db': 'SysCall',
     'charset': 'utf8mb4',
     'cursorclass': cursors.DictCursor,
@@ -489,7 +489,7 @@ async def delete_ticket(ticket_id: int, db=Depends(get_db)):
     try:
         with db.cursor() as cursor:
             cursor.execute(
-                "DELETE FROM Issue WHERE idIssue = %s", (ticket_id)
+                "DELETE FROM Issue WHERE idIssue = %s", (ticket_id,)
             )
             db.commit()
             return RedirectResponse("/tickets_crud?deleted=true", status_code=302)
@@ -715,29 +715,86 @@ async def sign_up(
     where: int = Form(1),  # Default to 1 (sign_up page)
     db=Depends(get_db)
 ):
+    def get_roles(db):
+        with db.cursor() as cursor:
+            cursor.execute("SELECT idRole, Role FROM Role")
+            return cursor.fetchall()
+
+    def render_sign_up_with_error(error_message):
+        roles = get_roles(db)
+        # Repassa todos os campos preenchidos para o template
+        return templates.TemplateResponse(
+            "sign_up.html",
+            {
+                "request": request,
+                "error": error_message,
+                "roles": roles,
+                "namesurname": namesurname,
+                "username": username,
+                "email": email,
+                "cpf": cpf,
+                "phone": phone,
+                "cep": cep,
+                "address": address,
+                "role": role,
+                "observation": observation,
+            },
+            status_code=200
+        )
+
+    def render_users_crud_with_error(error_message):
+        with db.cursor() as user_cursor:
+            user_cursor.execute("""
+                SELECT
+                    u.idUser,
+                    u.NameSurname,
+                    u.Username,
+                    u.Email,
+                    u.CPF,
+                    u.Number,
+                    a.CEP,
+                    a.Address,
+                    r.Role,
+                    c.Complement
+                FROM User u
+                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
+                LEFT JOIN Role r ON u.fk_Role_idRole = r.idRole
+                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
+            """)
+            users = user_cursor.fetchall()
+        return templates.TemplateResponse(
+            "users_crud.html",
+            {
+                "request": request,
+                "error": error_message,
+                "users": users,
+                "user_name": request.session.get("user_name"),
+                "user_role": request.session.get("user_role"),
+            },
+            status_code=200
+        )
+
     if not re.match(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}", password):
+        error_message = "Password doesn't match the requirements"
         if where == 1:
-            return templates.TemplateResponse("sign_up.html", {"request": request, "error": "Password doesn't match the requirements"})
+            return render_sign_up_with_error(error_message)
         else:
-            return templates.TemplateResponse("users_crud.html", {"request": request, "error": "Password doesn't match the requirements"})
+            return render_users_crud_with_error(error_message)
 
     NameSurname = namesurname
     Username = username
     Email = email
     CPF = cpf.replace('.', '').replace('-', '')
     CEP = cep.replace('-', '').replace('.', '')
-    Number = phone.replace('(', '').replace(
-        ')', '').replace('-', '').replace(' ', '')
-    Address_text = address  # Renamed to avoid conflict with Address table name
-    Complement_text = observation  # Renamed for clarity
+    Number = phone.replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
+    Address_text = address
+    Complement_text = observation
     fk_Role_idRole = role
 
-    # Hash the password using MD5
     Password = hashlib.md5(password.encode()).hexdigest()
 
     try:
         with db.cursor() as cursor:
-            # Checks if the username or email are already in use, if so returns an error menssage
             cursor.execute(
                 "SELECT * FROM User WHERE Username = %s OR Email = %s", (Username, Email))
             existing_user = cursor.fetchone()
@@ -745,11 +802,10 @@ async def sign_up(
             if existing_user:
                 error_message = "Username or email already in use."
                 if where == 1:
-                    return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+                    return render_sign_up_with_error(error_message)
                 else:
-                    return templates.TemplateResponse("users_crud.html", {"request": request, "error": error_message, "users": [], "user_name": request.session.get("user_name"), "user_role": request.session.get("user_role")})
+                    return render_users_crud_with_error(error_message)
 
-            # Validate the role ID against the Role table
             cursor.execute(
                 "SELECT idRole FROM Role WHERE idRole = %s", (fk_Role_idRole,))
             role_exists = cursor.fetchone()
@@ -757,36 +813,26 @@ async def sign_up(
             if not role_exists:
                 error_message = "Invalid role ID provided."
                 if where == 1:
-                    return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+                    return render_sign_up_with_error(error_message)
                 else:
-                    return templates.TemplateResponse("users_crud.html", {"request": request, "error": error_message, "users": [], "user_name": request.session.get("user_name"), "user_role": request.session.get("user_role")})
+                    return render_users_crud_with_error(error_message)
 
-            # Inserts into each table according to independence
-
-            # First, insert the user into the User table
             cursor.execute(
                 "INSERT INTO User (Username, Email, NameSurname, CPF, Number, Password, fk_Role_idRole) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (Username, Email, NameSurname, CPF,
-                 Number, Password, fk_Role_idRole)
+                (Username, Email, NameSurname, CPF, Number, Password, fk_Role_idRole)
             )
             user_id = cursor.lastrowid
-            # No commit here yet, do it after all related inserts
 
-            # Now, insert the address into the Address table, referencing the User
             cursor.execute(
                 "INSERT INTO Address (Address, fk_User_idUser, CEP) VALUES (%s, %s, %s)", (Address_text, user_id, CEP))
-            address_id = cursor.lastrowid  # Get the ID of the inserted address
-            # No commit here yet
+            address_id = cursor.lastrowid
 
-            # Insert the complement into the DB if it exists, referencing the Address
             if Complement_text:
                 cursor.execute("INSERT INTO Complement (Complement, fk_Address_idAddress) VALUES (%s, %s)", (
-                    Complement_text, address_id))  # Use address_id
-                # No commit here yet
+                    Complement_text, address_id))
 
-            db.commit()  # Commit all changes together
+            db.commit()
 
-            # Redirect based on where parameter (1 = sign_up page, 2 = users_crud)
             if where == 1:
                 return RedirectResponse("/login", status_code=302)
             elif where == 2:
@@ -794,43 +840,25 @@ async def sign_up(
             else:
                 return RedirectResponse("/login", status_code=302)
 
-    # Rollback safeguards for duplicate or incorrect entries
     except pymysql.err.IntegrityError as ie:
         db.rollback()
         print(f"Integrity error during sign up: {ie}")
         error_message = "Registration failed due to data conflict (e.g., duplicate entry or invalid foreign key)."
         if where == 1:
-            return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+            return render_sign_up_with_error(error_message)
         else:
-            return templates.TemplateResponse("users_crud.html", {"request": request, "error": error_message, "users": [], "user_name": request.session.get("user_name"), "user_role": request.session.get("user_role")})
+            return render_users_crud_with_error(error_message)
     except Exception as e:
         db.rollback()
         print(f"Error during sign up: {e}")
         error_message = "An error occurred during registration."
         if where == 1:
-            return templates.TemplateResponse("sign_up.html", {"request": request, "error": error_message})
+            return render_sign_up_with_error(error_message)
         else:
-            return templates.TemplateResponse("users_crud.html", {"request": request, "error": error_message, "users": [], "user_name": request.session.get("user_name"), "user_role": request.session.get("user_role")})
+            return render_users_crud_with_error(error_message)
     finally:
         if db:
             db.close()
-
-# User reference model
-
-
-class UserUpdate(BaseModel):
-    Username: str
-    NameSurname: str
-    Email: EmailStr
-    CPF: Annotated[str, Field(pattern=r'^\d{11}$')]
-    Number: Annotated[str, Field(pattern=r'^\d{10,11}$')]
-    CEP: Annotated[str, Field(pattern=r'^\d{8}$')]
-    Address: Optional[str] = None
-    Complement: Optional[str] = None
-    Password: Optional[str] = None  # Add optional password field
-    Role: int
-
-
 
 
 
