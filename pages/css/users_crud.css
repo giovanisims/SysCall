@@ -1,4 +1,5 @@
 @import url('header.css');
+@import url('tickets_crud.css');
 
 .title{
     width: 100%;
@@ -19,7 +20,6 @@ h1{
     width: 100%;
     display: flex;
     justify-content: center;
-
 }
 
 table {
@@ -42,6 +42,15 @@ th {
     border: 1px solid #ddd;
     padding: 8px;
     text-align: center;
+}
+
+/* Make CPF, CEP, and Phone number cells wider to fit formatted content */
+#users-table-body td[data-label="CPF"],
+#users-table-body td[data-label="CEP"],
+#users-table-body td[data-label="Telefone"] {
+    min-width: 120px; /* Set minimum width */
+    width: auto; /* Allow to grow if needed */
+    white-space: nowrap; /* Prevent text from wrapping */
 }
 
 

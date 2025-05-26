@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Set up event listeners
     setupEventListeners();
     
+    // Format CPF, CEP, and phone numbers in the users table
+    formatTableData();
+    
     // Exibe modal de sucesso se a URL tiver ?deleted=true, ?added=true ou ?edited=true
     const successModal = document.getElementById("successModal");
     const successMsg = document.getElementById("successMessageText");
@@ -463,14 +466,41 @@ function openEditModal(userId, name, username, email, cpf, cep, phone, address, 
         complement = "";
     }
     
+    // Format CPF if needed
+    const cleanCpf = cpf.replace(/\D/g, "");
+    let formattedCpf = cpf;
+    if (cleanCpf.length === 11) {
+        formattedCpf = cleanCpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+    }
+    
+    // Format CEP if needed
+    const cleanCep = cep.replace(/\D/g, "");
+    let formattedCep = cep;
+    if (cleanCep.length === 8) {
+        formattedCep = cleanCep.replace(/^(\d{2})(\d{3})(\d{3})$/, "$1.$2-$3");
+    }
+    
+    // Format phone if needed
+    const cleanPhone = phone.replace(/\D/g, "");
+    let formattedPhone = phone;
+    if (cleanPhone.length === 11) {
+        formattedPhone = cleanPhone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+    } else if (cleanPhone.length === 10) {
+        formattedPhone = cleanPhone.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
+    } else if (cleanPhone.length === 9) {
+        formattedPhone = cleanPhone.replace(/^(\d{5})(\d{4})$/, "$1-$2");
+    } else if (cleanPhone.length === 8) {
+        formattedPhone = cleanPhone.replace(/^(\d{4})(\d{4})$/, "$1-$2");
+    }
+    
     // Set form values
     document.getElementById("editUserId").value = userId;
     document.getElementById("editName").value = name;
     document.getElementById("editUsername").value = username;
     document.getElementById("editEmail").value = email;
-    document.getElementById("editCPF").value = cpf;
-    document.getElementById("editCEP").value = cep;
-    document.getElementById("editPhone").value = phone;
+    document.getElementById("editCPF").value = formattedCpf;
+    document.getElementById("editCEP").value = formattedCep;
+    document.getElementById("editPhone").value = formattedPhone;
     document.getElementById("editAddress").value = address;
     document.getElementById("editRole").value = role;
     document.getElementById("editPassword").value = "";  // Clear password field
@@ -613,3 +643,58 @@ window.onclick = function (event) {
     if (event.target === modalOpenUser) closeModalForm();
     if (event.target === successModal) successModal.style.display = "none";
 };
+
+// Format CPF, CEP, and phone numbers in the users table
+function formatTableData() {
+    // Format CPF cells
+    const cpfCells = document.querySelectorAll('td[data-label="CPF"]');
+    cpfCells.forEach(cell => {
+        const cpf = cell.textContent.trim();
+        if (cpf && cpf.length > 0) {
+            // Remove any existing formatting
+            const cleanCpf = cpf.replace(/\D/g, "");
+            // Format as XXX.XXX.XXX-XX if it has 11 digits
+            if (cleanCpf.length === 11) {
+                cell.textContent = cleanCpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+            }
+        }
+    });
+
+    // Format CEP cells
+    const cepCells = document.querySelectorAll('td[data-label="CEP"]');
+    cepCells.forEach(cell => {
+        const cep = cell.textContent.trim();
+        if (cep && cep.length > 0) {
+            // Remove any existing formatting
+            const cleanCep = cep.replace(/\D/g, "");
+            // Format as XX.XXX-XXX if it has 8 digits
+            if (cleanCep.length === 8) {
+                cell.textContent = cleanCep.replace(/^(\d{2})(\d{3})(\d{3})$/, "$1.$2-$3");
+            }
+        }
+    });
+
+    // Format phone number cells
+    const phoneCells = document.querySelectorAll('td[data-label="Telefone"]');
+    phoneCells.forEach(cell => {
+        const phone = cell.textContent.trim();
+        if (phone && phone.length > 0) {
+            // Remove any existing formatting
+            const cleanPhone = phone.replace(/\D/g, "");
+            // Format based on length
+            if (cleanPhone.length === 11) {
+                // Format as (XX) XXXXX-XXXX (with 9-digit number)
+                cell.textContent = cleanPhone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+            } else if (cleanPhone.length === 10) {
+                // Format as (XX) XXXX-XXXX (with 8-digit number)
+                cell.textContent = cleanPhone.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
+            } else if (cleanPhone.length === 9) {
+                // Format as XXXXX-XXXX (without area code)
+                cell.textContent = cleanPhone.replace(/^(\d{5})(\d{4})$/, "$1-$2");
+            } else if (cleanPhone.length === 8) {
+                // Format as XXXX-XXXX (without area code)
+                cell.textContent = cleanPhone.replace(/^(\d{4})(\d{4})$/, "$1-$2");
+            }
+        }
+    });
+}
