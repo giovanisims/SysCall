@@ -153,3 +153,23 @@
         padding: 8px;
     }
 }
+
+/* Form validation styles */
+.error-message-container {
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.error-msg {
+    color: #e74c3c;
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+.error {
+    border: 1px solid #e74c3c !important;
+}
+
+.empty-field {
+    border: 1px solid #e74c3c !important;
+}

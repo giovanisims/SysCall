@@ -101,8 +101,9 @@
                         <input type="password" id="password" name="password" placeholder=" " class="required">
                         <label for="password">Senha *</label>
                     </div>
-                    <div class="error-msg">
-                        <p id="errorFields">Preencha os campos obrigatórios</p>
+                    <div class="error-message-container">
+                        <p id="errorFields" class="error-msg" style="display: none;">Preencha os campos obrigatórios</p>
+                        <p id="errorEmail" class="error-msg" style="display: none;">Email inválido. Por favor, insira um email válido.</p>
                     </div>
 
                     <!-- Sim a mensagem de erro do login ta vindo do python, chora nao pq foi o jeito mais facil -->
