@@ -495,7 +495,7 @@ async def edit_profile(
 
             # Se o complemento for vazio, remova-o
             
-            if file:
+            if file is not None and file.filename:
                 image_data = await file.read()  # Lê o conteúdo do arquivo
                 cursor.execute(
                     """
