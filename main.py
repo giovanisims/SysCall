@@ -599,6 +599,7 @@ async def edit_ticket(
     title: str = Form(...),
     description: str = Form(...),
     priority: str = Form(...),
+    type: str = Form(...),
     db=Depends(get_db)
 ):
     try:
@@ -606,12 +607,16 @@ async def edit_ticket(
             cursor.execute(
                 """
                 UPDATE Issue
-                SET Title = %s, Description = %s, fk_Priority_idPriority = (
+                SET Title = %s, Description = %s, 
+                fk_Priority_idPriority = (
                     SELECT idPriority FROM Priority WHERE Priority = %s
+                ),
+                fk_IssueType_idIssueType = (
+                    SELECT idIssueType FROM IssueType WHERE StateName = %s
                 )
                 WHERE idIssue = %s
                 """,
-                (title, description, priority, ticket_id)
+                (title, description, priority, type, ticket_id)
             )
             db.commit()
         return RedirectResponse("/tickets_crud?edited=true", status_code=302)

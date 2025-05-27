@@ -121,7 +121,7 @@
                     <td data-label="Criador">{{ ticket.creator }}</td>
                     <td class="action-button-table" data-label="Ações">
                         <button class="edit-link" title="Editar chamado"
-                            onclick="openEditModal('{{ ticket.id }}', '{{ ticket.title }}', '{{ ticket.description }}', '{{ ticket.priority }}')">
+                            onclick="openEditModal('{{ ticket.id }}', '{{ ticket.title }}', '{{ ticket.description }}', '{{ ticket.priority }}', '{{ ticket.type }}')">
                             <i class="fa-solid fa-pen-to-square" style="color: #125dde;"></i>
                         </button>
                         <button class="delete-link" title="Excluir chamado" onclick="openModal('{{ ticket.id }}')">
@@ -158,14 +158,28 @@
                 </div>
                 <div class="form-group">
                     <label for="editPriority">Prioridade:</label>
-                    <select id="editPriority" name="priority">
+                    <select id="editPriority" name="priority" class="required">
                         <option value="Alta">Alta</option>
-                        <option value="Média">Média</option>
+                        <option value="Media">Média</option>
                         <option value="Baixa">Baixa</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="editType">Tipo:</label>
+                    <select name="type" id="editType" class="required">
+                        <option value="Erro">Erro</option>
+                        <option value="Melhoria">Melhoria</option>
+                        <option value="Tarefa">Tarefa</option>
+                    </select>
+                </div>
+                <div class="error-message-container">
+                    <p id="errorEditTitle" class="error-message" style="display: none;">Título inválido. Preencha este campo.</p>
+                    <p id="errorEditDescription" class="error-message" style="display: none;">Descrição inválida. Preencha este campo.</p>
+                    <p id="errorEditFields" class="error-message" style="display: none;">Preencha todos os campos obrigatórios.</p>
+                </div>
                 <div class="action-button-modal">
-                    <button type="submit" class="save-button">Salvar</button>
+                    <button type="button" id="editSubmitButtonVisible" class="save-button">Salvar</button>
+                    <button type="submit" id="editSubmitButton" style="display: none;"></button>
                     <button type="button" class="cancel-button" onclick="closeEditModal()">Cancelar</button>
                 </div>
             </form>
@@ -179,30 +193,37 @@
             <form id="formTicket" action="/tickets/submit?where=2" method="POST">
                 <div class="form-group">
                     <label for="addTitle">Título:</label>
-                    <input type="text" id="addTitle" name="title" required />
+                    <input type="text" id="addTitle" name="title" class="required" />
                 </div>
                 <div class="form-group">
                     <label for="addDescription">Descrição:</label>
-                    <textarea id="addDescription" name="description" rows="4" required></textarea>
+                    <textarea id="addDescription" name="description" rows="4" class="required"></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="priority">Prioridade:</label>
-                    <select id="priority" name="priority" required>
+                    <label for="addPriority">Prioridade:</label>
+                    <select id="addPriority" name="priority" class="required">
                         <option value="1">Baixa</option>
                         <option value="2">Média</option>
                         <option value="3">Alta</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="type">Tipo:</label>
-                    <select id="type" name="type" required>
+                    <label for="addType">Tipo:</label>
+                    <select id="addType" name="type" class="required">
                         <option value="1">Erro</option>
                         <option value="2">Melhoria</option>
                         <option value="3">Tarefa</option>
                     </select>
                 </div>
-                <div class="action-button-modal-add">
-                    <button class="sendForm btn" type="submit">Enviar</button>
+                <div class="error-message-container">
+                    <p id="errorAddTitle" class="error-message" style="display: none;">Título inválido. Preencha este campo.</p>
+                    <p id="errorAddDescription" class="error-message" style="display: none;">Descrição inválida. Preencha este campo.</p>
+                    <p id="errorAddFields" class="error-message" style="display: none;">Preencha todos os campos obrigatórios.</p>
+                </div>
+                <div class="action-button-modal">
+                    <button type="button" id="addSubmitButtonVisible" class="sendForm btn">Enviar</button>
+                    <button type="submit" id="addSubmitButton" style="display: none;"></button>
+                    <button type="button" class="cancel-button" onclick="closeModalForm()">Cancelar</button>
                 </div>
             </form>
         </div>
