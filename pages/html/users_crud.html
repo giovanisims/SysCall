@@ -147,51 +147,58 @@
     <div id="editModal" class="modal">
         <div class="modal-content edit-modal-content">
             <h2>Editar Usuário</h2>
+            {% if edit_error %}
+            <div id="backendEditError" class="backend-error-msg" style="color: #921f1f; margin-bottom: 10px; text-align: center; display: block;">
+                {{ edit_error }}
+            </div>
+            {% else %}
+            <div id="backendEditError" class="backend-error-msg" style="color: #921f1f; margin-bottom: 10px; text-align: center; display: none;"></div>
+            {% endif %}
             <form id="editUserForm" method="post" action="/users/edit">
-                <input type="hidden" id="editUserId" name="user_id">
+                <input type="hidden" id="editUserId" name="user_id" value="{{ edit_user_id|default('') }}">
                 <div class="form-group">
                     <label for="editName">Nome:</label>
-                    <input type="text" id="editName" name="name" class="required">
+                    <input type="text" id="editName" name="name" class="required" value="{{ edit_name|default('') }}">
                 </div>
                 <div class="form-group">
                     <label for="editUsername">Username:</label>
-                    <input type="text" id="editUsername" name="username" class="required">
+                    <input type="text" id="editUsername" name="username" class="required" value="{{ edit_username|default('') }}">
                 </div>
                 <div class="form-group">
                     <label for="editEmail">Email:</label>
-                    <input type="email" id="editEmail" name="email" class="required">
+                    <input type="email" id="editEmail" name="email" class="required" value="{{ edit_email|default('') }}">
                 </div>
                 <div class="form-group">
                     <label for="editCPF">CPF:</label>
-                    <input type="text" id="editCPF" name="cpf" class="required" maxlength="11">
+                    <input type="text" id="editCPF" name="cpf" class="required" maxlength="11" value="{{ edit_cpf|default('') }}">
                 </div>
                 <div class="form-group">
                     <label for="editCEP">CEP:</label>
-                    <input type="text" id="editCEP" name="cep" class="required" maxlength="9">
+                    <input type="text" id="editCEP" name="cep" class="required" maxlength="9" value="{{ edit_cep|default('') }}">
                 </div>
                 <div class="form-group">
                     <label for="editPhone">Telefone:</label>
-                    <input type="text" id="editPhone" name="phone" class="required" maxlength="12">
+                    <input type="text" id="editPhone" name="phone" class="required" maxlength="12" value="{{ edit_phone|default('') }}">
                 </div>
                 <div class="form-group">
                     <label for="editAddress">Endereço:</label>
-                    <input type="text" id="editAddress" name="address" class="required">
+                    <input type="text" id="editAddress" name="address" class="required" value="{{ edit_address|default('') }}">
                 </div>
                 <div class="form-group">
                     <label for="editObservation">Complemento:</label>
-                    <input type="text" id="editObservation" name="observation">
+                    <input type="text" id="editObservation" name="observation" value="{{ edit_observation|default('') }}">
                 </div>
                 <div class="form-group">
                     <label for="editRole">Função:</label>
                     <select id="editRole" name="role" class="required">
-                        <option value="3">Administrador</option>
-                        <option value="1">Usuário</option>
-                        <option value="2">Técnico</option>
+                        <option value="3" {% if edit_role == 3 %}selected{% endif %}>Administrador</option>
+                        <option value="1" {% if edit_role == 1 %}selected{% endif %}>Usuário</option>
+                        <option value="2" {% if edit_role == 2 %}selected{% endif %}>Técnico</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="editPassword">Senha:</label>
-                    <input type="password" id="editPassword" name="password">
+                    <input type="password" id="editPassword" name="password" value="{{ edit_password|default('') }}">
                 </div>
                 <div class="form-group see-password-container">
                     <div class="see-password-checkbox-container">
@@ -220,55 +227,62 @@
     <div id="modalOpenUser" class="modal">
         <div class="modal-content edit-modal-content">
             <h2>Adicionar Novo Usuário</h2>
+            {% if error %}
+            <div id="backendAddError" class="backend-error-msg" style="color: #921f1f; margin-bottom: 10px; text-align: center; display: block;">
+                {{ error }}
+            </div>
+            {% else %}
+            <div id="backendAddError" class="backend-error-msg" style="color: #921f1f; margin-bottom: 10px; text-align: center; display: none;"></div>
+            {% endif %}
             <form id="formUser" action="/users/submit" method="POST">
                 <input type="hidden" name="where" value="2">
                 <div class="form-group">
                     <label for="addName">Nome:</label>
-                    <input type="text" id="addName" name="namesurname" class="required" />
+                    <input type="text" id="addName" name="namesurname" class="required" value="{{ namesurname|default('') }}" />
                 </div>
                 <div class="form-group">
                     <label for="addUsername">Username:</label>
-                    <input type="text" id="addUsername" name="username" class="required" />
+                    <input type="text" id="addUsername" name="username" class="required" value="{{ username|default('') }}" />
                 </div>
                 <div class="form-group">
                     <label for="addEmail">Email:</label>
-                    <input type="email" id="addEmail" name="email" class="required" />
+                    <input type="email" id="addEmail" name="email" class="required" value="{{ email|default('') }}" />
                 </div>
                 <div class="form-group">
                     <label for="addCPF">CPF:</label>
-                    <input type="text" id="addCPF" name="cpf" class="required" maxlength="11" />
+                    <input type="text" id="addCPF" name="cpf" class="required" maxlength="11" value="{{ cpf|default('') }}" />
                 </div>
                 <div class="form-group">
                     <label for="addCEP">CEP:</label>
-                    <input type="text" id="addCEP" name="cep" class="required" maxlength="9" />
+                    <input type="text" id="addCEP" name="cep" class="required" maxlength="9" value="{{ cep|default('') }}" />
                 </div>
                 <div class="form-group">
                     <label for="addPhone">Telefone:</label>
-                    <input type="text" id="addPhone" name="phone" class="required" maxlength="12" />
+                    <input type="text" id="addPhone" name="phone" class="required" maxlength="12" value="{{ phone|default('') }}" />
                 </div>
                 <div class="form-group">
                     <label for="addAddress">Endereço:</label>
-                    <input type="text" id="addAddress" name="address" class="required" />
+                    <input type="text" id="addAddress" name="address" class="required" value="{{ address|default('') }}" />
                 </div>
                 <div class="form-group">
                     <label for="addObservation">Complemento:</label>
-                    <input type="text" id="addObservation" name="observation" />
+                    <input type="text" id="addObservation" name="observation" value="{{ observation|default('') }}" />
                 </div>
                 <div class="form-group">
                     <label for="addRole">Função:</label>
                     <select id="addRole" name="role" class="required">
-                        <option value="3">Administrador</option>
-                        <option value="1">Usuário</option>
-                        <option value="2">Técnico</option>
+                        <option value="3" {% if role == 3 %}selected{% endif %}>Administrador</option>
+                        <option value="1" {% if role == 1 %}selected{% endif %}>Usuário</option>
+                        <option value="2" {% if role == 2 %}selected{% endif %}>Técnico</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="addPassword">Senha:</label>
-                    <input type="password" id="addPassword" name="password" class="required" />
+                    <input type="password" id="addPassword" name="password" class="required" value="{{ password|default('') }}" />
                 </div>
                 <div class="form-group">
                     <label for="addPasswordConfirm">Confirmar senha:</label>
-                    <input type="password" id="addPasswordConfirm" name="passwordConfirm" class="required" />
+                    <input type="password" id="addPasswordConfirm" name="passwordConfirm" class="required" value="{{ passwordConfirm|default('') }}" />
                 </div>
                 <div class="form-group see-password-container">
                     <div class="see-password-checkbox-container">

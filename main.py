@@ -133,6 +133,7 @@ async def users_crud(request: Request, db=Depends(get_db)):
 
 @app.post("/users/edit")
 async def edit_user(
+    request: Request,
     user_id: int = Form(...),
     name: str = Form(...),
     username: str = Form(...),
@@ -152,16 +153,68 @@ async def edit_user(
             CPF = cpf.replace('.', '').replace('-', '')
             CEP = cep.replace('-', '').replace('.', '')
             Number = phone.replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
-            
+
+            # Check for duplicate username/email/cpf (excluding current user)
+            cursor.execute(
+                """
+                SELECT * FROM User WHERE (Username = %s OR Email = %s OR CPF = %s) AND idUser != %s
+                """,
+                (username, email, CPF, user_id)
+            )
+            existing_user = cursor.fetchone()
+            if existing_user:
+                if existing_user["Username"] == username:
+                    error_message = "Username já existente."
+                elif existing_user["Email"] == email:
+                    error_message = "Email já existente."
+                elif existing_user["CPF"] == CPF:
+                    error_message = "CPF já existente."
+                else:
+                    error_message = "Dados já cadastrados."
+                # Recarrega a lista de usuários
+                cursor.execute("""
+                    SELECT
+                        u.idUser,
+                        u.NameSurname,
+                        u.Username,
+                        u.Email,
+                        u.CPF,
+                        u.Number,
+                        a.CEP,
+                        a.Address,
+                        r.Role,
+                        c.Complement
+                    FROM User u
+                    LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
+                    LEFT JOIN Role r ON u.fk_Role_idRole = r.idRole
+                    LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
+                """)
+                users = cursor.fetchall()
+                return templates.TemplateResponse(
+                    "users_crud.html",
+                    {
+                        "request": request,
+                        "users": users,
+                        "user_name": request.session.get("user_name"),
+                        "user_role": request.session.get("user_role"),
+                        "edit_error": error_message,
+                        "edit_user_id": user_id,
+                        "edit_name": name,
+                        "edit_username": username,
+                        "edit_email": email,
+                        "edit_cpf": cpf,
+                        "edit_cep": cep,
+                        "edit_phone": phone,
+                        "edit_address": address,
+                        "edit_role": role,
+                        "edit_observation": observation,
+                        "edit_password": password or "",
+                    }
+                )
+
             # Update User table
             if password and password.strip():
-                # If password is provided, validate and hash it
-                if not re.match(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}", password):
-                    raise HTTPException(status_code=400, detail="Password doesn't match the requirements")
-                
-                # Hash the password using MD5
                 Password_hash = hashlib.md5(password.encode()).hexdigest()
-                
                 cursor.execute(
                     """
                     UPDATE User
@@ -227,13 +280,50 @@ async def edit_user(
             
             db.commit()
         return RedirectResponse("/users_crud?edited=true", status_code=302)
-    except HTTPException as he:
-        db.rollback()
-        raise he
     except Exception as e:
         db.rollback()
         print(f"Erro ao editar usuário: {e}")
-        raise HTTPException(status_code=500, detail="Erro ao editar usuário")
+        # Recarrega a lista de usuários e retorna erro genérico
+        with db.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    u.idUser,
+                    u.NameSurname,
+                    u.Username,
+                    u.Email,
+                    u.CPF,
+                    u.Number,
+                    a.CEP,
+                    a.Address,
+                    r.Role,
+                    c.Complement
+                FROM User u
+                LEFT JOIN Address a ON u.idUser = a.fk_User_idUser
+                LEFT JOIN Role r ON u.fk_Role_idRole = r.idRole
+                LEFT JOIN Complement c ON a.idAddress = c.fk_Address_idAddress
+            """)
+            users = cursor.fetchall()
+        return templates.TemplateResponse(
+            "users_crud.html",
+            {
+                "request": request,
+                "users": users,
+                "user_name": request.session.get("user_name"),
+                "user_role": request.session.get("user_role"),
+                "edit_error": "Erro ao editar usuário.",
+                "edit_user_id": user_id,
+                "edit_name": name,
+                "edit_username": username,
+                "edit_email": email,
+                "edit_cpf": cpf,
+                "edit_cep": cep,
+                "edit_phone": phone,
+                "edit_address": address,
+                "edit_role": role,
+                "edit_observation": observation,
+                "edit_password": password or "",
+            }
+        )
     finally:
         if db:
             db.close()
@@ -770,6 +860,16 @@ async def sign_up(
                 "users": users,
                 "user_name": request.session.get("user_name"),
                 "user_role": request.session.get("user_role"),
+                "namesurname": namesurname,
+                "username": username,
+                "email": email,
+                "cpf": cpf,
+                "phone": phone,
+                "cep": cep,
+                "address": address,
+                "role": role,
+                "observation": observation,
+                "password": password,
             },
             status_code=200
         )
@@ -793,14 +893,22 @@ async def sign_up(
 
     Password = hashlib.md5(password.encode()).hexdigest()
 
+
     try:
         with db.cursor() as cursor:
             cursor.execute(
-                "SELECT * FROM User WHERE Username = %s OR Email = %s", (Username, Email))
+                "SELECT * FROM User WHERE Username = %s OR Email = %s OR CPF = %s", (Username, Email, CPF))
             existing_user = cursor.fetchone()
 
             if existing_user:
-                error_message = "Username or email already in use."
+                if existing_user["Username"] == Username:
+                    error_message = "Username já existente."
+                elif existing_user["Email"] == Email:
+                    error_message = "Email já existente."
+                elif existing_user["CPF"] == CPF:
+                    error_message = "CPF já existente."
+                else:
+                    error_message = "Dados já cadastrados."
                 if where == 1:
                     return render_sign_up_with_error(error_message)
                 else:

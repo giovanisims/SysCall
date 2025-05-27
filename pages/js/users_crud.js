@@ -1,6 +1,19 @@
 var EditSelector, AddSelector;
 
 document.addEventListener('DOMContentLoaded', function () {
+    // If there is a backend error in the Add User modal, open the modal and show the error
+    const backendError = document.getElementById('backendAddError');
+    if (backendError && backendError.textContent.trim() !== "" && backendError.style.display === 'block') {
+        openModalForm();
+        backendError.style.display = 'block';
+    }
+
+    // If there is a backend error in the Edit User modal, open the modal and show the error
+    const backendEditError = document.getElementById('backendEditError');
+    if (backendEditError && backendEditError.textContent.trim() !== "") {
+        document.getElementById('editModal').style.display = 'block';
+        backendEditError.style.display = 'block';
+    }
     // Initialize the selectors for both forms
     EditSelector = loadEditSelectors();
     AddSelector = loadAddSelectors();
