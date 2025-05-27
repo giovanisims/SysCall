@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Load selectors for the Edit form
 function loadEditSelectors() {
+    const submitBtn = document.getElementById('editSubmitButton');
+    console.log("Edit Submit Button found:", submitBtn);
+    
     return {
         // Form elements
         form: document.getElementById('editUserForm'),
@@ -75,7 +78,7 @@ function loadEditSelectors() {
         seePasswordCheckbox: document.getElementById('editSeePassword'),
         // Buttons
         submitButtonVisible: document.getElementById('editSubmitButtonVisible'),
-        submitButton: document.getElementById('editSubmitButton'),
+        submitButton: submitBtn,
         // Error messages
         errorCep: document.getElementById('errorEditCep'),
         errorFields: document.getElementById('errorEditFields'),
@@ -154,18 +157,53 @@ function validateForm(selector) {
         // Convert to numeric only format for database storage
         let numericCPF = formattedCPF.replace(/\D/g, "");
         
-        // Store the CPF format for display in case of failed submission
-        let displayCPF = formattedCPF;
+        // Format phone number for submission
+        let formattedPhone = selector.phone.value;
+        let numericPhone = formattedPhone.replace(/\D/g, "");
         
-        // Set the field to numeric-only format for submission
+        // Store the display formats
+        let displayCPF = formattedCPF;
+        let displayPhone = formattedPhone;
+        
+        // Set the fields to numeric-only format for submission
         selector.cpf.value = numericCPF;
+        selector.phone.value = numericPhone;
         
         // Submit the form
-        selector.submitButton.click();
+        console.log("Submitting form", selector.form.id);
+        try {
+            if (selector.submitButton) {
+                console.log("Clicking submit button");
+                selector.submitButton.click();
+            } else {
+                // Fallback - if the button wasn't found through the selector
+                if (selector === EditSelector) {
+                    console.log("Using getElementById fallback for edit form");
+                    document.getElementById('editSubmitButton').click();
+                } else {
+                    console.log("Using getElementById fallback for add form");
+                    document.getElementById('addSubmitButton').click();
+                }
+            }
+            
+            // If the button click didn't work, submit the form directly
+            setTimeout(() => {
+                if (selector.form && !selector.form.getAttribute('data-submitted')) {
+                    console.log("Button click didn't work, submitting form directly");
+                    selector.form.setAttribute('data-submitted', 'true');
+                    selector.form.submit();
+                }
+            }, 200);
+        } catch (e) {
+            console.error("Error submitting form:", e);
+            // Last resort - direct form submission
+            selector.form.submit();
+        }
         
-        // Restore the formatted display value
+        // Restore the formatted display values
         setTimeout(() => {
             selector.cpf.value = displayCPF;
+            selector.phone.value = displayPhone;
         }, 100);
     }
 }
@@ -260,11 +298,18 @@ function formatAndValidateCPF(selector) {
     let cleanCpf = cpf.replace(/\D/g, "");
     let isValid = true;
 
-    if (cleanCpf.length > 0 && cleanCpf.length !== 11) {
+    // Check if field is empty (required validation will handle this separately)
+    if (cleanCpf.length === 0) {
+        // Don't remove any error classes here - let validateEmptyFields handle it
+        selector.errorCpf.style.display = 'none';
+        return true;
+    }
+
+    if (cleanCpf.length !== 11) {
         isValid = false;
-    } else if (cleanCpf.length > 0 && /^(\d)\1+$/.test(cleanCpf)) {
+    } else if (/^(\d)\1+$/.test(cleanCpf)) {
         isValid = false;
-    } else if (cleanCpf.length === 11) {
+    } else {
         // Calculate CPF validation
         let sum = 0;
         for (let i = 0; i < 9; i++) {
@@ -289,13 +334,12 @@ function formatAndValidateCPF(selector) {
         }
     }
 
-    if (!isValid && cleanCpf.length > 0) {
+    if (!isValid) {
         selector.cpf.classList.add('error');
         selector.errorCpf.style.display = 'block';
         return false;
     } else {
         selector.cpf.classList.remove('error');
-        selector.cpf.classList.remove('empty-field');
         selector.errorCpf.style.display = 'none';
         return true;
     }
@@ -307,8 +351,14 @@ function formatPhone(selector) {
     let cleanPhone = phone.replace(/\D/g, "");
 
     selector.errorPhone.style.display = 'none';
+    
+    // Don't remove error classes if the field is empty - let validateEmptyFields handle it
+    if (cleanPhone.length === 0) {
+        return true;
+    }
+    
+    // Only remove error class if field has a valid value
     selector.phone.classList.remove('error');
-    selector.phone.classList.remove('empty-field');
 
     if (cleanPhone.length === 11) {
         selector.phone.value = cleanPhone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
