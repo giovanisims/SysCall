@@ -100,17 +100,26 @@
             </div>
             <div class="form-group">
                 <label for="answer_title">Título da Resolução *</label>
-                <input type="text" name="answer_title" id="answer_title"/>
+                <input type="text" name="answer_title" id="answer_title" class="required"/>
+                <p id="errorAnswerTitle" class="error-message" style="display: none;">Título inválido. Preencha este campo.</p>
             </div>
             <div class="form-group">
                 <label for="answer_description">Resolução/comentário *</label>
-                <textarea name="answer_description" id="answer_description"></textarea>
+                <textarea name="answer_description" id="answer_description" class="required"></textarea>
+                <p id="errorAnswerDescription" class="error-message" style="display: none;">Descrição inválida. Preencha este campo.</p>
             </div>
-            <button>Enviar</button>
+            <div class="error-message-container">
+                <p id="errorRequiredFields" class="error-message" style="display: none;">Preencha todos os campos obrigatórios.</p>
+            </div>
+            <div class="action-button-container">
+                <button type="button" id="submitButtonVisible" class="sendForm">Enviar</button>
+                <button type="submit" id="submitButton" style="display: none;"></button>
+            </div>
         </form>
     </div>
     </div>    
     
     <script src="static/js/header.js"></script>
+    <script src="static/js/ticket_detail_form.js"></script>
 </body>
 </html>

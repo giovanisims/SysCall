@@ -99,6 +99,47 @@ button:hover{
     cursor: pointer;
 }
 
+/* Form validation styles */
+.error-message {
+    color: #e74c3c;
+    font-size: 14px;
+    margin-top: 5px;
+    display: none;
+}
+
+.error {
+    border: 1px solid #e74c3c !important;
+}
+
+.empty-field {
+    border: 1px solid #e74c3c !important;
+}
+
+.error-message-container {
+    margin-bottom: 10px;
+}
+
+.action-button-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.action-button-container button.sendForm {
+    width: 430px;
+    height: 40px;
+    border: none;
+    background-color: #2C1E5A;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f2e9e4;
+    transition:all 1s ease;
+    margin-bottom: 3%;
+    font-size: 16px;
+}
+
 @media (max-width: 800px) {
   .ticket-form-container {
     margin-top: 30px;
