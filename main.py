@@ -49,7 +49,7 @@ app = FastAPI()
 @app.middleware("http")
 async def session_timeout_middleware(request: Request, call_next):
     # Rotas públicas que não precisam de autenticação
-    public_routes = ["/login", "/sign_up", "/static", "/"]
+    public_routes = ["/login", "/sign_up", "/static", "/", "/contact"]
 
     # Verifica se a rota atual é pública
     if any(request.url.path.startswith(route) for route in public_routes):
