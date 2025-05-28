@@ -143,6 +143,42 @@ input[type="checkbox"]:checked {
     accent-color: #4a4e69;
 }
 
+/* Form validation styles */
+.error-message {
+  color: #e74c3c !important;
+  font-size: 14px;
+  margin-top: 5px;
+  display: none;
+  font-weight: bold;
+}
+
+.error {
+  border: 1px solid #e74c3c !important;
+}
+
+.empty-field {
+  border: 1px solid #e74c3c !important;
+}
+
+.error {
+  border: 1px solid #e74c3c !important;
+}
+
+.empty-field {
+  border: 1px solid #e74c3c !important;
+}
+
+.error-message-container {
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.button-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (max-width: 800px) {
   .profile-container {
     margin-top: 100px;

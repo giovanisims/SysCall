@@ -106,50 +106,61 @@
       </div>
 
           <div class="input-container">
-            <input type="text" id="username" name="username" placeholder=" " value="{{ user.Username }}" />
-            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder=" " value="{{ user.Username }}" class="required" />
+            <label for="username">Username *</label>
           </div>
           <div class="input-container">
-            <input type="text" id="namesurname" name="namesurname" placeholder=" " value="{{ user.NameSurname }}" />
-            <label for="namesurname">Nome completo</label>
+            <input type="text" id="namesurname" name="namesurname" placeholder=" " value="{{ user.NameSurname }}" class="required" />
+            <label for="namesurname">Nome completo *</label>
           </div>
           <div class="input-container">
-            <input type="email" id="email" name="email" placeholder=" " value="{{ user.Email }}" />
-            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder=" " value="{{ user.Email }}" class="required" />
+            <label for="email">Email *</label>
           </div>
           <div class="input-container">
-            <input type="text" id="cpf" name="cpf" placeholder=" " maxlength="11" value="{{user.CPF }}"  />
-            <label for="CPF">CPF</label>
+            <input type="text" id="cpf" name="cpf" placeholder=" " maxlength="11" value="{{user.CPF }}" class="required" />
+            <label for="CPF">CPF *</label>
           </div>
           <div class="input-container">
-            <input type="text" id="phone" name="phone" placeholder=" " maxlength="12" value="{{ user.Number }}" />
-            <label for="phone">Telefone</label>
+            <input type="text" id="phone" name="phone" placeholder=" " maxlength="12" value="{{ user.Number }}" class="required" />
+            <label for="phone">Telefone *</label>
           </div>
 
           <div class="input-container">
-            <input type="text" id="cep" name="cep" placeholder=" " maxlength="9" value="{{ user.CEP }}"  />
-            <label for="cep">CEP </label>
+            <input type="text" id="cep" name="cep" placeholder=" " maxlength="9" value="{{ user.CEP }}" class="required" />
+            <label for="cep">CEP *</label>
           </div>
           <div class="input-container">
-            <input type="text" id="address" name="address" placeholder=" " value="{{ user.Address }}"/>
-            <label for="address">Endereço </label>
+            <input type="text" id="address" name="address" placeholder=" " value="{{ user.Address }}" class="required" />
+            <label for="address">Endereço *</label>
           </div>
           <div class="input-container">
             <input type="text" id="observation" name="observation" placeholder=" " value="{{ user.Complement }}" />
             <label for="observation">Complemento </label>
           </div>
-
+          
+          <div class="error-message-container">
+            <p id="errorUsername" class="error-message" style="display: none; color: #e74c3c;">Nome de usuário inválido ou já utilizado.</p>
+            <p id="errorName" class="error-message" style="display: none; color: #e74c3c;">Nome inválido. Insira apenas letras.</p>
+            <p id="errorEmail" class="error-message" style="display: none; color: #e74c3c;">Email inválido. Verifique o formato.</p>
+            <p id="errorCpf" class="error-message" style="display: none; color: #e74c3c;">CPF inválido.</p>
+            <p id="errorPhone" class="error-message" style="display: none; color: #e74c3c;">Telefone inválido.</p>
+            <p id="errorCep" class="error-message" style="display: none; color: #e74c3c;">CEP inválido.</p>
+            <p id="errorFields" class="error-message" style="display: none; color: #e74c3c;">Preencha todos os campos obrigatórios.</p>
+          </div>
         
-          <button type="submit" id="" class="save-button">Salvar</button>
+          <div class="button-container">
+            <button type="button" id="submitButtonVisible" class="save-button">Salvar</button>
+            <button type="submit" id="submitButton" style="display: none;"></button>
+          </div>
 
         </form>
 
       </div>
     </div>
   </div>
-  <script src="static/js/sign_up.js"></script>
+  <script src="static/js/profile.js"></script>
   <script src="static/js/header.js"></script>
-
 
   <script>
   const fileInput = document.getElementById("file");
