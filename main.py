@@ -524,7 +524,9 @@ async def edit_profile(
                     (user_id,)
                 )
 
-            db.commit()  
+            db.commit() 
+        # Atualiza o nome na sessão para refletir imediatamente na interface
+        request.session["user_name"] = namesurname 
 
         return RedirectResponse("/profile", status_code=302)
     except Exception as e:
