@@ -41,7 +41,7 @@ def get_db():
     return pymysql.connect(**DB_CONFIG)
 
 
-SESSION_TIMEOUT = 300  # seconds
+SESSION_TIMEOUT =10  # seconds
 
 app = FastAPI()
 
