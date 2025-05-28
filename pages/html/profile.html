@@ -138,8 +138,15 @@
             <input type="text" id="observation" name="observation" placeholder=" " value="{{ user.Complement }}" />
             <label for="observation">Complemento </label>
           </div>
+
+
+          
           
           <div class="error-message-container">
+            
+            {% if duplicate_msg %}
+            <p id="error-message" style="color: #e74c3c;">{{ duplicate_msg }}</p>
+            {% endif %}
             <p id="errorUsername" class="error-message" style="display: none; color: #e74c3c;">Nome de usuário inválido ou já utilizado.</p>
             <p id="errorName" class="error-message" style="display: none; color: #e74c3c;">Nome inválido. Insira apenas letras.</p>
             <p id="errorEmail" class="error-message" style="display: none; color: #e74c3c;">Email inválido. Verifique o formato.</p>

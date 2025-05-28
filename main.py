@@ -358,6 +358,10 @@ templates = Jinja2Templates(directory=templates_dir)
 async def read_profile(request: Request, db=Depends(get_db)):
     user_name = request.session.get("user_name", None)
     user_role = request.session.get("user_role", None)
+    duplicate_msg_from_session = request.session.pop("duplicate_msg", None)
+    
+    print ('debugando essa porra do krl ' + str(duplicate_msg_from_session))
+    
     try:
         user_id = request.session.get("user_id", None)
         if not user_id:
@@ -404,11 +408,25 @@ async def read_profile(request: Request, db=Depends(get_db)):
                 "user_role": user_role,
                 "user": user_data,
                 "profile_picture": profile_picture,
+                "duplicate_msg": duplicate_msg_from_session,
             },
         )
     except Exception as e:
         print(f"Erro ao carregar o perfil: {e}")
-        return JSONResponse(content={"error": "Erro ao carregar o perfil"}, status_code=500)
+        # Mesmo em caso de erro, tente passar a duplicate_msg se existir
+        return templates.TemplateResponse(
+            "profile.html", 
+            {
+                "request": request, 
+                "user_name": user_name, 
+                "user_role": user_role, 
+                "user": {}, 
+                "profile_picture": None,
+                "duplicate_msg": duplicate_msg_from_session,
+                "error_loading_profile": f"Erro ao carregar o perfil: {e}" 
+            }, 
+            status_code=500
+        )
     finally:
         if db:
             db.close()
@@ -463,6 +481,10 @@ async def edit_profile(
     observation: str = Form(None),  # Campo opcional
     db=Depends(get_db)
 ):
+    email_duplo = False  # Variável para verificar se o email é duplicado
+    cpf_duplo = False  # Variável para verificar se o CPF é duplicado
+    username_duplo = False
+    
     try:
         user_id = request.session.get("user_id", None)
         if not user_id:
@@ -471,6 +493,7 @@ async def edit_profile(
         # Limpeza dos dados (remover caracteres indesejados)
         clean_phone = phone.replace("(", "").replace(")", "").replace("-", "").replace(" ", "")
         clean_cep = cep.replace("-", "")
+        clean_cpf = cpf.replace("-", "").replace(".", "")
 
         with db.cursor() as cursor:
             # Atualiza os dados do usuário na tabela `User`
@@ -480,7 +503,7 @@ async def edit_profile(
                 SET Username =%s, NameSurname =%s, Email =%s, CPF =%s, Number =%s
                 WHERE idUser =%s
                 """,
-                (username, namesurname, email, cpf, clean_phone, user_id)
+                (username, namesurname, email, clean_cpf, clean_phone, user_id)
             )
 
             # Atualiza os dados do endereço na tabela `Address`
@@ -531,8 +554,80 @@ async def edit_profile(
         return RedirectResponse("/profile", status_code=302)
     except Exception as e:
         db.rollback()  
-        print(f"Erro ao atualizar o perfil: {e}")
-        raise HTTPException(status_code=500, detail="Erro ao atualizar o perfil")
+        #print(f"Erro ao editar perfil: {e}")
+        try:
+            #print("entrou no try pelo menos")
+            user_id = request.session.get("user_id", None)
+            with db.cursor() as cursor:
+                # Atualiza os dados do usuário na tabela `User`
+                cursor.execute(
+                    """
+                    UPDATE User
+                    SET Email =%s
+                    WHERE idUser =%s
+                    """,
+                    (email, user_id)
+                )
+                db.rollback() 
+        except Exception as e2:
+            db.rollback()
+            request.session["duplicate_msg"] = "Email já cadastrado."
+            #print ("deu certo ou nao?")
+            email_duplo = True 
+        
+        try:
+            #print("entrou no try pelo menos")
+            user_id = request.session.get("user_id", None)
+            with db.cursor() as cursor:
+                # Atualiza os dados do usuário na tabela `User`
+                cursor.execute(
+                    """
+                    UPDATE User
+                    SET CPF =%s
+                    WHERE idUser =%s
+                    """,
+                    (clean_cpf, user_id)
+                )
+                db.rollback() 
+        except Exception as e2:
+            db.rollback()
+            request.session["duplicate_msg"] = "CPF já cadastrado."
+            #print ("deu certo ou nao? CPF")
+            cpf_duplo = True
+        
+        try:
+            #print("entrou no try pelo menos")
+            user_id = request.session.get("user_id", None)
+            with db.cursor() as cursor:
+                # Atualiza os dados do usuário na tabela `User`
+                cursor.execute(
+                    """
+                    UPDATE User
+                    SET Username =%s
+                    WHERE idUser =%s
+                    """,
+                    (username, user_id)
+                )
+        except Exception as e2:
+            db.rollback()
+            request.session["duplicate_msg"] = "username já cadastrado."
+            #print ("CHEGOOOOOOOO")
+            #print (request.session["duplicate_msg"])
+            username_duplo = True 
+
+        
+        request.session["duplicate_msg"] = ""
+        
+        if email_duplo:
+            request.session["duplicate_msg"] = "Email já cadastrado."
+        elif cpf_duplo:
+            request.session["duplicate_msg"] = "CPF já cadastrado."
+        elif username_duplo:
+            request.session["duplicate_msg"] = "Username já cadastrado."
+        #print ("AAAAAAAAAAAAAA")
+        #print (request.session["duplicate_msg"])
+        return RedirectResponse("/profile", status_code=302)
+            
     finally:
         if db:
             db.close()
