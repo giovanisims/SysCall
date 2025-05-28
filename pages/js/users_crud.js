@@ -1,351 +1,251 @@
-const tableBody = document.getElementById('users-table-body');
-const deleteModal = document.getElementById('confirmationModal');
-const confirmBtn = document.getElementById('confirmDeleteBtn');
-const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-const editModal = document.getElementById('editUserModal');
-const editForm = document.getElementById('editUserForm');
-const cancelEditBtn = document.getElementById('cancelEditBtn');
-const editErrorMsg = document.getElementById('editError');
-const successModal = document.getElementById('successModal');
-const closeSuccessBtn = document.getElementById('closeSuccessBtn');
-const successMessageText = document.getElementById('successMessageText');
-const editPasswordInput = document.getElementById('editPassword');
-const editSeePasswordCheckbox = document.getElementById('editSeePassword');
-const errorPasswordEdit = document.getElementById('errorPasswordEdit');
+var EditSelector, AddSelector;
 
-let deleteUrl = null; // To store the URL for deletion
+document.addEventListener('DOMContentLoaded', function () {
+    // If there is a backend error in the Add User modal, open the modal and show the error
+    const backendError = document.getElementById('backendAddError');
+    if (backendError && backendError.textContent.trim() !== "" && backendError.style.display === 'block') {
+        openModalForm();
+        backendError.style.display = 'block';
+    }
 
-// --- Fetch and Populate Table ---
-async function fetchUsers() {
-    try {
-        const response = await fetch('/users/crud');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const users = await response.json();
-        tableBody.innerHTML = '';
+    // If there is a backend error in the Edit User modal, open the modal and show the error
+    const backendEditError = document.getElementById('backendEditError');
+    if (backendEditError && backendEditError.textContent.trim() !== "") {
+        document.getElementById('editModal').style.display = 'block';
+        backendEditError.style.display = 'block';
+    }
+    // Initialize the selectors for both forms
+    EditSelector = loadEditSelectors();
+    AddSelector = loadAddSelectors();
     
-        users.forEach(user => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td data-label="ID">${user.idUser}</td>
-                <td data-label="Username">${user.Username}</td>
-                <td data-label="Nome Completo">${user.NameSurname}</td>
-                <td data-label="Email">${user.Email}</td>
-                <td data-label="CPF">${formatCPF(user.CPF)}</td>
-                <td data-label="Telefone">${formatPhoneNumber(user.Number)}</td>
-                <td data-label="CEP">${user.CEP ? formatCEP(user.CEP) : ''}</td>
-                <td data-label="Endereço">${user.Address || ''}</td>
-                <td data-label="Complemento">${user.Complement || ''}</td>
-                <td data-label="Papel">${user.Role}</td>
-                <td class="action-button" data-label="Ações">
-                    <a href="#" class="edit-link" data-user-id="${user.idUser}">
-                        <i class="fa-solid fa-pen-to-square" style="color: #125dde;"></i>
-                    </a>
-                    <a href="#" class="delete-link" data-delete-url="/delete_user?user_id=${user.idUser}">
-                        <i class="fa-solid fa-trash" style="color: #921f1f;"></i>
-                    </a>
-                </td>
-            `;
-            tableBody.appendChild(row);
-        });
-    } catch (error) {
-        console.error("Erro ao buscar usuários:", error);
-        tableBody.innerHTML = '<tr><td colspan="11">Erro ao carregar usuários.</td></tr>';
-    }
-}
-
-// --- Delete Modal Logic ---
-function showDeleteModal(url) {
-    deleteUrl = url;
-    deleteModal.style.display = 'block';
-}
-
-function hideDeleteModal() {
-    deleteModal.style.display = 'none';
-    deleteUrl = null;
-}
-
-confirmBtn.addEventListener('click', () => {
-    if (deleteUrl) {
-        window.location.href = deleteUrl;
-    }
-    hideDeleteModal();
-});
-
-cancelDeleteBtn.addEventListener('click', hideDeleteModal);
-
-// --- Edit Modal Logic ---
-function showEditModal() {
-    editErrorMsg.style.display = 'none'; // Hide previous errors
-    editModal.style.display = 'block';
-}
-
-function hideEditModal() {
-    editModal.style.display = 'none';
-    editForm.reset(); // Clear the form
-}
-
-async function openEditModal(userId) {
-    try {
-        const response = await fetch(`/user/${userId}`); // Fetch specific user data
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const user = await response.json();
-
-        if (user.error) { // Handle backend error response
-             console.error("Error fetching user data:", user.error);
-             alert(`Erro ao buscar dados do usuário: ${user.error}`);
-             return;
-        }
-
-
-        // Populate the form
-        document.getElementById('editUserId').value = user.idUser;
-        document.getElementById('editName').value = user.Username || '';
-        document.getElementById('editSurname').value = user.NameSurname || '';
-        document.getElementById('editEmail').value = user.Email || '';
-        document.getElementById('editCPF').value = formatCPF(user.CPF || '');
-        document.getElementById('editNumber').value = formatPhoneNumber(user.Number || '');
-        document.getElementById('editCEP').value = formatCEP(user.CEP || '');
-        document.getElementById('editAddress').value = user.Address || '';
-        document.getElementById('editComplement').value = user.Complement || '';
-        document.getElementById('editRole').value = user.idRole || '';
-        document.getElementById('editPassword').value = ''; // Ensure password field is empty
-
-        // Remove previous listeners to avoid duplicates if modal is reopened
-        document.getElementById('submitButtonVisible').removeEventListener('click', validateForm);
-        document.getElementById('editCEP').removeEventListener('blur', searchAddress);
-        document.getElementById('editCPF').removeEventListener('blur', formatAndValidateCPF);
-        document.getElementById('editNumber').removeEventListener('blur', formatPhone);
-        editPasswordInput.removeEventListener('blur', validatePasswordEdit);
-        editSeePasswordCheckbox.removeEventListener('change', togglePasswordVisibilityEdit);
-
-
-        // Add event listeners
-        document.getElementById('submitButtonVisible').addEventListener('click', validateForm);
-        document.getElementById('editCEP').addEventListener('blur', searchAddress);
-        document.getElementById('editCPF').addEventListener('blur', formatAndValidateCPF);
-        document.getElementById('editNumber').addEventListener('blur', formatPhone);
-        editPasswordInput.addEventListener('blur', validatePasswordEdit); // Add listener for password validation
-        editSeePasswordCheckbox.addEventListener('change', togglePasswordVisibilityEdit); // Add listener for show/hide password
-
-
-        showEditModal();
-    } catch (error) {
-        console.error("Failed to fetch user data for edit:", error);
-        alert("Não foi possível carregar os dados do usuário para edição.");
-    }
-}
-
-editForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    editErrorMsg.style.display = 'none';
-
-    const userId = document.getElementById('editUserId').value;
-    const formData = new FormData(editForm);
-    // const data = Object.fromEntries(formData.entries()); // Original problematic line
-
-    // --- Construct the data object with keys matching the Pydantic model ---
-    const data = {
-        Username: formData.get('editName'),
-        NameSurname: formData.get('editSurname'),
-        Email: formData.get('editEmail'),
-        // Send raw digits for validation on the backend
-        CPF: formData.get('cpf').replace(/\D/g, ''),
-        Number: formData.get('number').replace(/\D/g, ''),
-        CEP: formData.get('cep').replace(/\D/g, ''),
-        Address: formData.get('address'),
-        Complement: formData.get('complement') || null, // Send null if empty
-        Role: formData.get('editRole')
-    };
-
-    // Only include password if it's not empty
-    const newPassword = formData.get('editPassword');
-    if (newPassword && newPassword.trim() !== '') {
-        data.Password = newPassword; // Add password to the data object
-    }
-    // --- End of change ---
-
-    console.log("JSON enviado:", JSON.stringify(data, null, 2));
-
-    try {
-        const response = await fetch(`/user/update/${userId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data), // Send the correctly structured data
-        });
-
-        // console.log(response) // Keep for debugging if needed
-        const result = await response.json();
-        // console.log(result) // Keep for debugging if needed
-
-        if (!response.ok) { // Check response.ok instead of result.error first
-            // Use the error message from the backend if available
-            throw new Error(result.detail || result.error || `HTTP error! status: ${response.status}`);
-        }
-
-        hideEditModal();
-        fetchUsers(); // Refresh table
-        showSuccessModal('Usuário atualizado com sucesso!'); // Show success popup
-
-    } catch (error) {
-        console.error("Failed to update user:", error);
-        // Display the specific error message from the backend or the fetch error
-        editErrorMsg.textContent = `Erro ao atualizar: ${error.message}`;
-        editErrorMsg.style.display = 'block';
-    }
-});
-
-cancelEditBtn.addEventListener('click', hideEditModal);
-
-// --- Success Modal Logic ---
-function showSuccessModal(message) {
-    successMessageText.textContent = message; // Set the message text
-    successModal.style.display = 'block';
-}
-
-function hideSuccessModal() {
-    successModal.style.display = 'none';
-}
-
-closeSuccessBtn.addEventListener('click', hideSuccessModal);
-
-// --- Event Delegation for Table Actions ---
-tableBody.addEventListener('click', (event) => {
-    const target = event.target;
-    const deleteLink = target.closest('.delete-link');
-    const editLink = target.closest('.edit-link');
-
-    if (deleteLink) {
-        event.preventDefault();
-        const url = deleteLink.getAttribute('data-delete-url');
-        showDeleteModal(url);
-    } else if (editLink) {
-        event.preventDefault();
-        const userId = editLink.getAttribute('data-user-id');
-        openEditModal(userId);
-    }
-});
-
-// --- Close Modals on Outside Click ---
-window.addEventListener('click', (event) => {
-    if (event.target === deleteModal) {
-        hideDeleteModal();
-    }
-    if (event.target === editModal) {
-        hideEditModal();
-    }
-    if (event.target === successModal) {
-        hideSuccessModal();
-    }
-});
-
-// --- Initial Load ---
-document.addEventListener('DOMContentLoaded', () => {
-    fetchUsers(); // Load users initially
-
-    // Check for the delete success flag in the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('deleted') && urlParams.get('deleted') === 'true') {
-        showSuccessModal('Usuário excluído com sucesso!');
-        // Remove the query parameter from the URL without reloading the page
-        const newUrl = window.location.pathname + window.location.hash; // Keep hash if exists
-        history.replaceState(null, '', newUrl);
-    }
-});
-
-
-function formatCPF(cpf) {
-    if (!cpf) return '';
+    // Set up event listeners
+    setupEventListeners();
     
-    // Remove any non-digit character
-    cpf = cpf.replace(/\D/g, '');
+    // Format CPF, CEP, and phone numbers in the users table
+    formatTableData();
     
-    if (cpf.length !== 11) return cpf;
-    
-    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-}
+    // Exibe modal de sucesso se a URL tiver ?deleted=true, ?added=true ou ?edited=true
+    const successModal = document.getElementById("successModal");
+    const successMsg = document.getElementById("successMessageText");
+    const closeBtn = document.getElementById("closeSuccessBtn");
+    const params = new URLSearchParams(window.location.search);
 
-function formatPhoneNumber(number) {
-    if (!number) return '';
-    number = number.replace(/\D/g, '');
-    
-    if (number.length === 11) {
-        return number.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-    } else if (number.length === 10) {
-        return number.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-    }
-    return number;
-}
-
-function formatCEP(cep) {
-    if (!cep) return '';
-    
-    cep = cep.replace(/\D/g, '');
- 
-    if (cep.length !== 8) return cep;
-
-    return cep.replace(/(\d{5})(\d{3})/, '$1-$2');
-}
-
-// --- Form Validation Logic ---
-
-function validateForm() {
-    resetErrorMessages();
-    var fieldsValid = validateEmptyFields();
-    var passwordValid = true; // Assume valid if empty
-
-    // Only validate password if the field is not empty
-    if (editPasswordInput.value.trim() !== '') {
-        passwordValid = validatePasswordEdit();
+    let message = "";
+    if (params.get("deleted") === "true") {
+        message = "Usuário excluído com sucesso!";
+    } else if (params.get("added") === "true") {
+        message = "Usuário adicionado com sucesso!";
+    } else if (params.get("edited") === "true") {
+        message = "Usuário editado com sucesso!";
     }
 
-    if (fieldsValid && passwordValid) {
-        document.getElementById("submitButton").click();
-    }
-}
-
-function resetErrorMessages() {
-    document.getElementById("errorFields").style.display = 'none';
-    errorPasswordEdit.style.display = 'none'; // Reset password error
-    // Reset other specific errors if needed (CEP, CPF, etc.)
-    document.getElementById("errorCep").style.display = 'none';
-    document.getElementById("errorCpf").style.display = 'none';
-    document.getElementById("errorPhone").style.display = 'none';
-    // Remove error classes
-    const errorFields = editForm.querySelectorAll('.error, .empty-field');
-    errorFields.forEach(field => field.classList.remove('error', 'empty-field'));
-}
-
-function validateEmptyFields() {
-    var requiredFields = document.getElementsByClassName("required");
-    var requiredFieldsArray = Array.from(requiredFields);
-    var hasEmptyFields = false;
-
-    if (requiredFieldsArray.length > 0) {
-        requiredFieldsArray.forEach(field => {
-            if (!field.value || field.value.trim() === "") {
-                console.log("campo obrigatório");
-                field.classList.add("empty-field");
-                hasEmptyFields = true;
-            } else {
-                field.classList.remove("empty-field");
+    if (successModal && successMsg) {
+        if (message) {
+            successMsg.innerText = message;
+            successModal.style.display = "block";
+            if (closeBtn) {
+                closeBtn.onclick = function() {
+                    successModal.style.display = "none";
+                    successMsg.innerText = "";
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                };
             }
-        });
-
-        if (hasEmptyFields) {
-            document.getElementById("errorFields").style.display = 'block';
-            return false;
+        } else {
+            successModal.style.display = "none";
+            successMsg.innerText = "";
         }
     }
-    return true;
+});
+
+// Load selectors for the Edit form
+function loadEditSelectors() {
+    const submitBtn = document.getElementById('editSubmitButton');
+    console.log("Edit Submit Button found:", submitBtn);
+    
+    return {
+        // Form elements
+        form: document.getElementById('editUserForm'),
+        name: document.getElementById('editName'),
+        username: document.getElementById('editUsername'),
+        email: document.getElementById('editEmail'),
+        cpf: document.getElementById('editCPF'),
+        phone: document.getElementById('editPhone'),
+        cep: document.getElementById('editCEP'),
+        address: document.getElementById('editAddress'),
+        observation: document.getElementById('editObservation'),
+        role: document.getElementById('editRole'),
+        password: document.getElementById('editPassword'),
+        seePasswordCheckbox: document.getElementById('editSeePassword'),
+        // Buttons
+        submitButtonVisible: document.getElementById('editSubmitButtonVisible'),
+        submitButton: submitBtn,
+        // Error messages
+        errorCep: document.getElementById('errorEditCep'),
+        errorFields: document.getElementById('errorEditFields'),
+        errorCpf: document.getElementById('errorEditCpf'),
+        errorPhone: document.getElementById('errorEditPhone'),
+        errorName: document.getElementById('errorEditName'),
+        errorEmail: document.getElementById('errorEditEmail'),
+        errorUsername: document.getElementById('errorEditUsername'),
+        errorPassword: document.getElementById('errorEditPassword')
+    };
 }
 
-function searchAddress() {
-    let cep = document.getElementById("editCEP").value;
+// Load selectors for the Add form
+function loadAddSelectors() {
+    return {
+        // Form elements
+        form: document.getElementById('formUser'),
+        name: document.getElementById('addName'),
+        username: document.getElementById('addUsername'),
+        email: document.getElementById('addEmail'),
+        cpf: document.getElementById('addCPF'),
+        phone: document.getElementById('addPhone'),
+        cep: document.getElementById('addCEP'),
+        address: document.getElementById('addAddress'),
+        observation: document.getElementById('addObservation'),
+        role: document.getElementById('addRole'),
+        password: document.getElementById('addPassword'),
+        passwordConfirm: document.getElementById('addPasswordConfirm'),
+        seePasswordCheckbox: document.getElementById('addSeePassword'),
+        // Buttons
+        submitButtonVisible: document.getElementById('addSubmitButtonVisible'),
+        submitButton: document.getElementById('addSubmitButton'),
+        // Error messages
+        errorCep: document.getElementById('errorAddCep'),
+        errorFields: document.getElementById('errorAddFields'),
+        errorCpf: document.getElementById('errorAddCpf'),
+        errorPhone: document.getElementById('errorAddPhone'),
+        errorName: document.getElementById('errorAddName'),
+        errorEmail: document.getElementById('errorAddEmail'),
+        errorUsername: document.getElementById('errorAddUsername'),
+        errorPassword: document.getElementById('errorAddPassword'),
+        errorEqualPasswords: document.getElementById('errorAddEqualPasswords')
+    };
+}
+
+// Set up event listeners for both forms
+function setupEventListeners() {
+    // Edit form events
+    if (EditSelector.cep) EditSelector.cep.addEventListener('blur', function() { searchAddress(EditSelector); });
+    if (EditSelector.cpf) EditSelector.cpf.addEventListener('blur', function() { formatAndValidateCPF(EditSelector); });
+    if (EditSelector.phone) EditSelector.phone.addEventListener('blur', function() { formatPhone(EditSelector); });
+    if (EditSelector.name) EditSelector.name.addEventListener('blur', function() { validateName(EditSelector); });
+    if (EditSelector.email) EditSelector.email.addEventListener('blur', function() { validateEmail(EditSelector); });
+    if (EditSelector.submitButtonVisible) EditSelector.submitButtonVisible.addEventListener('click', function() { validateForm(EditSelector); });
+    if (EditSelector.seePasswordCheckbox) EditSelector.seePasswordCheckbox.addEventListener('change', function() { seePassword(EditSelector); });
+    if (EditSelector.password) EditSelector.password.addEventListener('blur', function() { validatePassword(EditSelector); });
+    
+    // Add form events
+    if (AddSelector.cep) AddSelector.cep.addEventListener('blur', function() { searchAddress(AddSelector); });
+    if (AddSelector.cpf) AddSelector.cpf.addEventListener('blur', function() { formatAndValidateCPF(AddSelector); });
+    if (AddSelector.phone) AddSelector.phone.addEventListener('blur', function() { formatPhone(AddSelector); });
+    if (AddSelector.name) AddSelector.name.addEventListener('blur', function() { validateName(AddSelector); });
+    if (AddSelector.email) AddSelector.email.addEventListener('blur', function() { validateEmail(AddSelector); });
+    if (AddSelector.submitButtonVisible) AddSelector.submitButtonVisible.addEventListener('click', function() { validateForm(AddSelector); });
+    if (AddSelector.seePasswordCheckbox) AddSelector.seePasswordCheckbox.addEventListener('change', function() { seePassword(AddSelector); });
+}
+
+// Form validation and submission
+function validateForm(selector) {
+    const valid = validateAllFields(selector);
+    
+    if (valid) {
+        // Get the formatted CPF value with dots and dashes
+        let formattedCPF = selector.cpf.value;
+        
+        // Convert to numeric only format for database storage
+        let numericCPF = formattedCPF.replace(/\D/g, "");
+        
+        // Format phone number for submission
+        let formattedPhone = selector.phone.value;
+        let numericPhone = formattedPhone.replace(/\D/g, "");
+        
+        // Store the display formats
+        let displayCPF = formattedCPF;
+        let displayPhone = formattedPhone;
+        
+        // Set the fields to numeric-only format for submission
+        selector.cpf.value = numericCPF;
+        selector.phone.value = numericPhone;
+        
+        // Submit the form
+        console.log("Submitting form", selector.form.id);
+        try {
+            if (selector.submitButton) {
+                console.log("Clicking submit button");
+                selector.submitButton.click();
+            } else {
+                // Fallback - if the button wasn't found through the selector
+                if (selector === EditSelector) {
+                    console.log("Using getElementById fallback for edit form");
+                    document.getElementById('editSubmitButton').click();
+                } else {
+                    console.log("Using getElementById fallback for add form");
+                    document.getElementById('addSubmitButton').click();
+                }
+            }
+            
+            // If the button click didn't work, submit the form directly
+            setTimeout(() => {
+                if (selector.form && !selector.form.getAttribute('data-submitted')) {
+                    console.log("Button click didn't work, submitting form directly");
+                    selector.form.setAttribute('data-submitted', 'true');
+                    selector.form.submit();
+                }
+            }, 200);
+        } catch (e) {
+            console.error("Error submitting form:", e);
+            // Last resort - direct form submission
+            selector.form.submit();
+        }
+        
+        // Restore the formatted display values
+        setTimeout(() => {
+            selector.cpf.value = displayCPF;
+            selector.phone.value = displayPhone;
+        }, 100);
+    }
+}
+
+// Validate all form fields
+function validateAllFields(selector) {
+    resetErrorMessages(selector);
+    
+    const emptyFieldsValid = validateEmptyFields(selector);
+    const nameValid = validateName(selector);
+    const emailValid = validateEmail(selector);
+    const cpfValid = formatAndValidateCPF(selector);
+    const cepValid = searchAddress(selector);
+    const phoneValid = formatPhone(selector);
+    
+    // Password validation for both Add and Edit forms
+    let passwordValid = true;
+    if (selector === EditSelector && selector.password) {
+        // Only validate password if not blank in Edit form
+        if (selector.password.value.trim() !== "") {
+            passwordValid = validatePassword(selector);
+        } else {
+            // Hide error if left blank
+            selector.errorPassword.style.display = 'none';
+            selector.password.classList.remove('error');
+        }
+    } else if (selector === AddSelector && selector.password) {
+        // Always validate password in Add form
+        passwordValid = validatePassword(selector);
+    }
+    
+    return emptyFieldsValid && nameValid && emailValid && cpfValid && cepValid && phoneValid && passwordValid;
+}
+
+// Look up address using CEP
+function searchAddress(selector) {
+    let cep = selector.cep.value;
     let rawCep = cep.replace(/\D/g, "");
 
     if (rawCep.length === 8) {
         let formattedCep = rawCep.replace(/^(\d{2})(\d{3})(\d{3})$/, "$1.$2-$3");
-        document.getElementById("editCEP").value = formattedCep;
+        selector.cep.value = formattedCep;
 
         let url = `https://viacep.com.br/ws/${rawCep}/json/`;
 
@@ -353,118 +253,511 @@ function searchAddress() {
             .then(response => response.json())
             .then(data => {
                 if (!("erro" in data)) {
-                    document.getElementById("editAddress").value = data.logradouro;
+                    selector.address.value = data.logradouro;
                 } else {
-                    document.getElementById("editCEP").classList.add("error");
-                document.getElementById("errorCep").style.display = 'block';
+                    console.log("CEP não encontrado.");
                 }
             })
             .catch(error => {
-                document.getElementById("editCEP").classList.add("error");
-                document.getElementById("errorCep").style.display = 'block';
+                console.error('Erro ao buscar o CEP:', error);
             });
-            document.getElementById("errorCep").style.display = 'none';
-            document.getElementById("editCEP").classList.remove("error");
-            document.getElementById("editCEP").classList.remove("empty-field");
-    } else {
-        document.getElementById("editCEP").classList.add("error");
-        document.getElementById("errorCep").style.display = 'block';
+        selector.errorCep.style.display = 'none';
+        selector.cep.classList.remove('error');
+        selector.cep.classList.remove('empty-field');
+        return true;
+    } else if (rawCep.length > 0) {
+        selector.cep.classList.add('error');
+        selector.errorCep.style.display = 'block';
+        return false;
     }
+    return true;
 }
 
-function formatAndValidateCPF() {
-    let cpf = document.getElementById("editCPF").value;
+// Format and validate CPF
+// This function formats the CPF for display with dots and dashes
+// The actual database submission will use only the numeric characters
+function formatAndValidateCPF(selector) {
+    let cpf = selector.cpf.value;
     let formattedCpf = cpf.replace(/\D/g, "");
 
     if (formattedCpf.length <= 11) {
-        formattedCpf = cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})$/, "$1.$2.$3-$4");
+        // Format CPF as XXX.XXX.XXX-XX
+        if (formattedCpf.length > 0) {
+            formattedCpf = formattedCpf.replace(/^(\d{3})(\d{0,3})(\d{0,3})(\d{0,2})$/, function(matched, p1, p2, p3, p4) {
+                let result = p1;
+                if (p2) result += '.' + p2;
+                if (p3) result += '.' + p3;
+                if (p4) result += '-' + p4;
+                return result;
+            });
+        }
     }
 
-    document.getElementById("editCPF").value = formattedCpf;
+    selector.cpf.value = formattedCpf;
 
     let cleanCpf = cpf.replace(/\D/g, "");
     let isValid = true;
+
+    // Check if field is empty (required validation will handle this separately)
+    if (cleanCpf.length === 0) {
+        // Don't remove any error classes here - let validateEmptyFields handle it
+        selector.errorCpf.style.display = 'none';
+        return true;
+    }
 
     if (cleanCpf.length !== 11) {
         isValid = false;
     } else if (/^(\d)\1+$/.test(cleanCpf)) {
         isValid = false;
     } else {
-        let sum = 0, remainder;
-        for (let i = 1; i <= 9; i++) sum += parseInt(cleanCpf[i - 1]) * (11 - i);
-        remainder = (sum * 10) % 11;
+        // Calculate CPF validation
+        let sum = 0;
+        for (let i = 0; i < 9; i++) {
+            sum += parseInt(cleanCpf.charAt(i)) * (10 - i);
+        }
+        let remainder = 11 - (sum % 11);
         if (remainder === 10 || remainder === 11) remainder = 0;
-        if (remainder !== parseInt(cleanCpf[9])) isValid = false;
-
-        if (isValid) {
+        
+        if (remainder !== parseInt(cleanCpf.charAt(9))) {
+            isValid = false;
+        } else {
             sum = 0;
-            for (let i = 1; i <= 10; i++) sum += parseInt(cleanCpf[i - 1]) * (12 - i);
-            remainder = (sum * 10) % 11;
+            for (let i = 0; i < 10; i++) {
+                sum += parseInt(cleanCpf.charAt(i)) * (11 - i);
+            }
+            remainder = 11 - (sum % 11);
             if (remainder === 10 || remainder === 11) remainder = 0;
-            if (remainder !== parseInt(cleanCpf[10])) isValid = false;
+            
+            if (remainder !== parseInt(cleanCpf.charAt(10))) {
+                isValid = false;
+            }
         }
     }
 
     if (!isValid) {
-        document.getElementById("editCPF").classList.add("error");
-        document.getElementById("errorCpf").style.display = 'block';
-    } else {
-        document.getElementById("editCPF").classList.remove("error");
-        document.getElementById("editCPF").classList.remove("empty-field");
-        document.getElementById("errorCpf").style.display = 'none';
-    }
-}
-
-
-function formatPhone() {
-    let phone = document.getElementById("editNumber").value;
-    let cleanPhone = phone.replace(/\D/g, "");
-    
-    document.getElementById("errorPhone").style.display = 'none';
-    document.getElementById("editNumber").classList.remove("error");
-    document.getElementById("editNumber").classList.remove("empty-field");
-    
-    if (cleanPhone.length === 11) {
-        document.getElementById("editNumber").value = cleanPhone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
-    } else if (cleanPhone.length === 10) {
-        document.getElementById("editNumber").value = cleanPhone.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
-    } else if (cleanPhone.length === 9) {
-        document.getElementById("editNumber").value = cleanPhone.replace(/^(\d{5})(\d{4})$/, "$1-$2");
-    } else if (cleanPhone.length > 0) {
-        document.getElementById("errorPhone").style.display = 'block';
-        document.getElementById("editNumber").classList.add("error");
-    }
-}
-
-// Add password validation function for the edit form
-function validatePasswordEdit() {
-    const password = editPasswordInput.value;
-    // If password field is empty, it's considered valid (no change)
-    if (!password || password.trim() === '') {
-        editPasswordInput.classList.remove("error");
-        errorPasswordEdit.style.display = 'none';
-        return true;
-    }
-
-    // Regex: At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
-    const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}$/;
-    if (!passwordRegex.test(password)) {
-        editPasswordInput.classList.add("error");
-        errorPasswordEdit.style.display = 'block';
+        selector.cpf.classList.add('error');
+        selector.errorCpf.style.display = 'block';
         return false;
     } else {
-        editPasswordInput.classList.remove("error");
-        errorPasswordEdit.style.display = 'none';
+        selector.cpf.classList.remove('error');
+        selector.errorCpf.style.display = 'none';
         return true;
     }
 }
 
-// Add function to toggle password visibility in the edit form
-function togglePasswordVisibilityEdit() {
-    if (editSeePasswordCheckbox.checked) {
-        editPasswordInput.type = 'text';
+// Format phone number
+function formatPhone(selector) {
+    let phone = selector.phone.value;
+    let cleanPhone = phone.replace(/\D/g, "");
+
+    selector.errorPhone.style.display = 'none';
+    
+    // Don't remove error classes if the field is empty - let validateEmptyFields handle it
+    if (cleanPhone.length === 0) {
+        return true;
+    }
+    
+    // Only remove error class if field has a valid value
+    selector.phone.classList.remove('error');
+
+    if (cleanPhone.length === 11) {
+        selector.phone.value = cleanPhone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+        return true;
+    } else if (cleanPhone.length === 10) {
+        selector.phone.value = cleanPhone.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
+        return true;
+    } else if (cleanPhone.length === 9) {
+        selector.phone.value = cleanPhone.replace(/^(\d{5})(\d{4})$/, "$1-$2");
+        return true;
+    } else if (cleanPhone.length === 8) {
+        selector.phone.value = cleanPhone.replace(/^(\d{4})(\d{4})$/, "$1-$2");
+        return true;
+    } else if (cleanPhone.length > 0) {
+        selector.phone.classList.add('error');
+        selector.errorPhone.style.display = 'block';
+        return false;
+    }
+    return true;
+}
+
+// Reset all error messages
+function resetErrorMessages(selector) {
+    selector.errorFields.style.display = 'none';
+    
+    // Clear all field-specific errors
+    const errorElements = document.querySelectorAll('.error-message');
+    errorElements.forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Remove error class from all inputs
+    const inputElements = selector.form.querySelectorAll('input, select');
+    inputElements.forEach(el => {
+        el.classList.remove('error');
+        el.classList.remove('empty-field');
+    });
+}
+
+// Validate required fields
+function validateEmptyFields(selector) {
+    const form = selector.form;
+    const requiredFields = form.querySelectorAll(".required");
+    let hasEmptyFields = false;
+
+    requiredFields.forEach(field => {
+        if (!field.value || field.value.trim() === "") {
+            field.classList.add('empty-field');
+            field.classList.add('error');
+            hasEmptyFields = true;
+        } else {
+            field.classList.remove('empty-field');
+        }
+    });
+
+    if (hasEmptyFields) {
+        selector.errorFields.style.display = 'block';
+        return false;
+    }
+    return true;
+}
+
+// Validate name format
+function validateName(selector) {
+    var name = selector.name.value.trim();
+    const regexName = /^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/;
+    if (name.length > 0 && (name.length < 2 || name.length > 100 || !regexName.test(name))) {
+        selector.name.classList.add('error');
+        selector.errorName.style.display = 'block';
+        return false;
     } else {
-        editPasswordInput.type = 'password';
+        selector.name.classList.remove('error');
+        selector.errorName.style.display = 'none';
+        return true;
     }
 }
 
+// Validate email format
+function validateEmail(selector) {
+    const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (selector.email.value.length > 0 && !regexEmail.test(selector.email.value)) {
+        selector.email.classList.add('error');
+        selector.errorEmail.style.display = 'block';
+        return false;
+    } else {
+        selector.email.classList.remove('error');
+        selector.errorEmail.style.display = 'none';
+        return true;
+    }
+}
+
+// Validate password format and match
+function validatePassword(selector) {
+    const passwordRegex = /(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*\W).{8,}/;
+
+    if (!passwordRegex.test(selector.password.value)) {
+        selector.password.classList.add("error");
+        selector.errorPassword.style.display = 'block';
+        return false;
+    } else {
+        selector.password.classList.remove("error");
+        selector.errorPassword.style.display = 'none';
+    }
+    
+    // Only check password confirmation for the Add form
+    if (selector === AddSelector && selector.passwordConfirm) {
+        if (selector.password.value !== selector.passwordConfirm.value) {
+            selector.password.classList.add("error");
+            selector.passwordConfirm.classList.add("error");
+            selector.errorEqualPasswords.style.display = 'block';
+            return false;
+        } else {
+            selector.password.classList.remove("error");
+            selector.passwordConfirm.classList.remove("error");
+            selector.errorEqualPasswords.style.display = 'none';
+        }
+    }
+    return true;
+}
+
+// Toggle password visibility
+function seePassword(selector) {
+    if (selector.seePasswordCheckbox.checked) {
+        selector.password.type = "text";
+        if (selector.passwordConfirm) {
+            selector.passwordConfirm.type = "text";
+        }
+    } else {
+        selector.password.type = "password";
+        if (selector.passwordConfirm) {
+            selector.passwordConfirm.type = "password";
+        }
+    }
+}
+
+// Original modal functions
+function openEditModal(userId, name, username, email, cpf, cep, phone, address, role, complement) {
+    // First, reset any existing form state and errors
+    document.getElementById("editUserForm").reset();
+    
+    // Clear error states
+    const errorMessages = document.querySelectorAll('#editModal .error-message');
+    errorMessages.forEach(element => {
+        element.style.display = 'none';
+    });
+    
+    const inputFields = document.querySelectorAll('#editModal input, #editModal select');
+    inputFields.forEach(element => {
+        element.classList.remove('error');
+        element.classList.remove('empty-field');
+    });
+
+    switch (role) {
+        case "User":
+            role = 1;
+            break;
+        case "Technician":
+            role = 2;
+            break;
+        case "System Administrator":
+            role = 3;
+            break;
+        default:
+            break;
+    }
+
+    if (complement === null || complement === undefined || complement === "None" || complement === "none") {
+        complement = "";
+    }
+    
+    // Format CPF if needed
+    const cleanCpf = cpf.replace(/\D/g, "");
+    let formattedCpf = cpf;
+    if (cleanCpf.length === 11) {
+        formattedCpf = cleanCpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+    }
+    
+    // Format CEP if needed
+    const cleanCep = cep.replace(/\D/g, "");
+    let formattedCep = cep;
+    if (cleanCep.length === 8) {
+        formattedCep = cleanCep.replace(/^(\d{2})(\d{3})(\d{3})$/, "$1.$2-$3");
+    }
+    
+    // Format phone if needed
+    const cleanPhone = phone.replace(/\D/g, "");
+    let formattedPhone = phone;
+    if (cleanPhone.length === 11) {
+        formattedPhone = cleanPhone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+    } else if (cleanPhone.length === 10) {
+        formattedPhone = cleanPhone.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
+    } else if (cleanPhone.length === 9) {
+        formattedPhone = cleanPhone.replace(/^(\d{5})(\d{4})$/, "$1-$2");
+    } else if (cleanPhone.length === 8) {
+        formattedPhone = cleanPhone.replace(/^(\d{4})(\d{4})$/, "$1-$2");
+    }
+    
+    // Set form values
+    document.getElementById("editUserId").value = userId;
+    document.getElementById("editName").value = name;
+    document.getElementById("editUsername").value = username;
+    document.getElementById("editEmail").value = email;
+    document.getElementById("editCPF").value = formattedCpf;
+    document.getElementById("editCEP").value = formattedCep;
+    document.getElementById("editPhone").value = formattedPhone;
+    document.getElementById("editAddress").value = address;
+    document.getElementById("editRole").value = role;
+    document.getElementById("editPassword").value = "";  // Clear password field
+    if (document.getElementById("editObservation")) {
+        document.getElementById("editObservation").value = complement || "";  // Set complement or empty string
+    }
+    
+    // Reset password visibility
+    if (document.getElementById("editPassword")) {
+        document.getElementById("editPassword").type = "password";
+    }
+    if (document.getElementById("editSeePassword")) {
+        document.getElementById("editSeePassword").checked = false;
+    }
+    
+    document.getElementById("editModal").style.display = "block";
+}
+
+function closeEditModal() {
+    document.getElementById("editModal").style.display = "none";
+    document.getElementById("editUserForm").reset();
+    
+    // Reset any error messages and validation states
+    const errorMessages = document.querySelectorAll('#editModal .error-message');
+    errorMessages.forEach(element => {
+        element.style.display = 'none';
+    });
+    
+    const inputFields = document.querySelectorAll('#editModal input, #editModal select');
+    inputFields.forEach(element => {
+        element.classList.remove('error');
+        element.classList.remove('empty-field');
+    });
+}
+
+function openModalForm() {
+    // First, reset any existing form state and errors
+    document.getElementById('formUser').reset();
+    
+    // Clear error states
+    const errorMessages = document.querySelectorAll('#modalOpenUser .error-message');
+    errorMessages.forEach(element => {
+        element.style.display = 'none';
+    });
+    
+    const inputFields = document.querySelectorAll('#modalOpenUser input, #modalOpenUser select');
+    inputFields.forEach(element => {
+        element.classList.remove('error');
+        element.classList.remove('empty-field');
+    });
+    
+    // Reset password visibility
+    if (document.getElementById('addPassword')) {
+        document.getElementById('addPassword').type = 'password';
+    }
+    if (document.getElementById('addPasswordConfirm')) {
+        document.getElementById('addPasswordConfirm').type = 'password';
+    }
+    if (document.getElementById('addSeePassword')) {
+        document.getElementById('addSeePassword').checked = false;
+    }
+    
+    const modal = document.getElementById('modalOpenUser');
+    modal.classList.remove('hidden');
+    modal.style.display = "block";
+}
+
+function closeModalForm() {
+    const modal = document.getElementById('modalOpenUser');
+    modal.classList.add('hidden');
+    modal.style.display = "none";
+    document.getElementById('formUser').reset();
+    
+    // Reset any error messages and validation states
+    const errorMessages = document.querySelectorAll('#modalOpenUser .error-message');
+    errorMessages.forEach(element => {
+        element.style.display = 'none';
+    });
+    
+    const inputFields = document.querySelectorAll('#modalOpenUser input, #modalOpenUser select');
+    inputFields.forEach(element => {
+        element.classList.remove('error');
+        element.classList.remove('empty-field');
+    });
+    
+    // Reset password visibility to password (hidden)
+    if (document.getElementById('addPassword')) {
+        document.getElementById('addPassword').type = 'password';
+    }
+    if (document.getElementById('addPasswordConfirm')) {
+        document.getElementById('addPasswordConfirm').type = 'password';
+    }
+    if (document.getElementById('addSeePassword')) {
+        document.getElementById('addSeePassword').checked = false;
+    }
+}
+
+function openModal(userId) {
+    const modal = document.getElementById("confirmationModal");
+    const confirmButton = document.getElementById("confirmDeleteBtn");
+    confirmButton.onclick = function () {
+        window.location.href = `/users/delete/${userId}`;
+    };
+    modal.style.display = "block";
+}
+
+function closeModal() {
+    document.getElementById("confirmationModal").style.display = "none";
+}
+
+// Success Modal Logic
+function showSuccessModal(message) {
+    const modal = document.getElementById('successModal');
+    const messageText = document.getElementById('successMessageText');
+    const closeBtn = document.getElementById('closeSuccessBtn');
+    if (messageText) messageText.textContent = message;
+    if (modal) modal.style.display = 'block';
+    if (closeBtn) {
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        };
+    }
+    // Also close modal if user clicks outside
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
+}
+
+// Fecha modais ao clicar fora
+window.onclick = function (event) {
+    const confirmationModal = document.getElementById("confirmationModal");
+    const editModal = document.getElementById("editModal");
+    const modalOpenUser = document.getElementById("modalOpenUser");
+    const successModal = document.getElementById("successModal");
+
+    if (event.target === confirmationModal) confirmationModal.style.display = "none";
+    if (event.target === editModal) closeEditModal();
+    if (event.target === modalOpenUser) closeModalForm();
+    if (event.target === successModal) successModal.style.display = "none";
+};
+
+// Format CPF, CEP, and phone numbers in the users table
+function formatTableData() {
+    // Format CPF cells
+    const cpfCells = document.querySelectorAll('td[data-label="CPF"]');
+    cpfCells.forEach(cell => {
+        const cpf = cell.textContent.trim();
+        if (cpf && cpf.length > 0) {
+            // Remove any existing formatting
+            const cleanCpf = cpf.replace(/\D/g, "");
+            // Format as XXX.XXX.XXX-XX if it has 11 digits
+            if (cleanCpf.length === 11) {
+                cell.textContent = cleanCpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+            }
+        }
+    });
+
+    // Format CEP cells
+    const cepCells = document.querySelectorAll('td[data-label="CEP"]');
+    cepCells.forEach(cell => {
+        const cep = cell.textContent.trim();
+        if (cep && cep.length > 0) {
+            // Remove any existing formatting
+            const cleanCep = cep.replace(/\D/g, "");
+            // Format as XX.XXX-XXX if it has 8 digits
+            if (cleanCep.length === 8) {
+                cell.textContent = cleanCep.replace(/^(\d{2})(\d{3})(\d{3})$/, "$1.$2-$3");
+            }
+        }
+    });
+
+    // Format phone number cells
+    const phoneCells = document.querySelectorAll('td[data-label="Telefone"]');
+    phoneCells.forEach(cell => {
+        const phone = cell.textContent.trim();
+        if (phone && phone.length > 0) {
+            // Remove any existing formatting
+            const cleanPhone = phone.replace(/\D/g, "");
+            // Format based on length
+            if (cleanPhone.length === 11) {
+                // Format as (XX) XXXXX-XXXX (with 9-digit number)
+                cell.textContent = cleanPhone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+            } else if (cleanPhone.length === 10) {
+                // Format as (XX) XXXX-XXXX (with 8-digit number)
+                cell.textContent = cleanPhone.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
+            } else if (cleanPhone.length === 9) {
+                // Format as XXXXX-XXXX (without area code)
+                cell.textContent = cleanPhone.replace(/^(\d{5})(\d{4})$/, "$1-$2");
+            } else if (cleanPhone.length === 8) {
+                // Format as XXXX-XXXX (without area code)
+                cell.textContent = cleanPhone.replace(/^(\d{4})(\d{4})$/, "$1-$2");
+            }
+        }
+    });
+}

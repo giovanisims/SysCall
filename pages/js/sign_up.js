@@ -81,19 +81,24 @@ function searchAddress() {
             .then(data => {
                 if (!("erro" in data)) {
                     Selector.address.value = data.logradouro;
+                    Selector.errorCep.style.display = 'none';
+                    Selector.cep.classList.remove('error');
+                    Selector.cep.classList.remove('empty-field');
                 } else {
-                    alert("CEP não encontrado.");
+                    Selector.errorCep.textContent = "CEP não encontrado.";
+                    Selector.errorCep.style.display = 'block';
+                    Selector.cep.classList.add('error');
                 }
             })
             .catch(error => {
                 console.error('Erro ao buscar o CEP:', error);
-                alert("Erro ao buscar o CEP.");
+                Selector.errorCep.textContent = "Erro ao buscar o CEP.";
+                Selector.errorCep.style.display = 'block';
+                Selector.cep.classList.add('error');
             });
-        Selector.errorCep.style.display = 'none';
-        Selector.cep.classList.remove('error');
-        Selector.cep.classList.remove('empty-field');
         return true;
     } else {
+        Selector.errorCep.textContent = "CEP inválido";
         Selector.cep.classList.add('error');
         Selector.errorCep.style.display = 'block';
         return false;

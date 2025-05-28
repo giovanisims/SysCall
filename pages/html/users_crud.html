@@ -6,9 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://kit.fontawesome.com/a97e2a6b17.js" crossorigin="anonymous"></script>
     <link rel="icon" type="image/x-icon" href="/static/images/logo.ico">
-    <link rel="stylesheet" href="static/css/users_crud.css">
+    <link rel="stylesheet" href="/static/css/users_crud.css">
     <title>SysCall</title>
-
 </head>
 
 <body>
@@ -20,147 +19,304 @@
                         fill="#F2E9E4" />
                 </svg></a>
         </div>
+
+        <!-- get ready for the most horrendous code you'll ever see, just cry over it front end developer, cuz it is working (probably)and there is nothing you can do about it -->
+
+        {% if user_role == "System Administrator" %} <!-- fuck this role name and you that made the fucking database -->
+
+        <nav id="navBar">
+            <ul class="menu">
+                <li class="menu-items"><a href="/tickets_crud">Chamados</a></li>
+                <li class="menu-items"><a href="users_crud">Usuários</a></li>
+                <li class="menu-items"><a href="/contact">Contato</a></li>
+            </ul>
+        </nav>
+
+        {% elif user_role == "User" %}
+
+        <nav id="navBar">
+            <ul class="menu">
+                <li class="menu-items"><a href="/tickets">Meus chamados</a></li>
+                <li class="menu-items"><a href="/contact">Contato</a></li>
+            </ul>
+        </nav>
+
+        {% elif user_role == "Technician" %}
+
         <nav id="navBar">
             <ul class="menu">
                 <li class="menu-items"><a href="/tickets">Chamados</a></li>
-                <li class="menu-items"><a href="users_crud">Usuários</a></li>
-                <li class="menu-items"><a href="#">Contato</a></li>
+                <li class="menu-items"><a href="/contact">Contato</a></li>
             </ul>
         </nav>
-<div class="icons">
-        {% if user_name %}
-        <p class="hello-user"><a href="">Olá, {{ user_name }}</a></p>
+
         {% else %}
-        <p class="hello-user" style="visibility: hidden">Olá, Usuário</p>
+
+        <nav id="navBar">
+            <ul class="menu">
+                <li class="menu-items"><a href="/login">Meus chamados</a></li>
+                <li class="menu-items"><a href="/login">Contato</a></li>
+            </ul>
+        </nav>
+
         {% endif %}
-        <a href=""><i class="fa-solid fa-circle-user"></i></a>
-        <i id="menuButton" class="fa-solid fa-bars"></i>
-      </div>
-      <div id="userModal" class="dropdown-modal">
-        <div class="triangle"></div>
-        <div class="modal-content">
-          <ul>
-            {% if not user_name %}
-            <li><a href="/login">Entrar</a></li>
-            <li><a href="/sign_up">Cadastrar-se</a></li>
+
+
+
+        <div class="icons">
+            {% if user_name %}
+            <p class="hello-user"><a href="">Olá, {{ user_name }}</a></p>
             {% else %}
-            <li><a href="/profile">Editar Perfil</a></li>
-            <li><a href="/logout">Sair</a></li>
+            <p class="hello-user" style="visibility: hidden">Olá, Usuário</p>
             {% endif %}
-          </ul>
+            <a href=""><i class="fa-solid fa-circle-user"></i></a>
+            <i id="menuButton" class="fa-solid fa-bars"></i>
         </div>
+        <div id="userModal" class="dropdown-modal">
+            <div class="triangle"></div>
+            <div class="modal-content">
+                <ul>
+                    {% if not user_name %}
+                    <li><a href="/login">Entrar</a></li>
+                    <li><a href="/sign_up">Cadastrar-se</a></li>
+                    {% else %}
+                    <li><a href="/profile">Editar Perfil</a></li>
+                    <li><a href="/logout">Sair</a></li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
     </header>
     <div class="title">
         <h1>Usuários</h1>
-        <a class="add" href="sign_up"><i class="fa-solid fa-plus" style="color: #f2e9e4;"></i>Adicionar</a>
+        <a class="add" href="#" onclick="openModalForm()"><i class="fa-solid fa-plus" style="color: #f2e9e4;"></i>Adicionar</a>
     </div>
     <div class="table-container">
         <table>
             <thead>
                 <tr>
                     <th>ID</th>
+                    <th>Nome</th>
                     <th>Username</th>
-                    <th>Nome Completo</th>
                     <th>Email</th>
                     <th>CPF</th>
-                    <th>Telefone</th>
                     <th>CEP</th>
+                    <th>Telefone</th>
                     <th>Endereço</th>
                     <th>Complemento</th>
-                    <th>Papel</th>
+                    <th>Função</th>
                     <th colspan="2">Ações</th>
                 </tr>
             </thead>
             <tbody id="users-table-body">
+                {% for user in users %}
+                <tr>
+                    <td data-label="ID">{{ user.idUser }}</td>
+                    <td data-label="Nome">{{ user.NameSurname }}</td>
+                    <td data-label="Username">{{ user.Username }}</td>
+                    <td data-label="Email">{{ user.Email }}</td>
+                    <td data-label="CPF">{{ user.CPF }}</td>
+                    <td data-label="CEP">{{ user.CEP }}</td>
+                    <td data-label="Telefone">{{ user.Number }}</td>
+                    <td data-label="Endereço">{{ user.Address }}</td>
+                    <td data-label="Complemento">{% if user.Complement == None or user.Complement == 'None' %}{% else %}{{ user.Complement }}{% endif %}</td>
+                    <td data-label="Função">{{ user.Role }}</td>
+                    <td class="action-button-table" data-label="Ações">
+                        <button class="edit-link" title="Editar usuário"
+                            onclick="openEditModal('{{ user.idUser }}', '{{ user.NameSurname }}', '{{ user.Username }}', '{{ user.Email }}', '{{ user.CPF }}', '{{ user.CEP }}', '{{ user.Number }}', '{{ user.Address }}', '{{ user.Role }}', '{{ user.Complement }}')">
+                            <i class="fa-solid fa-pen-to-square" style="color: #125dde;"></i>
+                        </button>
+                        <button class="delete-link" title="Excluir usuário" onclick="openModal('{{ user.idUser }}')">
+                            <i class="fa-solid fa-trash" style="color: #921f1f;"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
+    <!-- Modal de Confirmação -->
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
             <p>Tem certeza que deseja excluir este usuário?</p>
-            <button id="confirmDeleteBtn">Confirmar</button>
-            <button id="cancelDeleteBtn">Cancelar</button>
+            <button id="confirmDeleteBtn" class="confirm-delete">Confirmar</button>
+            <button id="cancelDeleteBtn" onclick="closeModal()">Cancelar</button>
         </div>
     </div>
-
-    <div id="editUserModal" class="modal">
+    <!-- Modal de Edição -->
+    <div id="editModal" class="modal">
         <div class="modal-content edit-modal-content">
             <h2>Editar Usuário</h2>
-            <form id="editUserForm">
-                <input type="hidden" id="editUserId"> <!-- Hidden field to store user ID -->
-
-                <label for="editName">Nome:</label>
-                <input type="text" id="editName" name="editName" class="required">
-
-                <label for="editSurname">Nome Completo:</label>
-                <input type="text" id="editSurname" name="editSurname" class="required">
-
-                <label for="editEmail">Email:</label>
-                <input type="email" id="editEmail" name="editEmail" class="required">
-
-                <label for="editCPF">CPF:</label>
-                <input type="text" id="editCPF" name="cpf" class="required">
-
-                <label for="editNumber">Telefone:</label>
-                <input type="tel" id="editNumber" name="number" class="required">
-
-                <label for="editCEP">CEP:</label>
-                <input type="text" id="editCEP" name="cep" class="required">
-
-                <label for="editAddress">Endereço:</label>
-                <input type="text" id="editAddress" name="address" class="required">
-
-                <label for="editComplement">Complemento:</label>
-                <input type="text" id="editComplement" name="complement">
-
-                <label for="editRole">Papel:</label>
-                <select name="editRole" id="editRole">
-                    <option value="1">Usuário</option>
-                    <option value="2">Técnico</option>
-                </select>
-
-                <label for="editPassword">Nova Senha (deixe em branco para não alterar):</label>
-                <input type="password" id="editPassword" name="editPassword">
-
-                <div class="see-password">
-                    <div class="input-see-password">
-                        <input type="checkbox" id="editSeePassword" class="see-password-check">
+            {% if edit_error %}
+            <div id="backendEditError" class="backend-error-msg" style="color: #921f1f; margin-bottom: 10px; text-align: center; display: block;">
+                {{ edit_error }}
+            </div>
+            {% else %}
+            <div id="backendEditError" class="backend-error-msg" style="color: #921f1f; margin-bottom: 10px; text-align: center; display: none;"></div>
+            {% endif %}
+            <form id="editUserForm" method="post" action="/users/edit">
+                <input type="hidden" id="editUserId" name="user_id" value="{{ edit_user_id|default('') }}">
+                <div class="form-group">
+                    <label for="editName">Nome:</label>
+                    <input type="text" id="editName" name="name" class="required" value="{{ edit_name|default('') }}">
+                </div>
+                <div class="form-group">
+                    <label for="editUsername">Username:</label>
+                    <input type="text" id="editUsername" name="username" class="required" value="{{ edit_username|default('') }}">
+                </div>
+                <div class="form-group">
+                    <label for="editEmail">Email:</label>
+                    <input type="email" id="editEmail" name="email" class="required" value="{{ edit_email|default('') }}">
+                </div>
+                <div class="form-group">
+                    <label for="editCPF">CPF:</label>
+                    <input type="text" id="editCPF" name="cpf" class="required" maxlength="11" value="{{ edit_cpf|default('') }}">
+                </div>
+                <div class="form-group">
+                    <label for="editCEP">CEP:</label>
+                    <input type="text" id="editCEP" name="cep" class="required" maxlength="9" value="{{ edit_cep|default('') }}">
+                </div>
+                <div class="form-group">
+                    <label for="editPhone">Telefone:</label>
+                    <input type="text" id="editPhone" name="phone" class="required" maxlength="12" value="{{ edit_phone|default('') }}">
+                </div>
+                <div class="form-group">
+                    <label for="editAddress">Endereço:</label>
+                    <input type="text" id="editAddress" name="address" class="required" value="{{ edit_address|default('') }}">
+                </div>
+                <div class="form-group">
+                    <label for="editObservation">Complemento:</label>
+                    <input type="text" id="editObservation" name="observation" value="{{ edit_observation|default('') }}">
+                </div>
+                <div class="form-group">
+                    <label for="editRole">Função:</label>
+                    <select id="editRole" name="role" class="required">
+                        <option value="3" {% if edit_role == 3 %}selected{% endif %}>Administrador</option>
+                        <option value="1" {% if edit_role == 1 %}selected{% endif %}>Usuário</option>
+                        <option value="2" {% if edit_role == 2 %}selected{% endif %}>Técnico</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editPassword">Senha:</label>
+                    <input type="password" id="editPassword" name="password" value="{{ edit_password|default('') }}">
+                </div>
+                <div class="form-group see-password-container">
+                    <div class="see-password-checkbox-container">
+                        <input type="checkbox" id="editSeePassword" name="seePassword" class="see-password-checkbox">
                     </div>
-                    <label for="seePassword" class="see-password-text">Mostrar a senha</label>
+                    <label for="editSeePassword" class="see-password-label">Mostrar a senha</label>
                 </div>
-
-                <div class="error-msg">
-                    <p id="errorCep">CEP inválido</p>
-                    <p id="errorCpf">CPF inválido</p>
-                    <p id="errorPhone">Telefone inválido</p>
-                    <p id="errorEmail">Email inválido</p>
-                    <p id="errorName">Nome inválido</p>
-                    <p id="errorSurname">Sobrenome inválido</p>
-                    <p id="errorPasswordEdit">A senha deve conter uma letra maiúscula, uma letra minúscula, um número,
-                        um caractere especial e 8 digitos</p>
-                    <p id="errorFields">Preencha os campos obrigatórios</p>
+                <div class="error-message-container">
+                    <p id="errorEditName" class="error-message" style="display: none;">Nome inválido. Use apenas letras e espaços.</p>
+                    <p id="errorEditUsername" class="error-message" style="display: none;">Username inválido.</p>
+                    <p id="errorEditEmail" class="error-message" style="display: none;">Email inválido.</p>
+                    <p id="errorEditCpf" class="error-message" style="display: none;">CPF inválido.</p>
+                    <p id="errorEditCep" class="error-message" style="display: none;">CEP inválido.</p>
+                    <p id="errorEditPhone" class="error-message" style="display: none;">Telefone inválido.</p>
+                    <p id="errorEditPassword" class="error-message" style="display: none;">A senha deve conter uma letra maiúscula, uma letra minúscula, um número, um caractere especial e 8 digitos.</p>
+                    <p id="errorEditFields" class="error-message" style="display: none;">Preencha todos os campos obrigatórios.</p>
                 </div>
-
-                <div class="modal-buttons">
-                    <button type="button" id="submitButtonVisible" class="save-button">Salvar Alterações</button>
-                    <button type="button" id="cancelEditBtn" class="cancel-button">Cancelar</button>
-                    <button class="none" type="submit" id="submitButton"></button>
+                <div class="action-button-modal">
+                    <button type="button" id="editSubmitButtonVisible" class="save-button">Salvar</button>
+                    <button type="submit" id="editSubmitButton" style="display: none;"></button>
+                    <button type="button" class="cancel-button" onclick="closeEditModal()">Cancelar</button>
                 </div>
-                <p id="editError" class="error-message" style="display: none; color: red;"></p>
             </form>
         </div>
     </div>
-
+    <div id="modalOpenUser" class="modal">
+        <div class="modal-content edit-modal-content">
+            <h2>Adicionar Novo Usuário</h2>
+            {% if error %}
+            <div id="backendAddError" class="backend-error-msg" style="color: #921f1f; margin-bottom: 10px; text-align: center; display: block;">
+                {{ error }}
+            </div>
+            {% else %}
+            <div id="backendAddError" class="backend-error-msg" style="color: #921f1f; margin-bottom: 10px; text-align: center; display: none;"></div>
+            {% endif %}
+            <form id="formUser" action="/users/submit" method="POST">
+                <input type="hidden" name="where" value="2">
+                <div class="form-group">
+                    <label for="addName">Nome:</label>
+                    <input type="text" id="addName" name="namesurname" class="required" value="{{ namesurname|default('') }}" />
+                </div>
+                <div class="form-group">
+                    <label for="addUsername">Username:</label>
+                    <input type="text" id="addUsername" name="username" class="required" value="{{ username|default('') }}" />
+                </div>
+                <div class="form-group">
+                    <label for="addEmail">Email:</label>
+                    <input type="email" id="addEmail" name="email" class="required" value="{{ email|default('') }}" />
+                </div>
+                <div class="form-group">
+                    <label for="addCPF">CPF:</label>
+                    <input type="text" id="addCPF" name="cpf" class="required" maxlength="11" value="{{ cpf|default('') }}" />
+                </div>
+                <div class="form-group">
+                    <label for="addCEP">CEP:</label>
+                    <input type="text" id="addCEP" name="cep" class="required" maxlength="9" value="{{ cep|default('') }}" />
+                </div>
+                <div class="form-group">
+                    <label for="addPhone">Telefone:</label>
+                    <input type="text" id="addPhone" name="phone" class="required" maxlength="12" value="{{ phone|default('') }}" />
+                </div>
+                <div class="form-group">
+                    <label for="addAddress">Endereço:</label>
+                    <input type="text" id="addAddress" name="address" class="required" value="{{ address|default('') }}" />
+                </div>
+                <div class="form-group">
+                    <label for="addObservation">Complemento:</label>
+                    <input type="text" id="addObservation" name="observation" value="{{ observation|default('') }}" />
+                </div>
+                <div class="form-group">
+                    <label for="addRole">Função:</label>
+                    <select id="addRole" name="role" class="required">
+                        <option value="3" {% if role == 3 %}selected{% endif %}>Administrador</option>
+                        <option value="1" {% if role == 1 %}selected{% endif %}>Usuário</option>
+                        <option value="2" {% if role == 2 %}selected{% endif %}>Técnico</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="addPassword">Senha:</label>
+                    <input type="password" id="addPassword" name="password" class="required" value="{{ password|default('') }}" />
+                </div>
+                <div class="form-group">
+                    <label for="addPasswordConfirm">Confirmar senha:</label>
+                    <input type="password" id="addPasswordConfirm" name="passwordConfirm" class="required" value="{{ passwordConfirm|default('') }}" />
+                </div>
+                <div class="form-group see-password-container">
+                    <div class="see-password-checkbox-container">
+                        <input type="checkbox" id="addSeePassword" name="seePassword" class="see-password-checkbox">
+                    </div>
+                    <label for="addSeePassword" class="see-password-label">Mostrar a senha</label>
+                </div>
+                <div class="error-message-container">
+                    <p id="errorAddName" class="error-message" style="display: none;">Nome inválido. Use apenas letras e espaços.</p>
+                    <p id="errorAddUsername" class="error-message" style="display: none;">Username inválido.</p>
+                    <p id="errorAddEmail" class="error-message" style="display: none;">Email inválido.</p>
+                    <p id="errorAddCpf" class="error-message" style="display: none;">CPF inválido.</p>
+                    <p id="errorAddCep" class="error-message" style="display: none;">CEP inválido.</p>
+                    <p id="errorAddPhone" class="error-message" style="display: none;">Telefone inválido.</p>
+                    <p id="errorAddPassword" class="error-message" style="display: none;">A senha deve conter uma letra maiúscula, uma letra minúscula, um número, um caractere especial e 8 digitos.</p>
+                    <p id="errorAddEqualPasswords" class="error-message" style="display: none;">As senhas devem ser iguais.</p>
+                    <p id="errorAddFields" class="error-message" style="display: none;">Preencha todos os campos obrigatórios.</p>
+                </div>
+                <div class="action-button-modal">
+                    <button type="button" id="addSubmitButtonVisible" class="sendForm btn">Enviar</button>
+                    <button type="submit" id="addSubmitButton" style="display: none;"></button>
+                    <button type="button" class="cancel-button" onclick="closeModalForm()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Modal de Sucesso -->
     <div id="successModal" class="modal">
         <div class="modal-content success-modal-content">
-            <p id="successMessageText">Usuário atualizado com sucesso!</p>
+            <p id="successMessageText"></p>
             <button id="closeSuccessBtn">OK</button>
         </div>
     </div>
-
-    <script src="static/js/header.js"></script>
     <script src="/static/js/users_crud.js"></script>
+    <script src="/static/js/header.js"></script>
 </body>
-
 </html>

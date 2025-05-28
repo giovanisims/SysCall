@@ -5,6 +5,158 @@ function openModalForm() {
 function closeModalForm() {
     document.getElementById('modalOpenTicket').classList.add('hidden');
     document.getElementById('formTicket').reset();
+    resetErrorMessages();
+}
+
+var FormSelector;
+
+// Load selectors for the form
+function loadFormSelectors() {
+    return {
+        // Form elements
+        form: document.getElementById('formTicket'),
+        title: document.getElementById('title'),
+        description: document.getElementById('description'),
+        priority: document.getElementById('priority'),
+        type: document.getElementById('type'),
+        
+        // Buttons
+        submitButtonVisible: document.getElementById('submitButtonVisible'),
+        submitButton: document.getElementById('submitButton'),
+        
+        // Error messages
+        errorTitle: document.getElementById('errorTitle'),
+        errorDescription: document.getElementById('errorDescription'),
+        errorFields: document.getElementById('errorFields')
+    };
+}
+
+// Set up event listeners for the form
+function setupEventListeners() {
+    if (FormSelector.title) {
+        FormSelector.title.addEventListener('blur', function() { 
+            validateTitle(FormSelector); 
+        });
+    }
+    
+    if (FormSelector.description) {
+        FormSelector.description.addEventListener('blur', function() { 
+            validateDescription(FormSelector); 
+        });
+    }
+    
+    if (FormSelector.submitButtonVisible) {
+        FormSelector.submitButtonVisible.addEventListener('click', function() { 
+            validateForm(FormSelector); 
+        });
+    }
+}
+
+// Form validation and submission
+function validateForm(selector) {
+    const valid = validateAllFields(selector);
+    
+    if (valid) {
+        // Submit the form
+        console.log("Submitting form", selector.form.id);
+        try {
+            if (selector.submitButton) {
+                console.log("Clicking submit button");
+                selector.submitButton.click();
+            } else {
+                // Fallback - submit the form directly
+                selector.form.submit();
+            }
+        } catch (e) {
+            console.error("Error submitting form:", e);
+            // Last resort - direct form submission
+            selector.form.submit();
+        }
+    }
+}
+
+// Validate all form fields
+function validateAllFields(selector) {
+    resetErrorMessages();
+    
+    const emptyFieldsValid = validateEmptyFields(selector);
+    const titleValid = validateTitle(selector);
+    const descriptionValid = validateDescription(selector);
+    
+    return emptyFieldsValid && titleValid && descriptionValid;
+}
+
+// Reset all error messages
+function resetErrorMessages() {
+    if (!FormSelector) return;
+    
+    FormSelector.errorFields.style.display = 'none';
+    
+    // Clear all field-specific errors
+    const errorElements = document.querySelectorAll('.error-message');
+    errorElements.forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Remove error class from all inputs
+    if (FormSelector.form) {
+        const inputElements = FormSelector.form.querySelectorAll('input, textarea, select');
+        inputElements.forEach(el => {
+            el.classList.remove('error');
+            el.classList.remove('empty-field');
+        });
+    }
+}
+
+// Validate required fields
+function validateEmptyFields(selector) {
+    const form = selector.form;
+    const requiredFields = form.querySelectorAll(".required");
+    let hasEmptyFields = false;
+
+    requiredFields.forEach(field => {
+        if (!field.value || field.value.trim() === "") {
+            field.classList.add('empty-field');
+            field.classList.add('error');
+            hasEmptyFields = true;
+        } else {
+            field.classList.remove('empty-field');
+        }
+    });
+
+    if (hasEmptyFields) {
+        selector.errorFields.style.display = 'block';
+        return false;
+    }
+    return true;
+}
+
+// Validate title
+function validateTitle(selector) {
+    var title = selector.title.value.trim();
+    if (title.length > 0 && (title.length < 3 || title.length > 100)) {
+        selector.title.classList.add('error');
+        selector.errorTitle.style.display = 'block';
+        return false;
+    } else {
+        selector.title.classList.remove('error');
+        selector.errorTitle.style.display = 'none';
+        return true;
+    }
+}
+
+// Validate description
+function validateDescription(selector) {
+    var description = selector.description.value.trim();
+    if (description.length > 0 && (description.length < 10 || description.length > 1000)) {
+        selector.description.classList.add('error');
+        selector.errorDescription.style.display = 'block';
+        return false;
+    } else {
+        selector.description.classList.remove('error');
+        selector.errorDescription.style.display = 'none';
+        return true;
+    }
 }
 
 const ticketList = document.getElementById('tickets');
@@ -127,4 +279,8 @@ document.addEventListener("DOMContentLoaded", function () {
     Array.from(document.getElementsByClassName('closeModalTicket')).forEach(element => {
         element.addEventListener('click', closeModalForm);
     });
+    
+    // Initialize form validation
+    FormSelector = loadFormSelectors();
+    setupEventListeners();
 });
