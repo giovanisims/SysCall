@@ -10,6 +10,10 @@ header{
     background-color: transparent;
 }
 
+#navBar {
+    background-color: #541EC8;
+}
+
 .start-pag{
     width: 100%;
     height: 80vh;
@@ -102,8 +106,8 @@ header{
 
 
 @media (max-width: 800px) {
-    #navBar {
-        background-color: #4f1eb9;
+    header {
+        background-color: transparent !important;
     }
 }
 

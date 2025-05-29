@@ -290,6 +290,14 @@ async def edit_user(
                         (observation, result['idAddress'])
                     )
             
+            logged_in_user_id = request.session.get("user_id")
+            if logged_in_user_id == user_id:
+                request.session["user_name"] = name
+
+                cursor.execute("SELECT Role FROM Role WHERE idRole = %s", (role,))
+                role_data = cursor.fetchone()
+                request.session["user_role"] = role_data["Role"]
+                
             db.commit()
         return RedirectResponse("/users_crud?edited=true", status_code=302)
     except Exception as e:

@@ -46,6 +46,15 @@ nav{
   visibility: hidden; /* Oculta o texto, mas mantém o espaço */
 }
 
+.fa-circle-user {
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.fa-bars {
+  font-size: 24px;
+}
+
 .dropdown-modal {
   display: none; 
   position: absolute;
@@ -69,7 +78,7 @@ nav{
   background-color: #fff;
   border-radius: 8px;
   padding: 10px 20px;
-  width: 150px;
+  width: 160px;
   text-align: center;
   margin: 0;
   border: none;
@@ -104,33 +113,76 @@ nav{
     #navBar {
         display: none;
         position: absolute;
-        top: 11vh;
-        right: 0;
+        top: 60px;
+        left: 0;
         background-color: #2C1E5A;
         width: 100%;
         flex-direction: column;
         align-items: center;
+        z-index: 100;
+        padding: 10px 0;
     }
     #navBar li {
         width: 100%;
         text-align: center;
-        padding: 10px 0;
+        padding: 15px 0;
     }
     #navBar li:last-child {
-        border-bottom: 2px solid #fff;
+        border-bottom: none;
     }
     #navBar a {
         width: 100%;
+        display: block;
+        padding: 5px 0;
     }
     #menuButton {
         display: block;
         cursor: pointer;
+        font-size: 24px;
     }
     .menu{
         display: flex;
         flex-direction: column;
+        width: 100%;
+        padding: 0;
     }
     .icons{
-        width: 30%;
+        width: auto;
+        gap: 15px;
+    }
+    .dropdown-modal {
+        top: 90px;
+        right: 15px;
+    }
+    header {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hello-user {
+        display: none;
+    }
+    
+    .icons {
+        gap: 15px;
+        margin-right: 5px;
+    }
+    
+    header {
+        padding: 12px 10px;
+    }
+    
+    .dropdown-modal {
+        right: 35px !important;
+    }
+    
+    .logo svg {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .fa-circle-user, .fa-bars {
+        font-size: 22px;
     }
 }
