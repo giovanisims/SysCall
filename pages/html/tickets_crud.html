@@ -118,7 +118,7 @@
                     <td data-label="Progresso">{{ ticket.progress }}</td>
                     <td data-label="Tipo">{{ ticket.type }}</td>
                     <td data-label="Prioridade">{{ ticket.priority }}</td>
-                    <td data-label="Criador">{{ ticket.creator }}</td>
+                    <td data-label="Criador">{% if ticket.creator is not none %}{{ ticket.creator }}{% else %}{% endif %}</td>
                     <td class="action-button-table" data-label="Ações">
                         <button class="edit-link" title="Editar chamado"
                             onclick="openEditModal('{{ ticket.id }}', '{{ ticket.title }}', '{{ ticket.description }}', '{{ ticket.priority }}', '{{ ticket.type }}')">

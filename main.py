@@ -290,6 +290,7 @@ async def edit_user(
                         (observation, result['idAddress'])
                     )
             
+            request.session["user_name"] = name
             db.commit()
         return RedirectResponse("/users_crud?edited=true", status_code=302)
     except Exception as e:
