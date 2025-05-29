@@ -9,7 +9,16 @@ document.getElementById('menuButton').addEventListener('click', function () {
     else {
         nav.style.display = "none";
     }
+});
 
+// Close menu when clicking anywhere else on the page
+document.addEventListener('click', function(event) {
+    const nav = document.getElementById("navBar");
+    const menuButton = document.getElementById("menuButton");
+    
+    if (window.innerWidth <= 800 && !nav.contains(event.target) && event.target !== menuButton) {
+        nav.style.display = "none";
+    }
 });
 
 window.addEventListener('resize', function () {
@@ -23,18 +32,19 @@ window.addEventListener('resize', function () {
 
 document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('userModal');
-    const userIcon = document.querySelector('.fa-circle-user');
+    const userIcon = document.querySelector('.user-icon');
 
     // Open modal when clicking on user icon
     userIcon.addEventListener('click', function (e) {
         e.preventDefault();
+        e.stopPropagation(); // Prevent this click from being caught by the document click handler
         const isVisible = modal.style.display === 'block';
         modal.style.display = isVisible ? 'none' : 'block';
     });
 
     // Close modal when clicking outside
-    window.addEventListener('click', function (event) {
-        if (event.target !== modal && !modal.contains(event.target) && event.target !== userIcon) {
+    document.addEventListener('click', function (event) {
+        if (event.target !== modal && !modal.contains(event.target) && !userIcon.contains(event.target)) {
             modal.style.display = 'none';
         }
     });
