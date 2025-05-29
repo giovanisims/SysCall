@@ -38,49 +38,56 @@ DB_CONFIG = {
 
 
 def get_db():
-    return pymysql.connect(**DB_CONFIG)
+    connection = pymysql.connect(**DB_CONFIG)
+    try:
+        yield connection
+    finally:
+        if connection.open:
+            connection.close()
 
 
-SESSION_TIMEOUT =10  # seconds
+SESSION_TIMEOUT = 10  # seconds
 
 app = FastAPI()
+
+# Configuração de sessão (chave secreta para cookies de sessão)
+# Add SessionMiddleware before other middleware that rely on request.session
+app.add_middleware(SessionMiddleware, secret_key="Syscall")
 
 
 @app.middleware("http")
 async def session_timeout_middleware(request: Request, call_next):
-    # Rotas públicas que não precisam de autenticação
+    # Public routes that don't need authentication
     public_routes = ["/login", "/sign_up", "/static", "/", "/contact"]
 
-    # Verifica se a rota atual é pública
+    # Check if the current route is public
     if any(request.url.path.startswith(route) for route in public_routes):
         return await call_next(request)
 
-    # Verifica se o usuário está logado
+    # Check if user is logged in
     user_id = request.session.get("user_id")
     if not user_id:
-        # Redireciona para a página de login se o usuário não estiver logado
+        # Redirect to login if user is not logged in
         return RedirectResponse("/login", status_code=302)
 
-    # Verifica o timeout da sessão
+    # Check session timeout
     last_activity = request.session.get("last_activity")
     now = datetime.now()
 
     if last_activity:
-        # Corrige o formato para corresponder à data armazenada
+        # Parse the stored timestamp
         last_activity = datetime.strptime(last_activity, "%Y-%m-%d %H:%M:%S")
         if (now - last_activity) > timedelta(seconds=SESSION_TIMEOUT):
+            # Session has expired - clear session and redirect to login
             request.session.clear()
-            return RedirectResponse("/login", status_code=302)
+            return RedirectResponse("/login?error=session_expired", status_code=302)
 
-    # Atualiza o timestamp da última atividade
+    # Update the last activity timestamp
     request.session["last_activity"] = now.strftime("%Y-%m-%d %H:%M:%S")
 
-    # Continua para a próxima etapa da requisição
+    # Continue to the next step in the request
     response = await call_next(request)
     return response
-
-# Configuração de sessão (chave secreta para cookies de sessão)
-app.add_middleware(SessionMiddleware, secret_key="Syscall")
 
 # Configuração de arquivos estáticos
 static_dir = os.path.join(os.path.dirname(__file__), "pages")
@@ -91,6 +98,14 @@ if not os.path.exists(static_dir):
     # For now, we'll let the mount potentially fail if it doesn't exist.
     pass
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+# Configuração de templates Jinja2
+templates_dir = os.path.join(os.path.dirname(__file__), "pages", "html")
+if not os.path.exists(templates_dir):
+    print(f"Warning: Templates directory not found at {templates_dir}")
+    # Handle appropriately
+    pass
+templates = Jinja2Templates(directory=templates_dir)
 
 
 @app.get("/users_crud", response_class=HTMLResponse)
@@ -127,9 +142,6 @@ async def users_crud(request: Request, db=Depends(get_db)):
     except Exception as e:
         print(f"Erro ao buscar usuários: {e}")
         return JSONResponse(content={"error": "Falha ao buscar usuários"}, status_code=500)
-    finally:
-        if db:
-            db.close()
 
 @app.post("/users/edit")
 async def edit_user(
@@ -324,9 +336,6 @@ async def edit_user(
                 "edit_password": password or "",
             }
         )
-    finally:
-        if db:
-            db.close()
 
 @app.get("/users/delete/{user_id}", response_class=RedirectResponse)
 async def delete_user(user_id: int, db=Depends(get_db)):
@@ -340,17 +349,6 @@ async def delete_user(user_id: int, db=Depends(get_db)):
         db.rollback()
         print(f"Erro ao deletar usuário: {e}")
         raise HTTPException(status_code=500, detail="Erro ao deletar usuário")
-    finally:
-        if db:
-            db.close()
-
-# Configuração de templates Jinja2
-templates_dir = os.path.join(os.path.dirname(__file__), "pages", "html")
-if not os.path.exists(templates_dir):
-    print(f"Warning: Templates directory not found at {templates_dir}")
-    # Handle appropriately
-    pass
-templates = Jinja2Templates(directory=templates_dir)
 
 
 # Profile
@@ -427,9 +425,6 @@ async def read_profile(request: Request, db=Depends(get_db)):
             }, 
             status_code=500
         )
-    finally:
-        if db:
-            db.close()
             
 
 @app.get("/profile/data", response_class=JSONResponse)
@@ -462,9 +457,6 @@ async def get_profile_data(request: Request, db=Depends(get_db)):
     except Exception as e:
         print(f"Erro ao carregar os dados do perfil: {e}")
         return JSONResponse(content={"error": "Erro ao carregar os dados do perfil"}, status_code=500)
-    finally:
-        if db:
-            db.close()
             
             
 @app.post("/profile/edit")
@@ -627,10 +619,6 @@ async def edit_profile(
         #print ("AAAAAAAAAAAAAA")
         #print (request.session["duplicate_msg"])
         return RedirectResponse("/profile", status_code=302)
-            
-    finally:
-        if db:
-            db.close()
 
 # Endpoints das páginas estáticas
 
@@ -667,9 +655,6 @@ async def tickets_crud(request: Request, db=Depends(get_db)):
     except Exception as e:
         print(f"Erro ao buscar tickets: {e}")
         return JSONResponse(content={"error": "Falha ao buscar tickets"}, status_code=500)
-    finally:
-        if db:
-            db.close()
             
 @app.get("/tickets/delete/{ticket_id}", response_class=RedirectResponse)
 async def delete_ticket(ticket_id: int, db=Depends(get_db)):
@@ -686,9 +671,6 @@ async def delete_ticket(ticket_id: int, db=Depends(get_db)):
         raise HTTPException(
             status_code=500, detail="Erro ao deletar o ticket"
         )
-    finally:
-        if db:
-            db.close()
             
 @app.post("/tickets/edit")
 async def edit_ticket(
@@ -802,12 +784,15 @@ async def getTicketDetail(
             error_message = "Ticket não encontrado"
             return templates.TemplateResponse("ticket_detail.html", {"request": request, "user_name": user_name, "user_role": user_role, "error": error_message})
 
-    finally:
-        db.close()
+    except Exception as e:
+        print(f"Error in ticket_detail: {e}")
+        user_name = request.session.get("user_name", None)
+        user_role = request.session.get("user_role", None)
+        return templates.TemplateResponse("ticket_detail.html", {"request": request, "user_name": user_name, "user_role": user_role, "error": "Erro interno"})
 
 
 @app.get("/ticket_detail_form", response_class=HTMLResponse)
-async def getTicketDetail(
+async def getTicketDetailForm(
     request: Request,
     ticketId: int,
     db=Depends(get_db)
@@ -836,8 +821,11 @@ async def getTicketDetail(
             error_message = "Ticket não encontrado"
             return templates.TemplateResponse("ticket_detail_form.html", {"request": request, "user_name": user_name, "user_role": user_role, "error": error_message})
 
-    finally:
-        db.close()
+    except Exception as e:
+        print(f"Error in ticket_detail_form: {e}")
+        user_name = request.session.get("user_name", None)
+        user_role = request.session.get("user_role", None)
+        return templates.TemplateResponse("ticket_detail_form.html", {"request": request, "user_name": user_name, "user_role": user_role, "error": "Erro interno"})
 
 
 @app.post("/login")
@@ -872,17 +860,17 @@ async def login(
                 # Agora user["UserRole"] conterá a string do nome da role
                 request.session["user_role"] = user["UserRole"]
 
-                request.session["last_activity"] = datetime.utcnow().strftime(
-                    "%Y-%m-%d %H:%M:%S")
+                # Set initial activity timestamp
+                request.session["last_activity"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                
                 return RedirectResponse("/", status_code=302)
             else:
                 error_message = "Email ou senha inválidos"
                 return templates.TemplateResponse("login.html", {"request": request, "error": error_message})
-    finally:
-        db.close()
+    except Exception as e:
+        print(f"Error in login: {e}")
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Erro interno"})
         
-        
-
 
 
 @app.get("/logout")
@@ -1066,10 +1054,6 @@ async def sign_up(
             return render_sign_up_with_error(error_message)
         else:
             return render_users_crud_with_error(error_message)
-    finally:
-        if db:
-            db.close()
-
 
 
 @app.get("/tickets/data")
@@ -1107,8 +1091,9 @@ async def ticket(
                 else:
                     error_message = "Ticket não encontrado"
                     return templates.TemplateResponse("tickets.html", {"request": request, "error": error_message})
-        finally:
-            db.close()
+        except Exception as e:
+            print(f"Error in tickets/data: {e}")
+            return JSONResponse(content={"error": "Internal server error"}, status_code=500)
     else:
         if user_role == "Technician":
             try:
@@ -1139,8 +1124,9 @@ async def ticket(
                     else:
                         error_message = "Ticket não encontrado"
                         return templates.TemplateResponse("tickets.html", {"request": request, "error": error_message})
-            finally:
-                db.close()
+            except Exception as e:
+                print(f"Error in tickets/data: {e}")
+                return JSONResponse(content={"error": "Internal server error"}, status_code=500)
 
 
 @app.post("/tickets/submit")
@@ -1173,9 +1159,9 @@ async def ticketsSubmit(
             elif where == 2:
                 return RedirectResponse("/tickets_crud?added=true", status_code=302)
 
-    finally:
-        if db:
-            db.close()
+    except Exception as e:
+        print(f"Error in tickets/submit: {e}")
+        return RedirectResponse("/tickets?error=true", status_code=302)
 
 
 @app.post("/tickets/history/submit")
@@ -1207,9 +1193,9 @@ async def ticketsAnswer(
             )
             db.commit()
             return RedirectResponse(f"/ticket_detail?ticketId={TicketId}", status_code=302)
-    finally:
-        if db:
-            db.close()
+    except Exception as e:
+        print(f"Error in tickets/history/submit: {e}")
+        return RedirectResponse(f"/ticket_detail?ticketId={TicketId}&error=true", status_code=302)
 
 
 @app.get("/tickets/history")
@@ -1236,8 +1222,9 @@ async def ticketHistory(
                 return ticket
             else:
                 return []
-    finally:
-        db.close()
+    except Exception as e:
+        print(f"Error in tickets/history: {e}")
+        return []
 
 
 @app.get("/tickets/finish")
@@ -1255,8 +1242,9 @@ request: Request,
             )
             db.commit()
         return RedirectResponse(f"/ticket_detail?ticketId={ticketId}", status_code=302)
-    finally:
-        db.close()
+    except Exception as e:
+        print(f"Error in tickets/finish: {e}")
+        return RedirectResponse(f"/ticket_detail?ticketId={ticketId}&error=true", status_code=302)
 
 
 @app.get("/tickets/search", response_class=JSONResponse)
@@ -1304,9 +1292,6 @@ async def search_tickets(q: str, request: Request, db=Depends(get_db)):
     except Exception as e:
         print(f"Erro ao buscar tickets: {e}")
         return JSONResponse(content={"error": "Falha ao buscar tickets"}, status_code=500)
-    finally:
-        if db:
-            db.close()
 
 
 if __name__ == "__main__":
