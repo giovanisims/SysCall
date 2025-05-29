@@ -727,12 +727,20 @@ async def read_main(request: Request):
 
 @app.get("/login", response_class=HTMLResponse)
 async def read_login(request: Request):
+    
+    if request.session.get("user_id"):
+        # If user is already logged in, redirect to main page
+        return RedirectResponse("/", status_code=302)
+    
     error = request.query_params.get("error")
     return templates.TemplateResponse("login.html", {"request": request, "error": error})
 
 
 @app.get("/sign_up", response_class=HTMLResponse)
 async def read_register(request: Request):
+    if request.session.get("user_id"):
+        # If user is already logged in, redirect to main page
+        return RedirectResponse("/", status_code=302)
     return templates.TemplateResponse("sign_up.html", {"request": request})
 
 
