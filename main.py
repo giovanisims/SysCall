@@ -1229,7 +1229,7 @@ async def ticketHistory(
                     FROM
                         issueHistory
                     WHERE fk_Issue_idIssue = %s
-                    ORDER BY 1 DESC;
+                    ORDER BY ChangedDate DESC;
                 """
             cursor.execute(sql_query, (ticketId,))
             ticket = cursor.fetchall()
