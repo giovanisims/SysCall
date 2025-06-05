@@ -1,5 +1,5 @@
 (function() {
-    const LOGOUT_DELAY_SECONDS = 10;
+    const LOGOUT_DELAY_SECONDS = 6000;
     let inactivityTimeoutId;
 
     function redirectToLogout() {

@@ -115,6 +115,22 @@ button:hover{
     cursor: pointer;
 }
 
+.card-header{
+  display: flex;
+  justify-content: space-between;
+}
+
+.card-owner {
+  background-color: #2C1E5A;
+  color: #fff;
+  height: 30px;
+  padding: 10px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (max-width: 900px) {
   .ticket {
     flex-direction: column;

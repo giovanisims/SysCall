@@ -197,7 +197,10 @@
                         const div = document.createElement('div');
                         div.classList.add("history-card")
                         div.innerHTML = `
-                            <div class="card-title">${item.Title}</div>
+                            <div class="card-header">
+                                <div class="card-title">${item.Title}</div>
+                                <div class="card-owner">${item.Username}</div>
+                            </div>
                             <div class="card-description">${item.Description}</div>
                         `;
                         divHistory.appendChild(div);

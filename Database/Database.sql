@@ -77,6 +77,8 @@ CREATE TABLE IssueHistory (
     Description TEXT NOT NULL,
     fk_IssueProgress_idIssueProgress INT NOT NULL DEFAULT(2),
     ChangedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fk_User_idUser INT,
+    FOREIGN KEY (fk_User_idUSer) REFERENCES User(idUser),
     FOREIGN KEY (fk_Issue_idIssue) REFERENCES Issue(idIssue) ON DELETE CASCADE,
     FOREIGN KEY (fk_IssueProgress_idIssueProgress) REFERENCES IssueProgress(idIssueProgress)
 );

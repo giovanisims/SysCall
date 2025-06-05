@@ -1192,21 +1192,24 @@ async def ticketsAnswer(
     Title = answer_title
     Description = answer_description
     TicketId = ticketId
-    TechnicianId = request.session.get("user_id")
+    user_id = request.session.get("user_id")
+    user_role = request.session.get("user_role")
     try:
         with db.cursor() as cursor:
             cursor.execute(
-                "INSERT INTO IssueHistory (fk_Issue_idIssue, Title, Description) VALUES (%s, %s, %s)",
-                (TicketId, Title, Description)
+                "INSERT INTO IssueHistory (fk_Issue_idIssue, Title, Description, fk_User_idUser) VALUES (%s, %s, %s, %s)",
+                (TicketId, Title, Description, user_id)
             )
             cursor.execute(
                 "UPDATE Issue SET fk_IssueProgress_idIssueProgress = %s WHERE idIssue = %s",
                 (2, TicketId)
             )
-            cursor.execute(
-                "UPDATE Issue SET fk_Technician_idUser = %s WHERE idIssue = %s",
-                (TechnicianId, TicketId)
-            )
+            
+            if user_role == "Technician" :
+                cursor.execute(
+                    "UPDATE Issue SET fk_Technician_idUser = %s WHERE idIssue = %s",
+                    (user_id, TicketId)
+                )
             db.commit()
             return RedirectResponse(f"/ticket_detail?ticketId={TicketId}", status_code=302)
     except Exception as e:
@@ -1224,10 +1227,12 @@ async def ticketHistory(
         with db.cursor() as cursor:
             sql_query = """
                     SELECT
-                        Title,
-                        Description
+                        i.Title,
+                        i.Description,
+                        u.Username
                     FROM
-                        issueHistory
+                        IssueHistory i
+                    LEFT JOIN User u ON i.fk_User_idUser = u.idUser
                     WHERE fk_Issue_idIssue = %s
                     ORDER BY ChangedDate DESC;
                 """
