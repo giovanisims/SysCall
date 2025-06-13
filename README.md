@@ -1,6 +1,6 @@
 # 🐍💻 SysCall - Full-Stack Web Application
 
-**SysCall** is a full-stack web application built with a **Python (FastAPI)** backend and a classic **HTML, CSS, and JavaScript** front-end. It demonstrates a complete client-server architecture, using **Jinja2** for templating and a **MariaDB** database for persistence.
+**SysCall** is a full-stack web application designed to be used as a middle man between users who need tech support and technicians looking for customers, with support for either B2B or B2C implementations, built with a **Python (FastAPI)** backend and a classic **HTML, CSS, and JavaScript** front-end. It demonstrates a complete client-server architecture, using **Jinja2** for templating and a **MariaDB** database for persistence.
 
 This project was developed as a final assignment for the **Experiência Criativa** course 🎓. It showcases how modern web technologies come together to create a functional application with both a user-facing interface and server-side logic. 🚀
 
